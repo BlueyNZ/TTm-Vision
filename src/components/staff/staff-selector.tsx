@@ -34,8 +34,11 @@ interface StaffSelectorProps {
 export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeholder = "Select staff...", loading = false, disabledIds = []}: StaffSelectorProps) {
   const [open, setOpen] = React.useState(false)
 
-  const handleSelect = (staff: Staff) => {
-    onSelectStaff(staff);
+  const handleSelect = (currentValue: string) => {
+    const staff = staffList.find(
+      (staff) => staff.name.toLowerCase() === currentValue.toLowerCase()
+    );
+    onSelectStaff(staff || null);
     setOpen(false);
   }
 
@@ -78,7 +81,7 @@ export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeho
                 <CommandItem
                   key={staff.id}
                   value={staff.name}
-                  onSelect={() => handleSelect(staff)}
+                  onSelect={handleSelect}
                   disabled={disabledIds.includes(staff.id)}
                   className="flex items-center justify-between"
                 >
