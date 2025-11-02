@@ -35,7 +35,7 @@ export default function JobCreatePage() {
 
   const { data: staffList } = useCollection<Staff>(staffCollection);
 
-  const handleAddTc = (staff: Staff) => {
+  const handleAddTc = (staff: Staff | null) => {
     if (staff && !selectedTcs.find(tc => tc.id === staff.id) && selectedStms?.id !== staff.id) {
         setSelectedTcs([...selectedTcs, staff]);
     }
@@ -49,7 +49,9 @@ export default function JobCreatePage() {
     if (staff) {
       setSelectedStms(staff);
       // Remove from TCs if they are also selected there
-      handleRemoveTc(staff.id);
+      if (selectedTcs.some(tc => tc.id === staff.id)) {
+        handleRemoveTc(staff.id);
+      }
     }
   }
 
@@ -95,7 +97,7 @@ export default function JobCreatePage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">Job Description</Label>
-            <Textarea id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. SH1 Motorway Closure" />
+            <Textarea id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Northbound lane closure for barrier repairs" />
           </div>
            <div className="space-y-2">
             <Label htmlFor="stms">STMS</Label>
@@ -103,7 +105,7 @@ export default function JobCreatePage() {
                 staffList={staffList || []}
                 onSelectStaff={handleSelectStms}
                 placeholder="Select STMS"
-                disabledIds={[...selectedTcs.map(tc => tc.id)]}
+                disabledIds={[...selectedTcs.map(tc => tc.id), selectedStms?.id].filter(id => !!id) as string[]}
             />
              {selectedStms && (
                 <div className="flex items-center justify-between p-2 bg-muted rounded-md mt-2">

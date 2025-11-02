@@ -63,9 +63,9 @@ export default function JobEditPage() {
     setJobStatus(value);
   };
 
-  const handleAddTc = (staff: Staff | null) => {
+ const handleAddTc = (staff: Staff | null) => {
     if (staff && !selectedTcs.find(tc => tc.id === staff.id) && selectedStms?.id !== staff.id) {
-        setSelectedTcs([...selectedTcs, staff]);
+        setSelectedTcs(prevTcs => [...prevTcs, staff]);
     }
   };
 
