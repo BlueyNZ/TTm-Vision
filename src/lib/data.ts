@@ -80,7 +80,6 @@ export const staffData: Staff[] = [
       phone: '027 890 1234'
     },
     accessLevel: 'Staff Member',
-toc
   },
    {
     id: '4',
