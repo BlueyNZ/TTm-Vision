@@ -1,3 +1,5 @@
+
+'use client';
 import { staffData } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,6 +9,7 @@ import { differenceInDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { AddStaffDialog } from "@/components/staff/add-staff-dialog";
 
 const getOverallCertStatus = (staff: typeof staffData[0]) => {
   if (staff.certifications.length === 0) return { label: 'No Certs', variant: 'outline' as const };
@@ -41,10 +44,12 @@ export default function StaffPage() {
             View and manage all staff members and their certification status.
           </CardDescription>
         </div>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Staff
-        </Button>
+        <AddStaffDialog>
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Staff
+          </Button>
+        </AddStaffDialog>
       </CardHeader>
       <CardContent>
         <Table>
@@ -90,3 +95,4 @@ export default function StaffPage() {
     </Card>
   );
 }
+
