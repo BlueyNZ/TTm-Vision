@@ -1,0 +1,157 @@
+
+'use client';
+import { useRouter } from 'next/navigation';
+import { Staff } from '@/lib/data';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { useState }from 'react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { StaffSelector } from '@/components/staff/staff-selector';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { X } from 'lucide-react';
+
+
+export default function JobCreatePage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const [location, setLocation] = useState('');
+  const [name, setName] = useState('');
+  const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
+  const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
+
+
+  const staffCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'staff');
+  }, [firestore]);
+
+  const { data: staffList } = useCollection<Staff>(staffCollection);
+
+  const handleAddTc = (staff: Staff) => {
+    if (staff && !selectedTcs.find(tc => tc.id === staff.id) && selectedStms?.id !== staff.id) {
+        setSelectedTcs([...selectedTcs, staff]);
+    }
+  };
+
+  const handleRemoveTc = (staffId: string) => {
+    setSelectedTcs(selectedTcs.filter(tc => tc.id !== staffId));
+  }
+
+  const handleSelectStms = (staff: Staff | null) => {
+    setSelectedStms(staff);
+    if (staff) {
+        handleRemoveTc(staff.id);
+    }
+  }
+
+  const handleRemoveStms = () => {
+    setSelectedStms(null);
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In a real app, you would send this data to your API to save it
+    console.log('New Job Data:', {
+        name,
+        location,
+        stms: selectedStms?.name,
+        tcs: selectedTcs.map(tc => tc.name),
+        status: 'Upcoming',
+        startDate: new Date().toISOString(),
+    });
+    toast({
+      title: 'Job Created',
+      description: `The job at ${location} has been created.`,
+    });
+    router.push(`/jobs`);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Create New Job Pack</CardTitle>
+          <CardDescription>Enter the details for the new job.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="location">Location</Label>
+            <Input id="location" name="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Km 24-28, Northern Mwy" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="name">Job Description</Label>
+            <Textarea id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. SH1 Motorway Closure" />
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="stms">STMS</Label>
+             <StaffSelector 
+                staffList={staffList || []}
+                onSelectStaff={handleSelectStms}
+                placeholder="Select STMS"
+                disabledIds={[...selectedTcs.map(tc => tc.id), selectedStms?.id].filter((id): id is string => !!id)}
+            />
+            {selectedStms && (
+                <div className="flex items-center justify-between p-2 bg-muted rounded-md mt-2">
+                    <div className='flex items-center gap-3'>
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={`https://picsum.photos/seed/${selectedStms.id}/200/200`} />
+                            <AvatarFallback>{selectedStms.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-medium text-sm">{selectedStms.name}</p>
+                            <p className="text-xs text-muted-foreground">{selectedStms.role}</p>
+                        </div>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={handleRemoveStms}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Traffic Controllers (TCs)</Label>
+             <StaffSelector 
+                staffList={staffList || []}
+                onSelectStaff={handleAddTc}
+                placeholder="Add a TC to the job"
+                disabledIds={[selectedStms?.id, ...selectedTcs.map(tc => tc.id)].filter((id): id is string => !!id)}
+             />
+             <div className="space-y-2 pt-2">
+                {selectedTcs.map(tc => (
+                    <div key={tc.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                        <div className='flex items-center gap-3'>
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={`https://picsum.photos/seed/${tc.id}/200/200`} />
+                                <AvatarFallback>{tc.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-medium text-sm">{tc.name}</p>
+                                <p className="text-xs text-muted-foreground">{tc.role}</p>
+                            </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveTc(tc.id)}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ))}
+                {selectedTcs.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-2">No traffic controllers assigned.</p>
+                )}
+             </div>
+          </div>
+        </CardContent>
+        <CardFooter className="justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
+            <Button type="submit">Create Job</Button>
+        </CardFooter>
+      </Card>
+    </form>
+  );
+}

@@ -67,9 +67,11 @@ export default function JobsPage() {
             View, create, and manage all jobs.
           </CardDescription>
         </div>
-        <Button>
+        <Button asChild>
+          <Link href="/jobs/create">
             <PlusCircle className="mr-2 h-4 w-4" />
             Create Job
+          </Link>
         </Button>
       </CardHeader>
       <CardContent>
