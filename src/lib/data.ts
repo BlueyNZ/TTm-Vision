@@ -44,6 +44,10 @@ export type Job = {
     signatureUrl: string;
     clientName: string;
   };
+  staff: Staff[];
+  date: Date;
+  startTime: string;
+  onSiteTime: string;
 };
 
 const today = new Date();
@@ -140,6 +144,10 @@ export const jobData: Job[] = [
     siteAddress: '123 Main St, Anytown',
     status: 'In Progress',
     permitUrl: '/path/to/permit.pdf',
+    staff: [staffData[0], staffData[1]],
+    date: new Date(),
+    startTime: '09:00',
+    onSiteTime: '08:45',
     hazards: [
       {
         description: 'Deep pothole near entrance.',
@@ -155,6 +163,10 @@ export const jobData: Job[] = [
     siteAddress: '456 Oak Ave, Anytown',
     status: 'Scheduled',
     permitUrl: '/path/to/permit.pdf',
+    staff: [staffData[3]],
+    date: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+    startTime: '10:00',
+    onSiteTime: '09:30',
     hazards: [],
   },
   {
@@ -163,6 +175,10 @@ export const jobData: Job[] = [
     client: 'Power Line Inc.',
     siteAddress: '789 Pine Ln, Anytown',
     status: 'Completed',
+    staff: [staffData[2]],
+    date: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
+    startTime: '08:00',
+    onSiteTime: '07:50',
     hazards: [],
     completionDetails: {
       photoUrl: 'https://picsum.photos/seed/complete1/400/300',

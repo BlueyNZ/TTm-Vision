@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, MoreHorizontal } from "lucide-react";
+import { FileText, MoreHorizontal, Clock, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 
 export default function JobsPage() {
   return (
@@ -23,9 +32,11 @@ export default function JobsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Job ID</TableHead>
+              <TableHead>Job</TableHead>
               <TableHead>Client</TableHead>
-              <TableHead className="hidden md:table-cell">Site</TableHead>
+              <TableHead className="hidden lg:table-cell">Site</TableHead>
+              <TableHead className="hidden md:table-cell">Staff</TableHead>
+              <TableHead className="hidden lg:table-cell">Times</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -35,9 +46,37 @@ export default function JobsPage() {
           <TableBody>
             {jobData.map((job) => (
               <TableRow key={job.id}>
-                <TableCell className="font-medium">{job.jobId}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{job.jobId}</div>
+                  <div className="text-sm text-muted-foreground">{format(job.date, 'eee, dd MMM')}</div>
+                </TableCell>
                 <TableCell>{job.client}</TableCell>
-                <TableCell className="hidden md:table-cell">{job.siteAddress}</TableCell>
+                <TableCell className="hidden lg:table-cell">{job.siteAddress}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                   <div className="flex items-center space-x-[-10px]">
+                      <TooltipProvider>
+                        {job.staff.map(staffMember => (
+                          <Tooltip key={staffMember.id}>
+                            <TooltipTrigger asChild>
+                              <Avatar className="border-2 border-background">
+                                <AvatarImage src={`https://picsum.photos/seed/${staffMember.id}/200/200`} />
+                                <AvatarFallback>{staffMember.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{staffMember.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                      </TooltipProvider>
+                    </div>
+                </TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>{job.startTime} (On-site: {job.onSiteTime})</span>
+                  </div>
+                </TableCell>
                 <TableCell>
                   <Badge variant="outline" className={cn(
                     job.status === 'In Progress' && 'bg-blue-100 text-blue-800 border-blue-200',
