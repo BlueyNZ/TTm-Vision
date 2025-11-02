@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { Job, Staff } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, User, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock } from 'lucide-react';
+import { Calendar, User, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock, ChevronDown } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,12 @@ import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, Timestamp } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -83,12 +89,39 @@ export default function JobDetailPage() {
                 <h1 className="text-3xl font-bold tracking-tight">{job.location}</h1>
             </div>
           </div>
-          <Button asChild variant="outline">
-            <Link href={`/jobs/${job.id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Job
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+              <Link href={`/jobs/${job.id}/edit`}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Job
+              </Link>
+            </Button>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                        <ChevronDown className="h-5 w-5" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem className="border my-1">CREATE ALL Crew Timesheets</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE a Single Crew Timesheet</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Truck Inspection</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE ESTOP Inspection</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Stop/Go Briefing</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE TSL Decision Matrix</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Hazard ID (NZGTTM)</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Hazard ID</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Site Induction Signatures</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Pre-Installation Process</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE NEW On-Site Record</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Mobile Ops On-Site Record</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Job Note</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Incident or Event Report</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Site Audit (COPTTM SCR)</DropdownMenuItem>
+                    <DropdownMenuItem className="border my-1">CREATE Client Feedback</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
       </div>
       <Card>
         <CardHeader>
