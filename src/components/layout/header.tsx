@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, Search, LogOut } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 import { Input } from "../ui/input";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -132,16 +132,6 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
         </h1>
       </div>
       <div className="flex flex-1 items-center gap-4 md:ml-auto md:flex-initial md:justify-end">
-        <form className="hidden md:block">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
-            />
-          </div>
-        </form>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
