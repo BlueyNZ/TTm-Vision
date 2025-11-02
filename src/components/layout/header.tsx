@@ -14,13 +14,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
 import { Search } from "lucide-react";
 import { Input } from "../ui/input";
 
 export function AppHeader() {
   const pathname = usePathname();
+  const { state } = useSidebar();
   const title = pathname.split("/").pop()?.replace(/-/g, " ") ?? "Dashboard";
 
   return (

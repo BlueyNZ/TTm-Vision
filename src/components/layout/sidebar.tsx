@@ -7,6 +7,8 @@ import {
   SidebarMenuButton,
   SidebarContent,
   SidebarFooter,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
@@ -16,9 +18,19 @@ import {
   LifeBuoy,
   TrafficCone,
   Shield,
+  ChevronDown,
 } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 export function AppSidebar() {
+  const pathname = usePathname();
+  const isAdminPagesActive = ["/admin", "/staff", "/fleet"].includes(pathname);
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -33,6 +45,7 @@ export function AppSidebar() {
             <SidebarMenuButton
               asChild
               tooltip="Dashboard"
+              isActive={pathname === "/dashboard"}
             >
               <Link href="/dashboard">
                 <LayoutDashboard />
@@ -40,39 +53,48 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Staff"
-            >
-              <Link href="/staff">
-                <Users />
-                <span>Staff</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Fleet"
-            >
-              <Link href="/fleet">
-                <Truck />
-                <span>Fleet</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Admin"
-            >
-              <Link href="/admin">
-                <Shield />
-                <span>Admin</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <Collapsible asChild>
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton
+                  tooltip="Admin"
+                  isActive={isAdminPagesActive}
+                  className="justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <Shield />
+                    <span>Admin</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:-rotate-90" />
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenuSub>
+                  <SidebarMenuItem>
+                    <SidebarMenuSubButton asChild isActive={pathname === "/admin"}>
+                       <Link href="/admin">
+                        Overview
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuSubButton asChild isActive={pathname === "/staff"}>
+                      <Link href="/staff">
+                        Staff
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuSubButton asChild isActive={pathname === "/fleet"}>
+                       <Link href="/fleet">
+                        Fleet
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuItem>
+                </SidebarMenuSub>
+              </CollapsibleContent>
+            </SidebarMenuItem>
+          </Collapsible>
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
