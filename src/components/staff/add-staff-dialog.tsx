@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,7 +45,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Staff } from "@/lib/data";
 
-const addStaffSchema = z.object({
+const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   role: z.enum(["TC", "STMS", "Operator"]),
   certifications: z.array(z.object({
@@ -57,19 +57,36 @@ const addStaffSchema = z.object({
   accessLevel: z.enum(["Staff Member", "Admin"]),
 });
 
-type AddStaffFormValues = z.infer<typeof addStaffSchema>;
+type StaffFormValues = z.infer<typeof staffSchema>;
 
-type AddStaffDialogProps = {
+type StaffDialogProps = {
   children: React.ReactNode;
+  staffToEdit?: Staff | null;
   onAddStaff: (staff: Omit<Staff, 'id' | 'avatarUrl'>) => void;
+  onEditStaff?: (staff: Staff) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddStaffDialog({ children, staffToEdit, onAddStaff, onEditStaff, open: controlledOpen, onOpenChange: setControlledOpen }: StaffDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = setControlledOpen ?? setInternalOpen;
+  
+  const isEditMode = !!staffToEdit;
   const { toast } = useToast();
-  const form = useForm<AddStaffFormValues>({
-    resolver: zodResolver(addStaffSchema),
-    defaultValues: {
+
+  const form = useForm<StaffFormValues>({
+    resolver: zodResolver(staffSchema),
+    defaultValues: isEditMode ? {
+      name: staffToEdit.name,
+      role: staffToEdit.role,
+      certifications: staffToEdit.certifications,
+      // Assuming these fields will be added to the Staff type
+      emergencyContactName: "Jane Doe", 
+      emergencyContactNumber: "021 987 6543",
+      accessLevel: "Staff Member",
+    } : {
       name: "",
       emergencyContactName: "",
       emergencyContactNumber: "",
@@ -77,34 +94,65 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
     },
   });
 
+  useEffect(() => {
+    if (isEditMode) {
+      form.reset({
+        name: staffToEdit.name,
+        role: staffToEdit.role,
+        certifications: staffToEdit.certifications.map(c => ({...c, expiryDate: new Date(c.expiryDate)})),
+        // These fields would be populated from staffToEdit if they existed on the type
+        emergencyContactName: "Jane Doe",
+        emergencyContactNumber: "0219876543",
+        accessLevel: "Staff Member"
+      });
+    } else {
+      form.reset({
+        name: "",
+        role: undefined,
+        certifications: [],
+        emergencyContactName: "",
+        emergencyContactNumber: "",
+        accessLevel: undefined,
+      });
+    }
+  }, [staffToEdit, form, isEditMode, open]);
+
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "certifications",
   });
 
-  function onSubmit(data: AddStaffFormValues) {
-    onAddStaff({
-      name: data.name,
-      role: data.role,
-      certifications: data.certifications || [],
-    });
+  function onSubmit(data: StaffFormValues) {
+    if (isEditMode && onEditStaff) {
+      onEditStaff({ ...staffToEdit, ...data, certifications: data.certifications || [] });
+      toast({
+        title: "Staff Updated",
+        description: `${data.name}'s details have been updated.`,
+      });
+    } else {
+      onAddStaff({
+        name: data.name,
+        role: data.role,
+        certifications: data.certifications || [],
+      });
+      toast({
+        title: "Staff Added",
+        description: `${data.name} has been added to the team.`,
+      });
+    }
     
-    toast({
-      title: "Staff Added",
-      description: `${data.name} has been added to the team.`,
-    });
     setOpen(false);
-    form.reset();
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {!isEditMode && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Staff Member</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Staff Member' : 'Add New Staff Member'}</DialogTitle>
           <DialogDescription>
-            Enter the details of the new staff member below.
+            {isEditMode ? 'Update the details of the staff member below.' : 'Enter the details of the new staff member below.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -128,7 +176,7 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Job Title/Role</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role" />
@@ -155,7 +203,7 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
                       name={`certifications.${index}.name`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select Cert" />
@@ -264,7 +312,7 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>System Access Level</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select access level" />
@@ -281,7 +329,7 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
             />
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Add Staff</Button>
+              <Button type="submit">{isEditMode ? 'Save Changes' : 'Add Staff'}</Button>
             </DialogFooter>
           </form>
         </Form>

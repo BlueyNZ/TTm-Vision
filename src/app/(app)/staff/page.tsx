@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { differenceInDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
 import { AddStaffDialog } from "@/components/staff/add-staff-dialog";
 import {
   DropdownMenu,
@@ -44,6 +44,7 @@ const getOverallCertStatus = (staff: Staff) => {
 
 export default function StaffPage() {
   const [staffList, setStaffList] = useState<Staff[]>(staffData);
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const { toast } = useToast();
 
   const handleAddStaff = (newStaff: Omit<Staff, 'id' | 'avatarUrl'>) => {
@@ -53,6 +54,11 @@ export default function StaffPage() {
       avatarUrl: `https://picsum.photos/seed/${staffList.length + 1}/200/200`,
     };
     setStaffList([...staffList, newStaffMember]);
+  };
+  
+  const handleEditStaff = (updatedStaff: Staff) => {
+    setStaffList(staffList.map(staff => staff.id === updatedStaff.id ? updatedStaff : staff));
+    setEditingStaff(null);
   };
 
   const handleDeleteStaff = (staffId: string) => {
@@ -66,6 +72,7 @@ export default function StaffPage() {
   };
 
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
@@ -130,6 +137,10 @@ export default function StaffPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                       <DropdownMenuItem onClick={() => setEditingStaff(staff)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => handleDeleteStaff(staff.id)}
@@ -146,5 +157,18 @@ export default function StaffPage() {
         </Table>
       </CardContent>
     </Card>
+     {editingStaff && (
+        <AddStaffDialog
+          staffToEdit={editingStaff}
+          onAddStaff={()=>{}} // Not used in edit mode
+          onEditStaff={handleEditStaff}
+          open={!!editingStaff}
+          onOpenChange={(isOpen) => !isOpen && setEditingStaff(null)}
+        >
+          {/* This is a controlled dialog, trigger is not needed here */}
+          <></>
+        </AddStaffDialog>
+      )}
+    </>
   );
 }
