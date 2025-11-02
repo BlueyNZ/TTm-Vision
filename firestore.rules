@@ -21,5 +21,9 @@ service cloud.firestore {
       allow read, create, update, delete: if isSignedIn();
     }
 
+    match /trucks/{truckId} {
+      allow read, create, update, delete: if isSignedIn();
+    }
+
   }
 }
