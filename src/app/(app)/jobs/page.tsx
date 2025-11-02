@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const getStatusVariant = (status: (typeof jobData)[0]['status']) => {
   switch (status) {
@@ -42,6 +43,17 @@ const getStatusColor = (status: (typeof jobData)[0]['status']) => {
       return 'fill-muted-foreground';
   }
 };
+
+const ClientFormattedDate = ({ dateString }: { dateString: string }) => {
+  const [formattedDate, setFormattedDate] = useState('');
+
+  useEffect(() => {
+    setFormattedDate(format(new Date(dateString), 'dd MMM yyyy, HH:mm'));
+  }, [dateString]);
+
+  return <>{formattedDate || '...'}</>;
+}
+
 
 export default function JobsPage() {
   const router = useRouter();
@@ -79,7 +91,9 @@ export default function JobsPage() {
               <TableRow key={job.id}>
                 <TableCell className="font-medium">{job.name}</TableCell>
                 <TableCell className="hidden md:table-cell text-muted-foreground">{job.location}</TableCell>
-                <TableCell className="hidden lg:table-cell text-muted-foreground">{format(new Date(job.startDate), 'dd MMM yyyy, HH:mm')}</TableCell>
+                <TableCell className="hidden lg:table-cell text-muted-foreground">
+                  <ClientFormattedDate dateString={job.startDate} />
+                </TableCell>
                 <TableCell>{job.stms}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(job.status)} className="flex items-center gap-2 w-fit">
