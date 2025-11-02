@@ -31,7 +31,7 @@ const getDisplayedStatus = (job: Job) => {
 const getStatusVariant = (status: Job['status']) => {
   switch (status) {
     case 'Upcoming':
-      return 'default';
+      return 'secondary';
     case 'In Progress':
       return 'default'; // Use default variant and custom class for color
     case 'Cancelled':

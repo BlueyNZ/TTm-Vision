@@ -44,7 +44,7 @@ const getDisplayedStatus = (job: Job) => {
 const getStatusVariant = (status: Job['status']) => {
   switch (status) {
     case 'Upcoming':
-      return 'default';
+      return 'secondary';
     case 'In Progress':
       return 'default';
     case 'Cancelled':
