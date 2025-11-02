@@ -81,7 +81,7 @@ export default function JobsPage() {
               <TableRow key={job.id} onClick={() => handleRowClick(job.id)} className="cursor-pointer">
                 <TableCell className="font-medium">{job.name}</TableCell>
                 <TableCell className="hidden md:table-cell text-muted-foreground">{job.location}</TableCell>
-                <TableCell className="hidden lg:table-cell text-muted-foreground">{format(job.startDate, 'dd MMM yyyy, HH:mm')}</TableCell>
+                <TableCell className="hidden lg:table-cell text-muted-foreground">{format(new Date(job.startDate), 'dd MMM yyyy, HH:mm')}</TableCell>
                 <TableCell>{job.stms}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(job.status)} className="flex items-center gap-2 w-fit">

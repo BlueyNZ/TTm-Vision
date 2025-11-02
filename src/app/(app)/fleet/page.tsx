@@ -1,3 +1,4 @@
+
 import { truckData } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,7 +18,7 @@ const getTruckStatus = (truck: typeof truckData[0]) => {
   if (truck.status === 'In Service') return { label: 'In Service', variant: 'destructive' as const };
   if (truck.status === 'Check Required') return { label: 'Check Required', variant: 'warning' as const };
 
-  const daysUntilService = differenceInDays(truck.service.nextServiceDate, new Date());
+  const daysUntilService = differenceInDays(new Date(truck.service.nextServiceDate), new Date());
   const kmsUntilService = truck.service.nextServiceKms - truck.currentKms;
 
   if (daysUntilService <= 14 || kmsUntilService <= 1000) {
@@ -60,7 +61,7 @@ export default function FleetPage() {
                   <div className="text-sm text-muted-foreground">{truck.plate}</div>
                 </TableCell>
                 <TableCell>{truck.currentKms.toLocaleString()} km</TableCell>
-                <TableCell className="hidden md:table-cell">{format(truck.service.nextServiceDate, 'dd MMM yyyy')}</TableCell>
+                <TableCell className="hidden md:table-cell">{format(new Date(truck.service.nextServiceDate), 'dd MMM yyyy')}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className="flex items-center gap-2 w-fit">
                     <Circle className={cn(

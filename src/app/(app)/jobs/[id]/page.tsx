@@ -54,7 +54,7 @@ export default function JobDetailPage() {
                 <Calendar className="h-6 w-6 text-primary" />
                 <div>
                     <p className="font-semibold">Date & Time</p>
-                    <p className="text-muted-foreground">{format(job.startDate, 'eeee, dd MMMM yyyy, p')}</p>
+                    <p className="text-muted-foreground">{format(new Date(job.startDate), 'eeee, dd MMMM yyyy, p')}</p>
                 </div>
             </div>
              <div className="flex items-start gap-4">
