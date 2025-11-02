@@ -1,4 +1,5 @@
 
+'use client';
 import { jobData } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,6 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const getStatusVariant = (status: (typeof jobData)[0]['status']) => {
   switch (status) {
@@ -41,6 +44,10 @@ const getStatusColor = (status: (typeof jobData)[0]['status']) => {
 };
 
 export default function JobsPage() {
+  const router = useRouter();
+  const handleRowClick = (jobId: string) => {
+    router.push(`/jobs/${jobId}`);
+  };
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -71,7 +78,7 @@ export default function JobsPage() {
           </TableHeader>
           <TableBody>
             {jobData.map((job) => (
-              <TableRow key={job.id}>
+              <TableRow key={job.id} onClick={() => handleRowClick(job.id)} className="cursor-pointer">
                 <TableCell className="font-medium">{job.name}</TableCell>
                 <TableCell className="hidden md:table-cell text-muted-foreground">{job.location}</TableCell>
                 <TableCell className="hidden lg:table-cell text-muted-foreground">{format(job.startDate, 'dd MMM yyyy, HH:mm')}</TableCell>
@@ -84,13 +91,15 @@ export default function JobsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View Job Pack</DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/jobs/${job.id}`}>View Job Pack</Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem>Edit</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

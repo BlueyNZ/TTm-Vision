@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -18,6 +19,7 @@ import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
 import { Search } from "lucide-react";
 import { Input } from "../ui/input";
+import { jobData } from "@/lib/data";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -28,7 +30,11 @@ export function AppHeader() {
 
   if (pathParts[0] === 'staff' && pathParts.length > 1) {
     title = "Overview";
-  } else {
+  } else if (pathParts[0] === 'jobs' && pathParts.length > 1) {
+    const job = jobData.find(j => j.id === pathParts[1]);
+    title = job ? job.location : "Job Details";
+  }
+  else {
     title = pathname.split("/").pop()?.replace(/-/g, " ") ?? "Dashboard";
   }
 
@@ -37,7 +43,7 @@ export function AppHeader() {
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
       <SidebarTrigger className="md:hidden" />
       <div className="flex-1">
-        <h1 className="text-lg font-semibold capitalize md:text-2xl">
+        <h1 className="text-lg font-semibold capitalize md:text-2xl truncate">
           {title}
         </h1>
       </div>
