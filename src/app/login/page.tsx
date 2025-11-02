@@ -9,13 +9,15 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { TrafficCone, LoaderCircle } from 'lucide-react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -26,6 +28,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      const persistence = keepLoggedIn ? browserLocalPersistence : browserSessionPersistence;
+      await setPersistence(auth, persistence);
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: 'Login Successful',
@@ -76,6 +80,19 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+              </div>
+               <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="keep-logged-in"
+                  checked={keepLoggedIn}
+                  onCheckedChange={(checked) => setKeepLoggedIn(checked as boolean)}
+                />
+                <label
+                  htmlFor="keep-logged-in"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Keep me logged in
+                </label>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
