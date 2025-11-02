@@ -28,6 +28,7 @@ function getCertificationStatus(expiryDate: Date): { label: string, variant: "de
   return { label: "Valid", variant: "success" };
 }
 
+const certOrder: Staff['certifications'][0]['name'][] = ['TTM', 'TMO-NP', 'TMO', 'STMS-U', 'STMS-L1', 'STMS-L2', 'STMS-L3', 'STMS-NP'];
 
 export default function StaffProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -61,9 +62,9 @@ export default function StaffProfilePage() {
   }
   
   const sortedCerts = staffMember.certifications ? [...staffMember.certifications].sort((a, b) => {
-    const dateA = a.expiryDate instanceof Timestamp ? a.expiryDate.toDate() : new Date(a.expiryDate);
-    const dateB = b.expiryDate instanceof Timestamp ? b.expiryDate.toDate() : new Date(b.expiryDate);
-    return dateA.getTime() - dateB.getTime();
+    const indexA = certOrder.indexOf(a.name);
+    const indexB = certOrder.indexOf(b.name);
+    return indexA - indexB;
   }) : [];
 
   return (
