@@ -14,9 +14,12 @@ export function useUser() {
 
   useEffect(() => {
     if (!auth) {
-       setLoading(false);
+       // Auth service might not be available immediately if persistence is being set.
+       // We start in a loading state, and the effect will re-run once auth is available.
+       setLoading(true);
       return;
     }
+
     const unsubscribe = onAuthStateChanged(
       auth,
       (user) => {

@@ -23,13 +23,6 @@ export function initializeFirebase() {
   }
 
   const auth = getAuth(firebaseApp);
-
-  // Apply persistence based on user's choice from localStorage
-  if (typeof window !== 'undefined') {
-    const keepLoggedIn = localStorage.getItem('keepLoggedIn');
-    const persistence = (keepLoggedIn === 'true') ? browserLocalPersistence : browserSessionPersistence;
-    setPersistence(auth, persistence);
-  }
   
   return {
     firebaseApp,
