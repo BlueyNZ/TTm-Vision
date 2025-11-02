@@ -6,11 +6,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Job, Staff } from "@/lib/data";
 import { collection, Timestamp } from "firebase/firestore";
-import { LoaderCircle, Circle, MapPin, Calendar } from "lucide-react";
+import { LoaderCircle, Circle, MapPin, Calendar, Users, UserSquare } from "lucide-react";
 import Link from "next/link";
 import { format, isPast } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const getDisplayedStatus = (job: Job) => {
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -110,12 +111,12 @@ export default function DashboardPage() {
                             return (
                                 <Link href={`/jobs/${job.id}`} key={job.id} className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                                     <div className="flex justify-between items-start">
-                                        <div>
+                                        <div className="flex-1 space-y-2">
                                             <p className="font-semibold text-lg flex items-center gap-2">
                                                 <MapPin className="h-5 w-5 text-primary"/>
                                                 {job.location}
                                             </p>
-                                            <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                                            <p className="text-sm text-muted-foreground flex items-center gap-2">
                                                 <Calendar className="h-4 w-4"/>
                                                 {format(startDate, 'eeee, dd MMM yyyy')}
                                             </p>
@@ -130,6 +131,39 @@ export default function DashboardPage() {
                                             <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
                                             {displayedStatus}
                                         </Badge>
+                                    </div>
+                                    <div className="border-t my-4"></div>
+                                    <div className="space-y-3">
+                                        {job.stms && (
+                                            <div className="flex items-center gap-2">
+                                                <UserSquare className="h-4 w-4 text-muted-foreground" />
+                                                <p className="text-sm font-medium">STMS:</p>
+                                                <div className="flex items-center gap-2">
+                                                    <Avatar className="h-6 w-6">
+                                                        <AvatarImage src={`https://picsum.photos/seed/${job.stmsId}/200/200`} />
+                                                        <AvatarFallback>{job.stms.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span className="text-sm text-muted-foreground">{job.stms}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {job.tcs && job.tcs.length > 0 && (
+                                            <div className="flex items-start gap-2">
+                                                <Users className="h-4 w-4 text-muted-foreground mt-1" />
+                                                <p className="text-sm font-medium">TCs:</p>
+                                                <div className="flex flex-wrap gap-x-2 gap-y-1">
+                                                    {job.tcs.map(tc => (
+                                                        <div key={tc.id} className="flex items-center gap-2">
+                                                            <Avatar className="h-6 w-6">
+                                                                <AvatarImage src={`https://picsum.photos/seed/${tc.id}/200/200`} />
+                                                                <AvatarFallback>{tc.name.charAt(0)}</AvatarFallback>
+                                                            </Avatar>
+                                                            <span className="text-sm text-muted-foreground">{tc.name}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </Link>
                             )
