@@ -24,12 +24,25 @@ import { collection, doc, deleteDoc } from "firebase/firestore";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const getOverallCertStatus = (staff: Staff) => {
-  if (!staff.certifications || staff.certifications.length === 0) return { label: 'No Certs', variant: 'outline' as const };
-  
+  if (!staff.certifications || staff.certifications.length === 0) {
+    return { label: 'No Certs', variant: 'outline' as const };
+  }
+
+  const expiringCerts = staff.certifications.filter(c => c.name !== 'TTMW');
+
+  if (expiringCerts.length === 0) {
+    // This means the user only has TTMW or no expiring certs
+    if (staff.certifications.some(c => c.name === 'TTMW')) {
+      return { label: 'Certified', variant: 'outline' as const };
+    }
+    // This case should ideally not be hit if the first check is for length 0
+    return { label: 'No Certs', variant: 'outline' as const };
+  }
+
   let soonestExpiry = Infinity;
   let isExpired = false;
 
-  for (const cert of staff.certifications) {
+  for (const cert of expiringCerts) {
     const daysUntilExpiry = differenceInDays(new Date(cert.expiryDate), new Date());
     if (daysUntilExpiry < 0) {
       isExpired = true;
@@ -43,7 +56,7 @@ const getOverallCertStatus = (staff: Staff) => {
   if (isExpired) return { label: 'Expired', variant: 'destructive' as const };
   if (soonestExpiry <= 30) return { label: 'Expires Soon', variant: 'warning' as const };
   return { label: 'Valid', variant: 'success' as const };
-}
+};
 
 
 export default function StaffPage() {
@@ -120,7 +133,7 @@ export default function StaffPage() {
                   </TableCell>
                   <TableCell>{staff.role}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn(
+                    <Badge variant={status.variant} className={cn(
                           status.variant === "destructive" && "bg-destructive/20 text-destructive-foreground border-destructive",
                           status.variant === "warning" && "bg-warning/20 text-yellow-800 border-warning",
                           status.variant === "success" && "bg-success/20 text-green-800 border-success"

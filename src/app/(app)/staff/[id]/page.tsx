@@ -15,7 +15,11 @@ import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc, Timestamp } from "firebase/firestore";
 import { useParams } from "next/navigation";
 
-function getCertificationStatus(expiryDate: Date): { label: string, variant: "destructive" | "warning" | "success" } {
+function getCertificationStatus(certName: string, expiryDate: Date): { label: string, variant: "destructive" | "warning" | "success" | "outline" } {
+  if (certName === 'TTMW') {
+    return { label: "Lifetime", variant: "outline" };
+  }
+  
   const today = new Date();
   const daysUntilExpiry = differenceInDays(expiryDate, today);
 
@@ -135,13 +139,13 @@ export default function StaffProfilePage() {
                       <TableBody>
                           {sortedCerts.map((cert, index) => {
                               const expiryDate = cert.expiryDate instanceof Timestamp ? cert.expiryDate.toDate() : new Date(cert.expiryDate);
-                              const status = getCertificationStatus(expiryDate);
+                              const status = getCertificationStatus(cert.name, expiryDate);
                               return (
                                   <TableRow key={index}>
                                       <TableCell className="font-medium">{cert.name}</TableCell>
-                                      <TableCell>{format(expiryDate, "dd MMM yyyy")}</TableCell>
+                                      <TableCell>{cert.name === 'TTMW' ? 'N/A' : format(expiryDate, "dd MMM yyyy")}</TableCell>
                                       <TableCell className="text-right">
-                                          <Badge variant="outline" className={cn(
+                                          <Badge variant={status.variant} className={cn(
                                               status.variant === "destructive" && "bg-destructive/20 text-destructive-foreground border-destructive",
                                               status.variant === "warning" && "bg-warning/20 text-yellow-800 border-warning",
                                               status.variant === "success" && "bg-success/20 text-green-800 border-success"
