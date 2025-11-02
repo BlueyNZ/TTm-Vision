@@ -43,7 +43,7 @@ export type Job = {
   startDate: Timestamp | Date | string;
   startTime: string;
   siteSetupTime: string;
-  status: 'Upcoming' | 'In Progress' | 'Completed' | 'On Hold';
+  status: 'Upcoming' | 'In Progress' | 'Completed' | 'Cancelled';
   stms: Staff['name'] | null;
   stmsId: Staff['id'] | null;
   tcs: { id: Staff['id'], name: Staff['name']}[];

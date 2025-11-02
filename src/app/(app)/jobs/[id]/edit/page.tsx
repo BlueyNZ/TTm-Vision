@@ -257,7 +257,7 @@ export default function JobEditPage() {
                 <SelectContent>
                     <SelectItem value="Upcoming">Upcoming</SelectItem>
                     <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="On Hold">On Hold</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
                 </SelectContent>
             </Select>

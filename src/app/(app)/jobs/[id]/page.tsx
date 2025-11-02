@@ -5,7 +5,7 @@ import { Job, Staff } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, User, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isPast } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -13,14 +13,23 @@ import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, Timestamp } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
+
+const getDisplayedStatus = (job: Job) => {
+  const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+  if (job.status === 'Upcoming' && isPast(startDate)) {
+    return 'In Progress';
+  }
+  return job.status;
+};
+
 const getStatusVariant = (status: Job['status']) => {
   switch (status) {
     case 'Upcoming':
       return 'default';
     case 'In Progress':
       return 'success';
-    case 'On Hold':
-      return 'warning';
+    case 'Cancelled':
+      return 'destructive';
     case 'Completed':
       return 'outline';
     default:
@@ -61,6 +70,8 @@ export default function JobDetailPage() {
       </div>
     );
   }
+
+  const displayedStatus = getDisplayedStatus(job);
 
   return (
     <div className="flex flex-col gap-6">
@@ -105,7 +116,7 @@ export default function JobDetailPage() {
                 <Info className="h-6 w-6 text-primary" />
                 <div>
                     <p className="font-semibold">Status</p>
-                    <Badge variant={getStatusVariant(job.status)}>{job.status}</Badge>
+                    <Badge variant={getStatusVariant(displayedStatus)}>{displayedStatus}</Badge>
                 </div>
             </div>
         </CardContent>

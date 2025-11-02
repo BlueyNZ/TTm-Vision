@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { format } from "date-fns";
+import { format, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,14 +32,23 @@ import { collection, doc, Timestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
+const getDisplayedStatus = (job: Job) => {
+  const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+  if (job.status === 'Upcoming' && isPast(startDate)) {
+    return 'In Progress';
+  }
+  return job.status;
+};
+
+
 const getStatusVariant = (status: Job['status']) => {
   switch (status) {
     case 'Upcoming':
       return 'default';
     case 'In Progress':
       return 'success';
-    case 'On Hold':
-      return 'warning';
+    case 'Cancelled':
+      return 'destructive';
     case 'Completed':
       return 'outline';
     default:
@@ -51,8 +60,8 @@ const getStatusColor = (status: Job['status']) => {
   switch (status) {
     case 'In Progress':
       return 'fill-success';
-    case 'On Hold':
-      return 'fill-warning';
+    case 'Cancelled':
+      return 'fill-destructive';
     default:
       return 'fill-muted-foreground';
   }
@@ -140,7 +149,9 @@ export default function JobsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {jobData?.map((job) => (
+              {jobData?.map((job) => {
+                const displayedStatus = getDisplayedStatus(job);
+                return (
                 <TableRow key={job.id}>
                   <TableCell className="font-medium">{job.location}</TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">{job.name}</TableCell>
@@ -149,9 +160,9 @@ export default function JobsPage() {
                   </TableCell>
                   <TableCell>{job.stms || 'N/A'}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusVariant(job.status)} className="flex items-center gap-2 w-fit">
-                      <Circle className={cn("h-2 w-2", getStatusColor(job.status))}/>
-                      {job.status}
+                    <Badge variant={getStatusVariant(displayedStatus)} className="flex items-center gap-2 w-fit">
+                      <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
+                      {displayedStatus}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -181,7 +192,7 @@ export default function JobsPage() {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              )})}
             </TableBody>
           </Table>
           )}
