@@ -107,20 +107,50 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       const snapshot = await getDocs(q);
 
       if (snapshot.empty) {
-        // Add a default staff member
-        await addDoc(staffCollectionRef, {
-          name: 'Harrison Price',
-          role: 'STMS',
-          accessLevel: 'Admin',
-          emergencyContact: {
-            name: 'Jane Price',
-            phone: '021-987-6543'
+        // Add default staff members
+        const initialStaff = [
+          {
+            name: 'Harrison Price',
+            role: 'STMS',
+            accessLevel: 'Admin',
+            emergencyContact: { name: 'Jane Price', phone: '021-987-6543' },
+            certifications: [
+              { name: 'STMS (CAT A)', expiryDate: new Date('2025-08-15T00:00:00Z') },
+              { name: 'TMO', expiryDate: new Date('2026-01-20T00:00:00Z') }
+            ]
           },
-          certifications: [
-            { name: 'STMS (CAT A)', expiryDate: new Date('2025-08-15T00:00:00Z') },
-            { name: 'TMO', expiryDate: new Date('2026-01-20T00:00:00Z') }
-          ]
-        });
+          {
+            name: 'Ben Carter',
+            role: 'TC',
+            accessLevel: 'Staff Member',
+            emergencyContact: { name: 'Sarah Carter', phone: '022-111-2222' },
+            certifications: [
+              { name: 'TTMW', expiryDate: new Date('2025-11-30T00:00:00Z') }
+            ]
+          },
+          {
+            name: 'Chloe Williams',
+            role: 'TC',
+            accessLevel: 'Staff Member',
+            emergencyContact: { name: 'Mike Williams', phone: '027-333-4444' },
+            certifications: [
+              { name: 'TTMW', expiryDate: new Date('2026-02-10T00:00:00Z') }
+            ]
+          },
+          {
+            name: 'Jack Taylor',
+            role: 'TC',
+            accessLevel: 'Staff Member',
+            emergencyContact: { name: 'Emily Taylor', phone: '021-555-6666' },
+            certifications: [
+              { name: 'TTMW', expiryDate: new Date('2025-09-05T00:00:00Z') }
+            ]
+          },
+        ];
+
+        for (const staff of initialStaff) {
+          await addDoc(staffCollectionRef, staff);
+        }
       }
     };
     
