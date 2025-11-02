@@ -28,6 +28,8 @@ export default function JobEditPage() {
   const [job, setJob] = useState(jobData.find((j) => j.id === jobId));
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
+  const [tcSelectorValue, setTcSelectorValue] = useState<Staff | null>(null);
+
 
   const staffCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -59,10 +61,12 @@ export default function JobEditPage() {
     setJob({ ...job, status: value as typeof job.status });
   };
 
-  const handleAddTc = (staff: Staff) => {
-    if (!selectedTcs.find(tc => tc.id === staff.id) && selectedStms?.id !== staff.id) {
+  const handleAddTc = (staff: Staff | null) => {
+    if (staff && !selectedTcs.find(tc => tc.id === staff.id) && selectedStms?.id !== staff.id) {
         setSelectedTcs([...selectedTcs, staff]);
     }
+    // Clear the selector after adding
+    setTcSelectorValue(null);
   };
 
   const handleRemoveTc = (staffId: string) => {
@@ -128,6 +132,7 @@ export default function JobEditPage() {
             <Label>Traffic Controllers (TCs)</Label>
              <StaffSelector 
                 staffList={staffList || []}
+                selectedStaff={tcSelectorValue}
                 onSelectStaff={handleAddTc}
                 placeholder="Add a TC to the job"
                 loading={isLoadingStaff}
