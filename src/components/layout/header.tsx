@@ -22,7 +22,16 @@ import { Input } from "../ui/input";
 export function AppHeader() {
   const pathname = usePathname();
   const { state } = useSidebar();
-  const title = pathname.split("/").pop()?.replace(/-/g, " ") ?? "Dashboard";
+  
+  let title;
+  const pathParts = pathname.split("/").filter(Boolean);
+
+  if (pathParts[0] === 'staff' && pathParts.length > 1) {
+    title = "Staff Profile";
+  } else {
+    title = pathname.split("/").pop()?.replace(/-/g, " ") ?? "Dashboard";
+  }
+
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
