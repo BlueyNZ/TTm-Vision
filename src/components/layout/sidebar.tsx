@@ -30,10 +30,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Staff } from "@/lib/data";
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  accessLevel?: Staff['accessLevel'];
+}
+
+export function AppSidebar({ accessLevel }: AppSidebarProps) {
   const pathname = usePathname();
   const isAdminPagesActive = ["/admin", "/staff", "/fleet", "/jobs"].some(path => pathname.startsWith(path));
+  const isAdmin = accessLevel === 'Admin';
 
   return (
     <Sidebar>
@@ -57,55 +63,57 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <Collapsible asChild defaultOpen={isAdminPagesActive}>
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton
-                  tooltip="Admin"
-                  isActive={isAdminPagesActive}
-                  className="justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <Shield />
-                    <span>Admin</span>
-                  </div>
-                  <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  <SidebarMenuItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/admin"}>
-                       <Link href="/admin">
-                        Overview
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuSubButton asChild isActive={pathname.startsWith("/staff")}>
-                      <Link href="/staff">
-                        Staff
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuSubButton asChild isActive={pathname.startsWith("/fleet")}>
-                       <Link href="/fleet">
-                        Fleet
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuItem>
-                   <SidebarMenuItem>
-                    <SidebarMenuSubButton asChild isActive={pathname.startsWith("/jobs")}>
-                       <Link href="/jobs">
-                        Jobs
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuItem>
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
+          {isAdmin && (
+            <Collapsible asChild defaultOpen={isAdminPagesActive}>
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton
+                    tooltip="Admin"
+                    isActive={isAdminPagesActive}
+                    className="justify-between"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Shield />
+                      <span>Admin</span>
+                    </div>
+                    <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    <SidebarMenuItem>
+                      <SidebarMenuSubButton asChild isActive={pathname === "/admin"}>
+                         <Link href="/admin">
+                          Overview
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuSubButton asChild isActive={pathname.startsWith("/staff")}>
+                        <Link href="/staff">
+                          Staff
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuSubButton asChild isActive={pathname.startsWith("/fleet")}>
+                         <Link href="/fleet">
+                          Fleet
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuItem>
+                     <SidebarMenuItem>
+                      <SidebarMenuSubButton asChild isActive={pathname.startsWith("/jobs")}>
+                         <Link href="/jobs">
+                          Jobs
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+          )}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
