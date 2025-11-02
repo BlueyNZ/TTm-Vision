@@ -29,24 +29,48 @@ export function AppHeader() {
   let showBackButton = false;
   let backPath = "";
 
+  const getTitleForPage = (parts: string[]) => {
+    const page = parts[0];
+    const id = parts[1];
+    const action = parts[2];
+
+    if (action === 'edit') {
+      if(page === 'jobs') return 'Edit Job';
+      if(page === 'staff') return 'Edit Staff';
+      if(page === 'fleet') return 'Edit Truck';
+      return 'Edit Item';
+    }
+
+    if (id && id !== 'create') {
+      if(page === 'jobs') return 'Job Details';
+      if(page === 'staff') return 'Staff Profile';
+      if(page === 'fleet') return 'Truck Profile';
+      return 'Item Details';
+    }
+
+     if (id === 'create') {
+      if(page === 'jobs') return 'Create Job';
+      if(page === 'staff') return 'Create Staff';
+      if(page === 'fleet') return 'Create Truck';
+      return 'Create Item';
+    }
+
+    if(page) return page.replace(/-/g, " ");
+
+    return "Dashboard";
+  }
+
+
   if (pathParts.length > 1) {
       showBackButton = true;
       if (pathParts.length > 2 && pathParts[2] === 'edit') {
-        // On an edit page like /jobs/[id]/edit, go back to the details page /jobs/[id]
-        title = "Edit " + (pathParts[0] === 'jobs' ? 'Job' : 'Item');
         backPath = `/${pathParts[0]}/${pathParts[1]}`;
       } else {
-        // On a detail page like /jobs/[id], go back to the list page /jobs
-        title = (pathParts[0] === 'jobs' ? 'Job' : 'Staff') + " Details";
         backPath = `/${pathParts[0]}`;
       }
-      if (pathParts[1] === 'create') {
-        title = "Create " + (pathParts[0] === 'jobs' ? 'Job' : 'Item');
-        backPath = `/${pathParts[0]}`;
-      }
-  } else if (pathParts[0]) {
-      title = pathParts[0].replace(/-/g, " ");
-  }
+  } 
+
+  title = getTitleForPage(pathParts);
 
   const handleBackClick = () => {
     if (backPath) {

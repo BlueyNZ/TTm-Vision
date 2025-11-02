@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -6,7 +7,7 @@ import { Firestore, collection, getDocs, limit, query, addDoc, Timestamp } from 
 import { Auth, User, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 import { jobData } from '@/lib/data';
-import type { Job, Staff } from '@/lib/data';
+import type { Job, Staff, Truck } from '@/lib/data';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -109,35 +110,59 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const seedInitialData = async () => {
       if (!firestore) return;
       
-      // Seed Staff
-      const staffCollectionRef = collection(firestore, 'staff');
-      const staffQuery = query(staffCollectionRef, limit(1));
-      const staffSnapshot = await getDocs(staffQuery);
-
-      if (staffSnapshot.empty) {
-        const initialStaff: Omit<Staff, 'id'>[] = [
-          { name: 'Harrison Price', role: 'STMS', accessLevel: 'Admin', emergencyContact: { name: 'Jane Price', phone: '021-987-6543' }, certifications: [{ name: 'STMS (CAT A)', expiryDate: new Date('2025-08-15T00:00:00Z') }, { name: 'TMO', expiryDate: new Date('2026-01-20T00:00:00Z') }] },
-          { name: 'Ben Carter', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Sarah Carter', phone: '022-111-2222' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-11-30T00:00:00Z') }] },
-          { name: 'Chloe Williams', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mike Williams', phone: '027-333-4444' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-02-10T00:00:00Z') }] },
-          { name: 'Jack Taylor', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Emily Taylor', phone: '021-555-6666' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-09-05T00:00:00Z') }] },
-          { name: 'Liam Wilson', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Grace Wilson', phone: '021-123-1234' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-05-20T00:00:00Z') }] },
-          { name: 'Olivia Brown', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'David Brown', phone: '021-456-4567' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-12-15T00:00:00Z') }] },
-          { name: 'Noah Jones', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Sophie Jones', phone: '021-789-7890' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-08-01T00:00:00Z') }] },
-          { name: 'Ava Smith', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Peter Smith', phone: '021-111-2222' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-03-10T00:00:00Z') }] },
-          { name: 'Lucas Miller', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mia Miller', phone: '021-222-3333' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-10-25T00:00:00Z') }] },
-          { name: 'Isla Garcia', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Leo Garcia', phone: '021-333-4444' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-07-18T00:00:00Z') }] },
-        ];
-        const addedDocs = [];
-        for (const staff of initialStaff) { 
-           const docRef = await addDoc(staffCollectionRef, staff);
-           addedDocs.push({ ...staff, id: docRef.id });
+      const seedCollection = async (collectionName: string, initialData: any[], dateFields: string[] = []) => {
+        const collectionRef = collection(firestore, collectionName);
+        const snapshot = await getDocs(query(collectionRef, limit(1)));
+        if (snapshot.empty) {
+          console.log(`Seeding ${collectionName}...`);
+          for (const item of initialData) {
+            const docToAdd = { ...item };
+            dateFields.forEach(field => {
+              if (docToAdd[field]) {
+                docToAdd[field] = Timestamp.fromDate(new Date(docToAdd[field]));
+              }
+            });
+            await addDoc(collectionRef, docToAdd);
+          }
+          return true; // Indicates seeding happened
         }
-         // Seed Jobs with correct staff IDs
-        const jobsCollectionRef = collection(firestore, 'job_packs');
+        return false; // Indicates seeding was skipped
+      };
+
+      // Seed Staff
+      const initialStaff: Omit<Staff, 'id'>[] = [
+        { name: 'Harrison Price', role: 'STMS', accessLevel: 'Admin', emergencyContact: { name: 'Jane Price', phone: '021-987-6543' }, certifications: [{ name: 'STMS (CAT A)', expiryDate: new Date('2025-08-15T00:00:00Z') }, { name: 'TMO', expiryDate: new Date('2026-01-20T00:00:00Z') }] },
+        { name: 'Ben Carter', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Sarah Carter', phone: '022-111-2222' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-11-30T00:00:00Z') }] },
+        { name: 'Chloe Williams', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mike Williams', phone: '027-333-4444' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-02-10T00:00:00Z') }] },
+        { name: 'Jack Taylor', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Emily Taylor', phone: '021-555-6666' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-09-05T00:00:00Z') }] },
+        { name: 'Liam Wilson', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Grace Wilson', phone: '021-123-1234' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-05-20T00:00:00Z') }] },
+        { name: 'Olivia Brown', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'David Brown', phone: '021-456-4567' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-12-15T00:00:00Z') }] },
+        { name: 'Noah Jones', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Sophie Jones', phone: '021-789-7890' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-08-01T00:00:00Z') }] },
+        { name: 'Ava Smith', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Peter Smith', phone: '021-111-2222' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-03-10T00:00:00Z') }] },
+        { name: 'Lucas Miller', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mia Miller', phone: '021-222-3333' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-10-25T00:00:00Z') }] },
+        { name: 'Isla Garcia', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Leo Garcia', phone: '021-333-4444' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-07-18T00:00:00Z') }] },
+      ];
+      await seedCollection('staff', initialStaff, ['certifications.expiryDate']);
+
+      // Seed Trucks
+      const initialTrucks: Omit<Truck, 'id'>[] = [
+        { name: 'Big Bertha', plate: 'TRUCK1', status: 'Operational', service: { lastServiceDate: '2024-05-10T00:00:00Z', nextServiceDate: '2024-11-10T00:00:00Z', nextServiceKms: 150000 }, currentKms: 145000, fuelLog: [{ date: '2024-07-02T00:00:00Z', volumeLiters: 120, cost: 240.50 }] },
+        { name: 'The Workhorse', plate: 'TRUCK2', status: 'Check Required', service: { lastServiceDate: '2024-06-20T00:00:00Z', nextServiceDate: '2024-12-20T00:00:00Z', nextServiceKms: 160000 }, currentKms: 158500, fuelLog: [] },
+        { name: 'Old Reliable', plate: 'TRUCK3', status: 'In Service', service: { lastServiceDate: '2024-01-01T00:00:00Z', nextServiceDate: '2024-07-25T00:00:00Z', nextServiceKms: 120000 }, currentKms: 119800, fuelLog: [] },
+      ];
+      await seedCollection('trucks', initialTrucks, ['service.lastServiceDate', 'service.nextServiceDate']);
+      
+      // Seed Jobs
+      const jobsCollectionRef = collection(firestore, 'job_packs');
+      const jobsSnapshot = await getDocs(query(jobsCollectionRef, limit(1)));
+      if (jobsSnapshot.empty) {
+        console.log('Seeding jobs...');
+        const staffSnapshot = await getDocs(collection(firestore, 'staff'));
+        const staffWithIds = staffSnapshot.docs.map(doc => ({ ...doc.data() as Staff, id: doc.id }));
         for (const job of jobData) {
-            const stms = addedDocs.find(s => s.name === job.stms);
+            const stms = staffWithIds.find(s => s.name === job.stms);
             const tcs = job.tcs.map(jobTc => {
-                const tc = addedDocs.find(s => s.name === jobTc.name);
+                const tc = staffWithIds.find(s => s.name === jobTc.name);
                 return { id: tc?.id || '', name: jobTc.name };
             }).filter(tc => tc.id);
 
@@ -148,32 +173,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
                 startDate: Timestamp.fromDate(new Date(job.startDate)),
             };
             await addDoc(jobsCollectionRef, docToAdd);
-        }
-      } else {
-        // If staff data exists, check if jobs exist
-         const jobsCollectionRef = collection(firestore, 'job_packs');
-        const jobsQuery = query(jobsCollectionRef, limit(1));
-        const jobsSnapshot = await getDocs(jobsQuery);
-
-        if (jobsSnapshot.empty) {
-            const staffSnapshot = await getDocs(staffCollectionRef);
-            const staffWithIds = staffSnapshot.docs.map(doc => ({ ...doc.data() as Staff, id: doc.id }));
-            
-            for (const job of jobData) {
-                const stms = staffWithIds.find(s => s.name === job.stms);
-                const tcs = job.tcs.map(jobTc => {
-                    const tc = staffWithIds.find(s => s.name === jobTc.name);
-                    return { id: tc?.id || '', name: jobTc.name };
-                }).filter(tc => tc.id);
-
-                const docToAdd: Omit<Job, 'id'> = {
-                    ...job,
-                    stmsId: stms?.id || null,
-                    tcs: tcs,
-                    startDate: Timestamp.fromDate(new Date(job.startDate)),
-                };
-                await addDoc(jobsCollectionRef, docToAdd);
-            }
         }
       }
     };
