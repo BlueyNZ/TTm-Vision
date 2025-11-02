@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Pie, PieChart, Cell } from "recharts"
@@ -28,9 +29,9 @@ const chartConfig = {
     label: "Available Days",
     color: "hsl(var(--secondary))",
   },
-  onSite: { label: "On-Site", color: "hsl(var(--chart-1))" },
-  inYard: { label: "In-Yard", color: "hsl(var(--chart-2))" },
-  inService: { label: "In-Service", color: "hsl(var(--chart-3))" },
+  onSite: { label: "On-Site", color: "hsl(var(--chart-1))" }, // Orange
+  inYard: { label: "In-Yard", color: "hsl(var(--chart-3))" }, // Green
+  inService: { label: "In-Service", color: "hsl(var(--chart-2))" }, // Blue
 }
 
 export function UtilizationDashboard() {
