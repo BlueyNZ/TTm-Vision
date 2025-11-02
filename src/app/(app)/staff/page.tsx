@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { differenceInDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 const getOverallCertStatus = (staff: typeof staffData[0]) => {
   if (staff.certifications.length === 0) return { label: 'No Certs', variant: 'outline' as const };
@@ -32,11 +34,17 @@ const getOverallCertStatus = (staff: typeof staffData[0]) => {
 export default function StaffPage() {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Staff Management</CardTitle>
-        <CardDescription>
-          View and manage all staff members and their certification status.
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Staff Management</CardTitle>
+          <CardDescription>
+            View and manage all staff members and their certification status.
+          </CardDescription>
+        </div>
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Staff
+        </Button>
       </CardHeader>
       <CardContent>
         <Table>
