@@ -45,6 +45,10 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     // Only run the setup if the auth service has been initialized.
     if (firebaseServices.auth) {
       setupPersistence(firebaseServices.auth);
+    } else {
+      // If auth service is not available for some reason, we can't proceed.
+      // We'll mark services as ready to not block the app, but auth will likely fail.
+      setServicesReady(true);
     }
   }, [firebaseServices.auth]); // This effect depends only on the auth service instance.
 

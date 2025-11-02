@@ -1,4 +1,3 @@
-
 // src/firebase/auth/use-user.tsx
 'use client';
 import { useState, useEffect } from 'react';
@@ -35,5 +34,5 @@ export function useUser() {
     return () => unsubscribe();
   }, [auth]); // This effect now correctly depends on the availability of the auth service.
 
-  return { user, loading, error };
+  return { user, loading: loading, error };
 }
