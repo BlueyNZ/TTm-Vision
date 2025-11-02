@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -44,7 +45,7 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
       <SidebarHeader>
         <Link href="/dashboard" className="flex items-center gap-2">
           <TrafficCone className="h-8 w-8 text-sidebar-primary" />
-          <h2 className="text-xl font-bold text-sidebar-foreground">TrafficFlow</h2>
+          <h2 className="text-xl font-bold text-sidebar-foreground">TTM Vision</h2>
         </Link>
       </SidebarHeader>
       <SidebarContent>

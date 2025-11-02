@@ -63,7 +63,7 @@ export default function LoginPage() {
             <div className="mb-4 flex justify-center">
               <TrafficCone className="h-12 w-12 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Welcome to TrafficFlow</CardTitle>
+            <CardTitle className="text-2xl">Welcome to TTM Vision</CardTitle>
             <CardDescription>Enter your credentials to access your account</CardDescription>
           </CardHeader>
           <CardContent>
