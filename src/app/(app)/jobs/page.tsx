@@ -140,7 +140,8 @@ export default function JobsPage() {
               <TableRow>
                 <TableHead>Location</TableHead>
                 <TableHead className="hidden lg:table-cell">Start Date</TableHead>
-                <TableHead className="hidden lg:table-cell">Start Time</TableHead>
+                <TableHead className="hidden lg:table-cell">On Site</TableHead>
+                <TableHead className="hidden lg:table-cell">Job Start</TableHead>
                 <TableHead>STMS</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
@@ -157,6 +158,7 @@ export default function JobsPage() {
                   <TableCell className="hidden lg:table-cell text-muted-foreground">
                     <ClientFormattedDate date={job.startDate} />
                   </TableCell>
+                  <TableCell className="hidden lg:table-cell text-muted-foreground">{job.siteSetupTime || 'N/A'}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">{job.startTime || 'N/A'}</TableCell>
                   <TableCell>{job.stms || 'N/A'}</TableCell>
                   <TableCell>
