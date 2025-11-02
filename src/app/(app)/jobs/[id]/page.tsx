@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { Job, Staff } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, User, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle } from 'lucide-react';
+import { Calendar, User, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ export default function JobDetailPage() {
         } else {
             date = new Date(job.startDate);
         }
-        setFormattedDate(format(date, 'eeee, dd MMMM yyyy, p'));
+        setFormattedDate(format(date, 'eeee, dd MMMM yyyy'));
     }
   }, [job]);
 
@@ -87,8 +87,18 @@ export default function JobDetailPage() {
             <div className="flex items-start gap-4">
                 <Calendar className="h-6 w-6 text-primary" />
                 <div>
-                    <p className="font-semibold">Date & Time</p>
+                    <p className="font-semibold">Date</p>
                     <p className="text-muted-foreground">{formattedDate || 'Loading...'}</p>
+                </div>
+            </div>
+             <div className="flex items-start gap-4">
+                <Clock className="h-6 w-6 text-primary" />
+                <div>
+                    <p className="font-semibold">Times</p>
+                    <div className="text-muted-foreground">
+                        <p>Site Setup: {job.siteSetupTime || 'Not Set'}</p>
+                        <p>Job Start: {job.startTime || 'Not Set'}</p>
+                    </div>
                 </div>
             </div>
              <div className="flex items-start gap-4">

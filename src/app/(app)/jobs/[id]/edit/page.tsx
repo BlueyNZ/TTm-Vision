@@ -15,7 +15,11 @@ import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc, Timestamp } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { X, LoaderCircle } from 'lucide-react';
+import { X, LoaderCircle, Calendar as CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 
 export default function JobEditPage() {
@@ -27,6 +31,9 @@ export default function JobEditPage() {
 
   const [jobName, setJobName] = useState('');
   const [jobLocation, setJobLocation] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [startTime, setStartTime] = useState('');
+  const [siteSetupTime, setSiteSetupTime] = useState('');
   const [jobStatus, setJobStatus] = useState<Job['status'] | undefined>();
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
@@ -47,6 +54,11 @@ export default function JobEditPage() {
     if (job) {
       setJobName(job.name);
       setJobLocation(job.location);
+      if (job.startDate) {
+        setStartDate(job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate));
+      }
+      setStartTime(job.startTime || '');
+      setSiteSetupTime(job.siteSetupTime || '');
       setJobStatus(job.status);
 
       if (staffList) {
@@ -88,16 +100,26 @@ export default function JobEditPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firestore || !job) return;
+    if (!firestore || !job || !startDate) {
+        toast({
+            title: 'Missing Information',
+            description: 'Please select a start date for the job.',
+            variant: 'destructive',
+        });
+        return;
+    }
+
 
     const updatedJob = {
         name: jobName,
         location: jobLocation,
+        startDate: Timestamp.fromDate(startDate),
+        startTime,
+        siteSetupTime,
         status: jobStatus,
         stms: selectedStms?.name || null,
         stmsId: selectedStms?.id || null,
         tcs: selectedTcs.map(tc => ({ id: tc.id, name: tc.name })),
-        startDate: job.startDate, // Keep original start date
     };
 
     const jobDocRef = doc(firestore, 'job_packs', job.id);
@@ -134,15 +156,50 @@ export default function JobEditPage() {
             <Label htmlFor="name">Job Description</Label>
             <Textarea id="name" name="name" value={jobName} onChange={(e) => setJobName(e.target.value)} />
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="startDate">Start Date</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="siteSetupTime">Site Setup Time</Label>
+                <Input id="siteSetupTime" type="time" value={siteSetupTime} onChange={e => setSiteSetupTime(e.target.value)} />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="startTime">Job Start Time</Label>
+                <Input id="startTime" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
+            </div>
+          </div>
            <div className="space-y-2">
-            <Label htmlFor="stms">STMS</Label>
-            <StaffSelector 
+            <Label>STMS</Label>
+             <StaffSelector 
                 staffList={staffList || []}
                 onSelectStaff={handleSelectStms}
                 placeholder="Select STMS"
                 disabledIds={[...selectedTcs.map(tc => tc.id), selectedStms?.id].filter(id => !!id) as string[]}
             />
-             {selectedStms && (
+            {selectedStms && (
                 <div className="flex items-center justify-between p-2 bg-muted rounded-md mt-2">
                     <div className='flex items-center gap-3'>
                         <Avatar className="h-8 w-8">

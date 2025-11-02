@@ -7,6 +7,7 @@ import { Firestore, collection, getDocs, limit, query, addDoc, Timestamp } from 
 import { Auth, User, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 import { jobData } from '@/lib/data';
+import type { Job, Staff } from '@/lib/data';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -110,7 +111,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       const staffSnapshot = await getDocs(staffQuery);
 
       if (staffSnapshot.empty) {
-        const initialStaff = [
+        const initialStaff: Omit<Staff, 'id'>[] = [
           { name: 'Harrison Price', role: 'STMS', accessLevel: 'Admin', emergencyContact: { name: 'Jane Price', phone: '021-987-6543' }, certifications: [{ name: 'STMS (CAT A)', expiryDate: new Date('2025-08-15T00:00:00Z') }, { name: 'TMO', expiryDate: new Date('2026-01-20T00:00:00Z') }] },
           { name: 'Ben Carter', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Sarah Carter', phone: '022-111-2222' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-11-30T00:00:00Z') }] },
           { name: 'Chloe Williams', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mike Williams', phone: '027-333-4444' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-02-10T00:00:00Z') }] },
@@ -118,6 +119,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           { name: 'Liam Wilson', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Grace Wilson', phone: '021-123-1234' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-05-20T00:00:00Z') }] },
           { name: 'Olivia Brown', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'David Brown', phone: '021-456-4567' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-12-15T00:00:00Z') }] },
           { name: 'Noah Jones', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Sophie Jones', phone: '021-789-7890' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-08-01T00:00:00Z') }] },
+          { name: 'Ava Smith', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Peter Smith', phone: '021-111-2222' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-03-10T00:00:00Z') }] },
+          { name: 'Lucas Miller', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mia Miller', phone: '021-222-3333' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-10-25T00:00:00Z') }] },
+          { name: 'Isla Garcia', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Leo Garcia', phone: '021-333-4444' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-07-18T00:00:00Z') }] },
         ];
         for (const staff of initialStaff) { await addDoc(staffCollectionRef, staff); }
       }
@@ -129,9 +133,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
       if (jobsSnapshot.empty) {
         for (const job of jobData) {
-          const { id, ...jobDetails } = job;
-          const docToAdd = {
-            ...jobDetails,
+          const docToAdd: Omit<Job, 'id'> = {
+            ...job,
             startDate: Timestamp.fromDate(new Date(job.startDate)),
           };
           await addDoc(jobsCollectionRef, docToAdd);

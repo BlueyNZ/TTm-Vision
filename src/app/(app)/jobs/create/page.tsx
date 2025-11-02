@@ -14,7 +14,11 @@ import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, Timestamp } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { X } from 'lucide-react';
+import { X, Calendar as CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 
 export default function JobCreatePage() {
@@ -24,6 +28,9 @@ export default function JobCreatePage() {
 
   const [location, setLocation] = useState('');
   const [name, setName] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [startTime, setStartTime] = useState('');
+  const [siteSetupTime, setSiteSetupTime] = useState('');
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
 
@@ -48,7 +55,6 @@ export default function JobCreatePage() {
   const handleSelectStms = (staff: Staff | null) => {
     if (staff) {
       setSelectedStms(staff);
-      // Remove from TCs if they are also selected there
       if (selectedTcs.some(tc => tc.id === staff.id)) {
         handleRemoveTc(staff.id);
       }
@@ -61,16 +67,25 @@ export default function JobCreatePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firestore) return;
+    if (!firestore || !startDate) {
+        toast({
+            title: 'Missing Information',
+            description: 'Please select a start date for the job.',
+            variant: 'destructive',
+        });
+        return;
+    }
 
     const newJob: Omit<Job, 'id'> = {
         name,
         location,
+        startDate: Timestamp.fromDate(startDate),
+        startTime,
+        siteSetupTime,
+        status: 'Upcoming',
         stms: selectedStms?.name || null,
         stmsId: selectedStms?.id || null,
         tcs: selectedTcs.map(tc => ({id: tc.id, name: tc.name })),
-        status: 'Upcoming',
-        startDate: Timestamp.now(),
     };
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
@@ -99,15 +114,50 @@ export default function JobCreatePage() {
             <Label htmlFor="name">Job Description</Label>
             <Textarea id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Northbound lane closure for barrier repairs" />
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="startDate">Start Date</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="siteSetupTime">Site Setup Time</Label>
+                <Input id="siteSetupTime" type="time" value={siteSetupTime} onChange={e => setSiteSetupTime(e.target.value)} />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="startTime">Job Start Time</Label>
+                <Input id="startTime" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
+            </div>
+          </div>
            <div className="space-y-2">
-            <Label htmlFor="stms">STMS</Label>
-            <StaffSelector 
+            <Label>STMS</Label>
+             <StaffSelector 
                 staffList={staffList || []}
                 onSelectStaff={handleSelectStms}
                 placeholder="Select STMS"
                 disabledIds={[...selectedTcs.map(tc => tc.id), selectedStms?.id].filter(id => !!id) as string[]}
             />
-             {selectedStms && (
+            {selectedStms && (
                 <div className="flex items-center justify-between p-2 bg-muted rounded-md mt-2">
                     <div className='flex items-center gap-3'>
                         <Avatar className="h-8 w-8">
@@ -123,7 +173,7 @@ export default function JobCreatePage() {
                         <X className="h-4 w-4" />
                     </Button>
                 </div>
-            )}
+             )}
           </div>
           <div className="space-y-2">
             <Label>Traffic Controllers (TCs)</Label>

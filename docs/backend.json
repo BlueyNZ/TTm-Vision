@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "JobPack": {
@@ -21,6 +22,19 @@
         "location": {
           "type": "string",
           "description": "The location or address of the job site."
+        },
+        "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The start date and time of the job."
+        },
+        "startTime": {
+            "type": "string",
+            "description": "The start time of the job (HH:mm)."
+        },
+        "siteSetupTime": {
+            "type": "string",
+            "description": "The site setup time (HH:mm)."
         },
         "permitId": {
           "type": "string",
@@ -50,7 +64,10 @@
         "id",
         "jobName",
         "description",
-        "location"
+        "location",
+        "startDate",
+        "startTime",
+        "siteSetupTime"
       ]
     },
     "Permit": {

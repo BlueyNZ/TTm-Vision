@@ -41,6 +41,8 @@ export type Job = {
   name: string;
   location: string;
   startDate: Timestamp | Date | string;
+  startTime: string;
+  siteSetupTime: string;
   status: 'Upcoming' | 'In Progress' | 'Completed' | 'On Hold';
   stms: Staff['name'] | null;
   stmsId: Staff['id'] | null;
@@ -92,12 +94,13 @@ export const truckData: Truck[] = [
 ];
 
 
-export const jobData: Job[] = [
+export const jobData: Omit<Job, 'id'>[] = [
   {
-    id: "JOB-001",
     name: "SH1 Motorway Closure",
     location: "Km 24-28, Northern Mwy",
     startDate: "2024-08-15T20:00:00Z",
+    startTime: "20:00",
+    siteSetupTime: "19:00",
     status: "Upcoming",
     stms: "Harrison Price",
     stmsId: null,
@@ -107,30 +110,33 @@ export const jobData: Job[] = [
     ],
   },
   {
-    id: "JOB-002",
     name: "Local Road Maintenance",
     location: "Smith Street, Suburbia",
     startDate: "2024-07-20T08:00:00Z",
+    startTime: "08:00",
+    siteSetupTime: "07:30",
     status: "In Progress",
     stms: "Harrison Price",
     stmsId: null,
     tcs: [{ id: "3", name: "Jack Taylor" }],
   },
   {
-    id: "JOB-003",
     name: "Event Traffic Control",
     location: "City Stadium",
     startDate: "2024-07-12T16:00:00Z",
+    startTime: "16:00",
+    siteSetupTime: "15:00",
     status: "Completed",
     stms: "Jane Doe",
     stmsId: null,
     tcs: [{ id: "1", name: "Ben Carter" }],
   },
   {
-    id: "JOB-004",
     name: "Emergency Watermain Repair",
     location: "Main & First Ave",
     startDate: "2024-07-22T10:00:00Z",
+    startTime: "10:00",
+    siteSetupTime: "09:30",
     status: "On Hold",
     stms: "Harrison Price",
     stmsId: null,
