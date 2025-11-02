@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { useCollection, useFirestore } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, doc, deleteDoc } from "firebase/firestore";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -51,7 +51,11 @@ export default function StaffPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   
-  const staffCollection = collection(firestore, 'staff');
+  const staffCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'staff');
+  }, [firestore]);
+  
   const { data: staffData, isLoading } = useCollection<Staff>(staffCollection);
 
 
