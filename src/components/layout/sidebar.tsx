@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
-  Briefcase,
   Users,
   Truck,
   Settings,
@@ -38,17 +37,6 @@ export function AppSidebar() {
               <Link href="/dashboard">
                 <LayoutDashboard />
                 <span>Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Jobs"
-            >
-              <Link href="/jobs">
-                <Briefcase />
-                <span>Jobs</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

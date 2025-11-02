@@ -27,29 +27,6 @@ export type Truck = {
   }[];
 };
 
-export type Job = {
-  id: string;
-  jobId: string;
-  client: string;
-  siteAddress: string;
-  status: 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
-  permitUrl?: string;
-  hazards: {
-    description: string;
-    photoUrl: string;
-    reportedBy: string;
-  }[];
-  completionDetails?: {
-    photoUrl: string;
-    signatureUrl: string;
-    clientName: string;
-  };
-  staff: Staff[];
-  date: Date;
-  startTime: string;
-  onSiteTime: string;
-};
-
 const today = new Date();
 
 export const staffData: Staff[] = [
@@ -133,57 +110,5 @@ export const truckData: Truck[] = [
     },
     currentKms: 119800,
     fuelLog: [],
-  },
-];
-
-export const jobData: Job[] = [
-  {
-    id: '101',
-    jobId: 'J-2024-001',
-    client: 'City Council',
-    siteAddress: '123 Main St, Anytown',
-    status: 'In Progress',
-    permitUrl: '/path/to/permit.pdf',
-    staff: [staffData[0], staffData[1]],
-    date: new Date(),
-    startTime: '09:00',
-    onSiteTime: '08:45',
-    hazards: [
-      {
-        description: 'Deep pothole near entrance.',
-        photoUrl: 'https://picsum.photos/seed/hazard1/400/300',
-        reportedBy: 'Jane Smith',
-      },
-    ],
-  },
-  {
-    id: '102',
-    jobId: 'J-2024-002',
-    client: 'ConstructCo',
-    siteAddress: '456 Oak Ave, Anytown',
-    status: 'Scheduled',
-    permitUrl: '/path/to/permit.pdf',
-    staff: [staffData[3]],
-    date: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-    startTime: '10:00',
-    onSiteTime: '09:30',
-    hazards: [],
-  },
-  {
-    id: '103',
-    jobId: 'J-2023-159',
-    client: 'Power Line Inc.',
-    siteAddress: '789 Pine Ln, Anytown',
-    status: 'Completed',
-    staff: [staffData[2]],
-    date: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
-    startTime: '08:00',
-    onSiteTime: '07:50',
-    hazards: [],
-    completionDetails: {
-      photoUrl: 'https://picsum.photos/seed/complete1/400/300',
-      signatureUrl: '/path/to/signature.png',
-      clientName: 'Foreman Bob',
-    },
   },
 ];
