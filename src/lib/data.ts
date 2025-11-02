@@ -43,6 +43,7 @@ export type Job = {
   startDate: string;
   status: 'Upcoming' | 'In Progress' | 'Completed' | 'On Hold';
   stms: string;
+  tcs: string[];
 };
 
 export const truckData: Truck[] = [
@@ -98,6 +99,7 @@ export const jobData: Job[] = [
     startDate: "2024-08-15T20:00:00Z",
     status: "Upcoming",
     stms: "Harrison Price",
+    tcs: ["Ben Carter", "Chloe Williams"],
   },
   {
     id: "JOB-002",
@@ -106,6 +108,7 @@ export const jobData: Job[] = [
     startDate: "2024-07-20T08:00:00Z",
     status: "In Progress",
     stms: "Harrison Price",
+    tcs: ["Jack Taylor"],
   },
   {
     id: "JOB-003",
@@ -114,6 +117,7 @@ export const jobData: Job[] = [
     startDate: "2024-07-12T16:00:00Z",
     status: "Completed",
     stms: "Jane Doe",
+    tcs: ["Ben Carter"],
   },
   {
     id: "JOB-004",
@@ -122,5 +126,7 @@ export const jobData: Job[] = [
     startDate: "2024-07-22T10:00:00Z",
     status: "On Hold",
     stms: "Harrison Price",
+    tcs: [],
   },
 ];
+
