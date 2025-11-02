@@ -27,7 +27,7 @@ export function AppHeader() {
   const pathParts = pathname.split("/").filter(Boolean);
 
   if (pathParts[0] === 'staff' && pathParts.length > 1) {
-    title = "Staff Profile";
+    title = "Overview";
   } else {
     title = pathname.split("/").pop()?.replace(/-/g, " ") ?? "Dashboard";
   }
