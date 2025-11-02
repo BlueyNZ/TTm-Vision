@@ -122,23 +122,6 @@ export default function SettingsPage() {
           <CardDescription>Manage your personal information.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-            <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20">
-                    <AvatarImage src={`https://picsum.photos/seed/${user?.uid}/200/200`} />
-                    <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div>
-                     <Label htmlFor="avatar-upload">Profile Photo</Label>
-                     <p className="text-sm text-muted-foreground pb-2">Upload a new photo for your profile.</p>
-                     <Button asChild variant="outline">
-                        <label htmlFor="avatar-upload">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Upload Image
-                            <input id="avatar-upload" type="file" className="sr-only" />
-                        </label>
-                    </Button>
-                </div>
-            </div>
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input id="name" value={name} onChange={e => setName(e.target.value)} />
