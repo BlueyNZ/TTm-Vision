@@ -22,9 +22,52 @@ export default function SignupPage() {
   const { toast } = useToast();
   const auth = useAuth();
 
+  const validatePassword = (password: string, name: string, email: string): { valid: boolean, message: string } => {
+    // 1. Minimum Length
+    if (password.length < 8) {
+      return { valid: false, message: "Password must be at least 8 characters long." };
+    }
+
+    // 2. Character Diversity
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumbers = /[0-9]/.test(password);
+    const hasSymbols = /[!@#$%^&*]/.test(password);
+    const diversityScore = [hasUppercase, hasLowercase, hasNumbers, hasSymbols].filter(Boolean).length;
+
+    if (diversityScore < 3) {
+      return { valid: false, message: "Password must include at least three of the following: uppercase letters, lowercase letters, numbers, and symbols." };
+    }
+
+    // 3. No Personal Information
+    const lowerCasePassword = password.toLowerCase();
+    const lowerCaseName = name.toLowerCase();
+    const emailUsername = email.split('@')[0].toLowerCase();
+
+    if (lowerCaseName && lowerCasePassword.includes(lowerCaseName)) {
+        return { valid: false, message: "Password cannot contain your name." };
+    }
+    if (emailUsername && lowerCasePassword.includes(emailUsername)) {
+        return { valid: false, message: "Password cannot contain your email address." };
+    }
+
+    return { valid: true, message: "Password is strong." };
+  }
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    const passwordValidation = validatePassword(password, name, email);
+    if (!passwordValidation.valid) {
+      toast({
+        variant: 'destructive',
+        title: 'Weak Password',
+        description: passwordValidation.message,
+      });
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -87,7 +130,7 @@ export default function SignupPage() {
                   id="password" 
                   type="password" 
                   required 
-                  minLength={6}
+                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
