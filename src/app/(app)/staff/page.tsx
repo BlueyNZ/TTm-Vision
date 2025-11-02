@@ -9,8 +9,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { differenceInDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import { AddStaffDialog } from "@/components/staff/add-staff-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const getOverallCertStatus = (staff: Staff) => {
   if (staff.certifications.length === 0) return { label: 'No Certs', variant: 'outline' as const };
@@ -37,6 +44,7 @@ const getOverallCertStatus = (staff: Staff) => {
 
 export default function StaffPage() {
   const [staffList, setStaffList] = useState<Staff[]>(staffData);
+  const { toast } = useToast();
 
   const handleAddStaff = (newStaff: Omit<Staff, 'id' | 'avatarUrl'>) => {
     const newStaffMember: Staff = {
@@ -45,6 +53,16 @@ export default function StaffPage() {
       avatarUrl: `https://picsum.photos/seed/${staffList.length + 1}/200/200`,
     };
     setStaffList([...staffList, newStaffMember]);
+  };
+
+  const handleDeleteStaff = (staffId: string) => {
+    const staffToDelete = staffList.find(staff => staff.id === staffId);
+    setStaffList(staffList.filter(staff => staff.id !== staffId));
+    toast({
+      title: "Staff Member Removed",
+      description: `${staffToDelete?.name} has been removed from the staff list.`,
+      variant: "destructive",
+    });
   };
 
   return (
@@ -71,6 +89,9 @@ export default function StaffPage() {
               <TableHead>Role</TableHead>
               <TableHead className="hidden md:table-cell">Expiring Cert.</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>
+                <span className="sr-only">Actions</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -98,6 +119,24 @@ export default function StaffPage() {
                         status.variant === "warning" && "bg-warning/20 text-yellow-800 border-warning",
                         status.variant === "success" && "bg-success/20 text-green-800 border-success"
                     )}>{status.label}</Badge>
+                </TableCell>
+                 <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => handleDeleteStaff(staff.id)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             )})}
