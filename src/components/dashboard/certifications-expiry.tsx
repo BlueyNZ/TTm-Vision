@@ -24,10 +24,10 @@ function getCertificationStatus(expiryDate: Date): { label: string, variant: "de
   return { label: "Valid", variant: "success" };
 }
 
-type CertificationWithStaff = {
+type GroupedCertification = {
   staff: Staff;
-  certName: string;
   expiryDate: Date;
+  certNames: string[];
 };
 
 export function CertificationsExpiry() {
@@ -39,21 +39,38 @@ export function CertificationsExpiry() {
   const { data: staffData, isLoading } = useCollection<Staff>(staffCollection);
 
 
-  const expiringCerts: CertificationWithStaff[] = (staffData ?? []).flatMap(staff => 
-    (staff.certifications || [])
-    .filter(cert => cert.name !== 'TTMW') // Exclude non-expiring TTMW certs
-    .map(cert => {
-      // Firestore timestamp needs to be converted to Date object for date-fns
-      const expiryDate = (cert.expiryDate as any).toDate ? (cert.expiryDate as any).toDate() : new Date(cert.expiryDate);
-      return {
+  const expiringCerts: GroupedCertification[] = (staffData ?? [])
+  .reduce((acc: GroupedCertification[], staff) => {
+    const certsToProcess = (staff.certifications || [])
+      .filter(cert => cert.name !== 'TTMW')
+      .map(cert => ({
+        ...cert,
+        expiryDate: (cert.expiryDate as any).toDate ? (cert.expiryDate as any).toDate() : new Date(cert.expiryDate)
+      }))
+      .filter(cert => differenceInDays(cert.expiryDate, new Date()) < 90);
+
+    const groupedByDate: { [date: string]: string[] } = {};
+
+    certsToProcess.forEach(cert => {
+      const dateString = cert.expiryDate.toISOString().split('T')[0];
+      if (!groupedByDate[dateString]) {
+        groupedByDate[dateString] = [];
+      }
+      groupedByDate[dateString].push(cert.name);
+    });
+
+    Object.entries(groupedByDate).forEach(([dateString, certNames]) => {
+      acc.push({
         staff,
-        certName: cert.name,
-        expiryDate,
-      };
-    })
-  )
-  .filter(cert => differenceInDays(cert.expiryDate, new Date()) < 90)
+        expiryDate: new Date(dateString),
+        certNames,
+      });
+    });
+
+    return acc;
+  }, [])
   .sort((a, b) => a.expiryDate.getTime() - b.expiryDate.getTime());
+
 
   return (
     <Card className="h-full flex flex-col">
@@ -69,17 +86,17 @@ export function CertificationsExpiry() {
             </div>
           ) : (
             <div className="space-y-4 p-6 pt-0">
-              {expiringCerts.length > 0 ? expiringCerts.map((cert, index) => {
-                const status = getCertificationStatus(cert.expiryDate);
+              {expiringCerts.length > 0 ? expiringCerts.map((certGroup, index) => {
+                const status = getCertificationStatus(certGroup.expiryDate);
                 return (
-                  <div key={`${cert.staff.id}-${index}`} className="flex items-center space-x-4">
+                  <div key={`${certGroup.staff.id}-${index}`} className="flex items-center space-x-4">
                     <Avatar>
-                      <AvatarImage src={`https://picsum.photos/seed/${cert.staff.id}/200/200`} />
-                      <AvatarFallback>{cert.staff.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={`https://picsum.photos/seed/${certGroup.staff.id}/200/200`} />
+                      <AvatarFallback>{certGroup.staff.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="font-medium">{cert.staff.name}</p>
-                      <p className="text-sm text-muted-foreground">{cert.certName}</p>
+                      <p className="font-medium">{certGroup.staff.name}</p>
+                      <p className="text-sm text-muted-foreground">{certGroup.certNames.join(', ')}</p>
                     </div>
                     <div className="text-right">
                       <Badge variant="outline" className={cn(
@@ -88,7 +105,7 @@ export function CertificationsExpiry() {
                           status.variant === "success" && "bg-success/20 text-green-800 border-success",
                           "dark:text-white"
                       )}>
-                        {status.label === "Expired" ? "Expired" : format(cert.expiryDate, 'dd MMM yyyy')}
+                        {status.label === "Expired" ? "Expired" : format(certGroup.expiryDate, 'dd MMM yyyy')}
                       </Badge>
                        <p className={cn("text-xs mt-1", 
                           status.variant === "destructive" && "text-destructive",
