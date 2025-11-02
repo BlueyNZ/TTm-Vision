@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 function getCertificationStatus(expiryDate: Date): { label: string, variant: "destructive" | "warning" | "success" } {
   const today = new Date();
-  const daysUntilExpiry = differenceInDays(expiryDate, today);
+  const daysUntilExpiry = differenceInDays(new Date(expiryDate), today);
 
   if (daysUntilExpiry < 0) {
     return { label: "Expired", variant: "destructive" };
@@ -30,7 +30,7 @@ export default function StaffProfilePage({ params }: { params: { id: string } })
     notFound();
   }
   
-  const sortedCerts = [...staffMember.certifications].sort((a, b) => a.expiryDate.getTime() - b.expiryDate.getTime());
+  const sortedCerts = [...staffMember.certifications].sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
