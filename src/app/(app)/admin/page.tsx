@@ -1,6 +1,5 @@
 
 'use client';
-import { UtilizationDashboard } from "@/components/dashboard/utilization-dashboard";
 import { CertificationsExpiry } from "@/components/dashboard/certifications-expiry";
 import { FleetServiceStatus } from "@/components/dashboard/fleet-service-status";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,7 +90,6 @@ export default function AdminPage() {
         </Card>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <UtilizationDashboard />
         <CertificationsExpiry />
       </div>
       <div>
