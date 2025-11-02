@@ -30,9 +30,7 @@ export default function AppLayout({
   const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
   const accessLevel = currentUserStaffProfile?.accessLevel;
   
-  // --- TEMPORARY CHANGE ---
-  // This is temporarily set to true to allow you to make yourself an admin.
-  const isAdmin = true;
+  const isAdmin = accessLevel === 'Admin';
 
 
   const isLoading = isUserLoading || isStaffLoading;
