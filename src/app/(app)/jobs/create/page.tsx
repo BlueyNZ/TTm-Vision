@@ -27,7 +27,7 @@ export default function JobCreatePage() {
   const firestore = useFirestore();
 
   const [location, setLocation] = useState('');
-  const [name, setName] = useState('');
+  const [name, setName] = useState('Start Time:\nOn Site:\n\nJob Description:');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState('');
   const [siteSetupTime, setSiteSetupTime] = useState('');
