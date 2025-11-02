@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { differenceInDays, format, toDate } from "date-fns";
 import { ScrollArea } from "../ui/scroll-area";
-import { useCollection, useFirestore } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { LoaderCircle } from "lucide-react";
 
@@ -31,7 +31,10 @@ type CertificationWithStaff = {
 
 export function CertificationsExpiry() {
   const firestore = useFirestore();
-  const staffCollection = collection(firestore, 'staff');
+  const staffCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'staff');
+  }, [firestore]);
   const { data: staffData, isLoading } = useCollection<Staff>(staffCollection);
 
 
