@@ -4,7 +4,7 @@ export type Staff = {
   role: 'TC' | 'STMS' | 'Operator';
   avatarUrl: string;
   certifications: {
-    name: 'TC' | 'STMS Level 1' | 'First Aid';
+    name: 'TTM' | 'TMO-NP' | 'TMO' | 'STMS-U' | 'STMS-L1 - L3' | 'STMS-NP' | 'First Aid' | 'TC' | 'STMS Level 1';
     expiryDate: Date;
   }[];
 };

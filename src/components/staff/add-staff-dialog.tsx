@@ -49,7 +49,7 @@ const addStaffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   role: z.enum(["TC", "STMS", "Operator"]),
   certifications: z.array(z.object({
-    name: z.enum(["TC", "STMS Level 1", "First Aid"]),
+    name: z.enum(["TTM", "TMO-NP", "TMO", "STMS-U", "STMS-L1 - L3", "STMS-NP"]),
     expiryDate: z.date(),
   })).optional(),
   emergencyContactName: z.string().min(2, "Emergency contact name is required."),
@@ -162,9 +162,12 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="TC">TC</SelectItem>
-                              <SelectItem value="STMS Level 1">STMS Level 1</SelectItem>
-                              <SelectItem value="First Aid">First Aid</SelectItem>
+                              <SelectItem value="TTM">TTM</SelectItem>
+                              <SelectItem value="TMO-NP">TMO-NP</SelectItem>
+                              <SelectItem value="TMO">TMO</SelectItem>
+                              <SelectItem value="STMS-U">STMS-U</SelectItem>
+                              <SelectItem value="STMS-L1 - L3">STMS-L1 - L3</SelectItem>
+                              <SelectItem value="STMS-NP">STMS-NP</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -219,7 +222,7 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
                   variant="outline"
                   size="sm"
                   className="mt-2"
-                  onClick={() => append({ name: 'TC', expiryDate: new Date() })}
+                  onClick={() => append({ name: 'TTM', expiryDate: new Date() })}
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Certification
