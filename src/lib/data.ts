@@ -36,8 +36,6 @@ export type Truck = {
   }[];
 };
 
-const today = new Date();
-
 export const truckData: Truck[] = [
   {
     id: 'T-01',
@@ -45,13 +43,13 @@ export const truckData: Truck[] = [
     plate: 'TRUCK1',
     status: 'Operational',
     service: {
-      lastServiceDate: new Date(today.getFullYear(), today.getMonth() - 2, 10),
-      nextServiceDate: new Date(today.getFullYear(), today.getMonth() + 4, 10),
+      lastServiceDate: new Date('2024-05-10T00:00:00Z'),
+      nextServiceDate: new Date('2024-11-10T00:00:00Z'),
       nextServiceKms: 150000,
     },
     currentKms: 145000,
     fuelLog: [
-      { date: new Date(today.getFullYear(), today.getMonth(), 2), volumeLiters: 120, cost: 240.50 },
+      { date: new Date('2024-07-02T00:00:00Z'), volumeLiters: 120, cost: 240.50 },
     ],
   },
   {
@@ -60,11 +58,11 @@ export const truckData: Truck[] = [
     plate: 'TRUCK2',
     status: 'Check Required',
     service: {
-      lastServiceDate: new Date(today.getFullYear(), today.getMonth() - 1, 20),
-      nextServiceDate: new Date(today.getFullYear(), today.getMonth() + 5, 20),
+      lastServiceDate: new Date('2024-06-20T00:00:00Z'),
+      nextServiceDate: new Date('2024-12-20T00:00:00Z'),
       nextServiceKms: 160000,
     },
-    currentKms: 158500, // Close to service KMs
+    currentKms: 158500, 
     fuelLog: [],
   },
   {
@@ -73,8 +71,8 @@ export const truckData: Truck[] = [
     plate: 'TRUCK3',
     status: 'In Service',
     service: {
-      lastServiceDate: new Date(today.getFullYear(), today.getMonth() - 6, 1),
-      nextServiceDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 5), // Service due soon
+      lastServiceDate: new Date('2024-01-01T00:00:00Z'),
+      nextServiceDate: new Date('2024-07-25T00:00:00Z'), 
       nextServiceKms: 120000,
     },
     currentKms: 119800,
