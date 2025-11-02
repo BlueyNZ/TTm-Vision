@@ -117,7 +117,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
             phone: '021-987-6543'
           },
           certifications: [
-            { name: 'STMS-L1', expiryDate: new Date('2025-08-15T00:00:00Z') },
+            { name: 'STMS (CAT A)', expiryDate: new Date('2025-08-15T00:00:00Z') },
             { name: 'TMO', expiryDate: new Date('2026-01-20T00:00:00Z') }
           ]
         });

@@ -28,7 +28,7 @@ function getCertificationStatus(expiryDate: Date): { label: string, variant: "de
   return { label: "Valid", variant: "success" };
 }
 
-const certOrder: Staff['certifications'][0]['name'][] = ['TTM', 'TMO-NP', 'TMO', 'STMS-U', 'STMS-L1', 'STMS-L2', 'STMS-L3', 'STMS-NP'];
+const certOrder: Staff['certifications'][0]['name'][] = ['TTMW', 'TMO-NP', 'TMO', 'STMS-U', 'STMS (CAT A)', 'STMS (CAT B)', 'STMS (CAT C)', 'STMS-NP'];
 
 export default function StaffProfilePage() {
   const [isEditing, setIsEditing] = useState(false);

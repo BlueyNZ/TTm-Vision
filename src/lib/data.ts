@@ -2,7 +2,7 @@
 import { Timestamp } from "firebase/firestore";
 
 export type Certification = {
-  name: 'TTM' | 'TMO-NP' | 'TMO' | 'STMS-U' | 'STMS-L1' | 'STMS-L2' | 'STMS-L3' | 'STMS-NP';
+  name: 'TTMW' | 'TMO-NP' | 'TMO' | 'STMS-U' | 'STMS (CAT A)' | 'STMS (CAT B)' | 'STMS (CAT C)' | 'STMS-NP';
   expiryDate: Date | Timestamp;
 };
 

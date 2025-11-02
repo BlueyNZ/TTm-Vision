@@ -52,7 +52,7 @@ const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   role: z.enum(["TC", "STMS", "Operator"]),
   certifications: z.array(z.object({
-    name: z.enum(["TTM", "TMO-NP", "TMO", "STMS-U", "STMS-L1", "STMS-L2", "STMS-L3", "STMS-NP"]),
+    name: z.enum(["TTMW", "TMO-NP", "TMO", "STMS-U", "STMS (CAT A)", "STMS (CAT B)", "STMS (CAT C)", "STMS-NP"]),
     expiryDate: z.date(),
   })).optional(),
   emergencyContactName: z.string().min(2, "Emergency contact name is required."),
@@ -271,13 +271,13 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="TTM">TTM</SelectItem>
+                              <SelectItem value="TTMW">TTMW</SelectItem>
                               <SelectItem value="TMO-NP">TMO-NP</SelectItem>
                               <SelectItem value="TMO">TMO</SelectItem>
                               <SelectItem value="STMS-U">STMS-U</SelectItem>
-                              <SelectItem value="STMS-L1">STMS-L1</SelectItem>
-                              <SelectItem value="STMS-L2">STMS-L2</SelectItem>
-                              <SelectItem value="STMS-L3">STMS-L3</SelectItem>
+                              <SelectItem value="STMS (CAT A)">STMS (CAT A)</SelectItem>
+                              <SelectItem value="STMS (CAT B)">STMS (CAT B)</SelectItem>
+                              <SelectItem value="STMS (CAT C)">STMS (CAT C)</SelectItem>
                               <SelectItem value="STMS-NP">STMS-NP</SelectItem>
                             </SelectContent>
                           </Select>
@@ -333,7 +333,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                   variant="outline"
                   size="sm"
                   className="mt-2"
-                  onClick={() => append({ name: 'TTM', expiryDate: new Date() })}
+                  onClick={() => append({ name: 'TTMW', expiryDate: new Date() })}
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Certification
