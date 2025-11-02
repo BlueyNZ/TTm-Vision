@@ -87,7 +87,7 @@ export default function StaffPage() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead className="hidden md:table-cell">Expiring Cert.</TableHead>
+              <TableHead className="hidden md:table-cell">Next-expiring cert</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -96,7 +96,9 @@ export default function StaffPage() {
           </TableHeader>
           <TableBody>
             {staffList.map((staff) => {
-              const soonestExpiringCert = [...staff.certifications].sort((a, b) => a.expiryDate.getTime() - b.expiryDate.getTime())[0];
+              const soonestExpiringCert = staff.certifications.length > 0 
+                ? [...staff.certifications].sort((a, b) => a.expiryDate.getTime() - b.expiryDate.getTime())[0]
+                : null;
               const status = getOverallCertStatus(staff);
               return (
               <TableRow key={staff.id}>
