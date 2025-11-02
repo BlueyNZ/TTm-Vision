@@ -5,13 +5,17 @@ import { FleetServiceStatus } from "@/components/dashboard/fleet-service-status"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { truckData } from "@/lib/data";
 import { Activity, LoaderCircle, Truck, Users } from "lucide-react";
-import { useCollection, useFirestore } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { Staff } from "@/lib/data";
 
 export default function AdminPage() {
   const firestore = useFirestore();
-  const staffCollection = collection(firestore, 'staff');
+  const staffCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'staff');
+  }, [firestore]);
+
   const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffCollection);
 
   const totalStaff = staffData?.length ?? 0;
