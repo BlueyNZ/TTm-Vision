@@ -32,7 +32,7 @@ const getDisplayedStatus = (job: Job) => {
 const getStatusVariant = (status: Job['status']) => {
   switch (status) {
     case 'Upcoming':
-      return 'default';
+      return 'secondary';
     case 'In Progress':
       return 'default'; // Use default variant and custom class for color
     case 'Cancelled':
@@ -104,21 +104,21 @@ export default function JobDetailPage() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem className="border my-1">CREATE a Single Crew Timesheet</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Truck Inspection</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE ESTOP Inspection</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Stop/Go Briefing</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE TSL Decision Matrix</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Hazard ID (NZGTTM)</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Hazard ID</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Site Induction Signatures</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Pre-Installation Process</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE NEW On-Site Record</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Mobile Ops On-Site Record</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Job Note</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Incident or Event Report</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Site Audit (COPTTM SCR)</DropdownMenuItem>
-                    <DropdownMenuItem className="border my-1">CREATE Client Feedback</DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/single-crew-timesheet`}>Single Crew Timesheet</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/truck-inspection`}>Truck Inspection</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/estop-inspection`}>ESTOP Inspection</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/stop-go-briefing`}>Stop/Go Briefing</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/tsl-decision-matrix`}>TSL Decision Matrix</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/hazard-id-nzgttm`}>Hazard ID (NZGTTM)</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/hazard-id`}>Hazard ID</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/site-induction-signatures`}>Site Induction Signatures</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/pre-installation-process`}>Pre-Installation Process</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/new-on-site-record`}>NEW On-Site Record</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/mobile-ops-on-site-record`}>Mobile Ops On-Site Record</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/job-note`}>Job Note</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/incident-or-event-report`}>Incident or Event Report</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/site-audit-copttm-scr`}>Site Audit (COPTTM SCR)</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/client-feedback`}>Client Feedback</Link></DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
           </div>
