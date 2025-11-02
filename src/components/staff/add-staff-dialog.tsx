@@ -36,8 +36,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
@@ -48,8 +48,10 @@ import { Staff } from "@/lib/data";
 const addStaffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   role: z.enum(["TC", "STMS", "Operator"]),
-  certificationName: z.enum(["TC", "STMS Level 1", "First Aid"]).optional(),
-  certificationExpiryDate: z.date().optional(),
+  certifications: z.array(z.object({
+    name: z.enum(["TC", "STMS Level 1", "First Aid"]),
+    expiryDate: z.date(),
+  })).optional(),
   emergencyContactName: z.string().min(2, "Emergency contact name is required."),
   emergencyContactNumber: z.string().min(8, "Emergency contact number is required."),
   accessLevel: z.enum(["Staff Member", "Admin"]),
@@ -71,22 +73,20 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
       name: "",
       emergencyContactName: "",
       emergencyContactNumber: "",
+      certifications: [],
     },
   });
 
-  function onSubmit(data: AddStaffFormValues) {
-    const certifications = [];
-    if (data.certificationName && data.certificationExpiryDate) {
-      certifications.push({
-        name: data.certificationName,
-        expiryDate: data.certificationExpiryDate,
-      });
-    }
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "certifications",
+  });
 
+  function onSubmit(data: AddStaffFormValues) {
     onAddStaff({
       name: data.name,
       role: data.role,
-      certifications,
+      certifications: data.certifications || [],
     });
     
     toast({
@@ -100,7 +100,7 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Staff Member</DialogTitle>
           <DialogDescription>
@@ -144,71 +144,89 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="certificationName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Certification</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Cert" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="TC">TC</SelectItem>
-                          <SelectItem value="STMS Level 1">STMS Level 1</SelectItem>
-                          <SelectItem value="First Aid">First Aid</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="certificationExpiryDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Cert. Expiry</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date()
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            
+            <div>
+              <Label>Certifications</Label>
+              <div className="space-y-2 mt-2">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex items-end gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`certifications.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Cert" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="TC">TC</SelectItem>
+                              <SelectItem value="STMS Level 1">STMS Level 1</SelectItem>
+                              <SelectItem value="First Aid">First Aid</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`certifications.${index}.expiryDate`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Expiry Date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) => date < new Date()}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button variant="ghost" size="icon" onClick={() => remove(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+                 <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => append({ name: 'TC', expiryDate: new Date() })}
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Certification
+                </Button>
+              </div>
             </div>
+
             <FormField
               control={form.control}
               name="emergencyContactName"
@@ -256,62 +274,6 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
                 </FormItem>
               )}
             />
-             {/* DOB and License are not in spec but were in my thought process, hiding for now.
-             <FormField
-              control={form.control}
-              name="dob"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date of birth</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="licenseDetails"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>License Details</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Full, Class 1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            */}
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit">Add Staff</Button>
