@@ -8,16 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Phone, Shield, User, Award, Edit, LoaderCircle } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AddStaffDialog } from "@/components/staff/add-staff-dialog";
 import { Button } from "@/components/ui/button";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { doc, Timestamp } from "firebase/firestore";
 import { useParams } from "next/navigation";
 
 function getCertificationStatus(expiryDate: Date): { label: string, variant: "destructive" | "warning" | "success" } {
   const today = new Date();
-  const daysUntilExpiry = differenceInDays(new Date(expiryDate), today);
+  const daysUntilExpiry = differenceInDays(expiryDate, today);
 
   if (daysUntilExpiry < 0) {
     return { label: "Expired", variant: "destructive" };
@@ -60,7 +60,11 @@ export default function StaffProfilePage() {
     return <p>Staff member not found.</p>;
   }
   
-  const sortedCerts = staffMember.certifications ? [...staffMember.certifications].sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()) : [];
+  const sortedCerts = staffMember.certifications ? [...staffMember.certifications].sort((a, b) => {
+    const dateA = a.expiryDate instanceof Timestamp ? a.expiryDate.toDate() : new Date(a.expiryDate);
+    const dateB = b.expiryDate instanceof Timestamp ? b.expiryDate.toDate() : new Date(b.expiryDate);
+    return dateA.getTime() - dateB.getTime();
+  }) : [];
 
   return (
     <>
@@ -129,11 +133,12 @@ export default function StaffProfilePage() {
                       </TableHeader>
                       <TableBody>
                           {sortedCerts.map((cert, index) => {
-                              const status = getCertificationStatus(new Date(cert.expiryDate));
+                              const expiryDate = cert.expiryDate instanceof Timestamp ? cert.expiryDate.toDate() : new Date(cert.expiryDate);
+                              const status = getCertificationStatus(expiryDate);
                               return (
                                   <TableRow key={index}>
                                       <TableCell className="font-medium">{cert.name}</TableCell>
-                                      <TableCell>{format(new Date(cert.expiryDate), "dd MMM yyyy")}</TableCell>
+                                      <TableCell>{format(expiryDate, "dd MMM yyyy")}</TableCell>
                                       <TableCell className="text-right">
                                           <Badge variant="outline" className={cn(
                                               status.variant === "destructive" && "bg-destructive/20 text-destructive-foreground border-destructive",

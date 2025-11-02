@@ -41,11 +41,11 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
-import { format, toDate } from "date-fns";
+import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Staff } from "@/lib/data";
 import { useFirestore } from "@/firebase";
-import { collection, doc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, Timestamp } from "firebase/firestore";
 import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const staffSchema = z.object({
@@ -92,7 +92,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     if (isEditMode && staffToEdit) {
       const certsWithDates = staffToEdit.certifications?.map(c => {
         // Firestore timestamp needs to be converted to Date object for the form
-        const expiryDate = (c.expiryDate as any).toDate ? (c.expiryDate as any).toDate() : new Date(c.expiryDate);
+        const expiryDate = c.expiryDate instanceof Timestamp ? c.expiryDate.toDate() : new Date(c.expiryDate);
         return {...c, expiryDate };
       }) || [];
 
