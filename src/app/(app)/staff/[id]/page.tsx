@@ -13,6 +13,7 @@ import { AddStaffDialog } from "@/components/staff/add-staff-dialog";
 import { Button } from "@/components/ui/button";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
+import { useParams } from "next/navigation";
 
 function getCertificationStatus(expiryDate: Date): { label: string, variant: "destructive" | "warning" | "success" } {
   const today = new Date();
@@ -28,14 +29,16 @@ function getCertificationStatus(expiryDate: Date): { label: string, variant: "de
 }
 
 
-export default function StaffProfilePage({ params }: { params: { id: string } }) {
+export default function StaffProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const firestore = useFirestore();
+  const params = useParams();
+  const staffId = params.id as string;
 
   const staffMemberRef = useMemoFirebase(() => {
-    if (!firestore || !params.id) return null;
-    return doc(firestore, 'staff', params.id);
-  }, [firestore, params.id]);
+    if (!firestore || !staffId) return null;
+    return doc(firestore, 'staff', staffId);
+  }, [firestore, staffId]);
 
   const { data: staffMember, isLoading } = useDoc<Staff>(staffMemberRef);
   
