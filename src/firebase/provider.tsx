@@ -115,7 +115,17 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
                             subItem[fieldParts[1]] = Timestamp.fromDate(new Date(subItem[fieldParts[1]]));
                         }
                     });
-                } else {
+                } else if(fieldParts.length === 2 && typeof docToAdd[fieldParts[0]] === 'object' && docToAdd[fieldParts[0]] !== null) {
+                    // Handle nested objects like service.lastServiceDate
+                    let temp = docToAdd;
+                    for(let i=0; i<fieldParts.length - 1; i++) {
+                        temp = temp[fieldParts[i]];
+                    }
+                    if(temp[fieldParts[fieldParts.length - 1]]) {
+                      temp[fieldParts[fieldParts.length-1]] = Timestamp.fromDate(new Date(temp[fieldParts[fieldParts.length - 1]]));
+                    }
+                }
+                else {
                     docToAdd[field] = Timestamp.fromDate(new Date(docToAdd[field]));
                 }
               }
