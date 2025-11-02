@@ -83,18 +83,17 @@ export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeho
                   value={staff.name}
                   onSelect={handleSelect}
                   disabled={disabledIds.includes(staff.id)}
-                  className="flex items-center justify-between"
                 >
-                    <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                            <AvatarImage src={`https://picsum.photos/seed/${staff.id}/200/200`} />
-                            <AvatarFallback>{staff.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span>{staff.name}</span>
-                    </div>
+                  <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                          <AvatarImage src={`https://picsum.photos/seed/${staff.id}/200/200`} />
+                          <AvatarFallback>{staff.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span>{staff.name}</span>
+                  </div>
                   <Check
                     className={cn(
-                      "h-4 w-4",
+                      "ml-auto h-4 w-4",
                       selectedStaff?.id === staff.id ? "opacity-100" : "opacity-0"
                     )}
                   />
