@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { jobData } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, User, Info, MapPin } from 'lucide-react';
+import { Calendar, User, Info, MapPin, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 
@@ -81,6 +81,17 @@ export default function JobDetailPage() {
                 </div>
             </div>
         </CardContent>
+      </Card>
+      <Card>
+          <CardHeader>
+            <CardTitle>Job Description</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start gap-4">
+                <FileText className="h-6 w-6 text-primary" />
+                <p className="text-muted-foreground">{job.name}</p>
+            </div>
+          </CardContent>
       </Card>
     </div>
   );
