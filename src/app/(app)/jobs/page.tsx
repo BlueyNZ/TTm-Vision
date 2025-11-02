@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Circle, Eye } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Circle, Eye, Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -98,6 +98,10 @@ export default function JobsPage() {
                       <DropdownMenuItem onClick={() => router.push(`/jobs/${job.id}`)}>
                         <Eye className="mr-2 h-4 w-4" />
                         View
+                      </DropdownMenuItem>
+                       <DropdownMenuItem onClick={() => router.push(`/jobs/${job.id}/edit`)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
