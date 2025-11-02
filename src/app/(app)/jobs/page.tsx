@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Circle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Circle, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,9 +45,7 @@ const getStatusColor = (status: (typeof jobData)[0]['status']) => {
 
 export default function JobsPage() {
   const router = useRouter();
-  const handleRowClick = (jobId: string) => {
-    router.push(`/jobs/${jobId}`);
-  };
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -78,7 +76,7 @@ export default function JobsPage() {
           </TableHeader>
           <TableBody>
             {jobData.map((job) => (
-              <TableRow key={job.id} onClick={() => handleRowClick(job.id)} className="cursor-pointer">
+              <TableRow key={job.id}>
                 <TableCell className="font-medium">{job.name}</TableCell>
                 <TableCell className="hidden md:table-cell text-muted-foreground">{job.location}</TableCell>
                 <TableCell className="hidden lg:table-cell text-muted-foreground">{format(new Date(job.startDate), 'dd MMM yyyy, HH:mm')}</TableCell>
@@ -91,14 +89,15 @@ export default function JobsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/jobs/${job.id}`}>View Job Pack</Link>
+                      <DropdownMenuItem onClick={() => router.push(`/jobs/${job.id}`)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
