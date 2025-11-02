@@ -255,8 +255,19 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
             />
             
             <div>
-              <Label>Certifications</Label>
-              <div className="space-y-2 mt-2">
+              <div className="flex justify-between items-center mb-2">
+                <Label>Certifications</Label>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => append({ name: 'TTMW', expiryDate: new Date() })}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add
+                  </Button>
+              </div>
+              <div className="space-y-2">
                 {fields.map((field, index) => (
                   <div key={field.id} className="flex items-end gap-2">
                     <FormField
@@ -328,16 +339,6 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                     </Button>
                   </div>
                 ))}
-                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => append({ name: 'TTMW', expiryDate: new Date() })}
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Certification
-                </Button>
               </div>
             </div>
             <DialogFooter>
