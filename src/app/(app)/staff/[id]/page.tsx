@@ -50,21 +50,21 @@ export default function StaffProfilePage({ params }: { params: { id: string } })
                     <User className="h-5 w-5 text-muted-foreground" />
                     <div className="text-sm">
                         <p className="font-medium">Emergency Contact</p>
-                        <p className="text-muted-foreground">Jane Doe</p>
+                        <p className="text-muted-foreground">{staffMember.emergencyContact.name}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
                     <Phone className="h-5 w-5 text-muted-foreground" />
                      <div className="text-sm">
                         <p className="font-medium">Emergency Number</p>
-                        <p className="text-muted-foreground">021 987 6543</p>
+                        <p className="text-muted-foreground">{staffMember.emergencyContact.phone}</p>
                     </div>
                 </div>
                  <div className="flex items-center gap-4">
                     <Shield className="h-5 w-5 text-muted-foreground" />
                      <div className="text-sm">
                         <p className="font-medium">Access Level</p>
-                        <p className="text-muted-foreground">Staff Member</p>
+                        <p className="text-muted-foreground">{staffMember.accessLevel}</p>
                     </div>
                 </div>
             </div>
@@ -96,7 +96,7 @@ export default function StaffProfilePage({ params }: { params: { id: string } })
                             return (
                                 <TableRow key={index}>
                                     <TableCell className="font-medium">{cert.name}</TableCell>
-                                    <TableCell>{format(cert.expiryDate, "dd MMM yyyy")}</TableCell>
+                                    <TableCell>{format(new Date(cert.expiryDate), "dd MMM yyyy")}</TableCell>
                                     <TableCell className="text-right">
                                         <Badge variant="outline" className={cn(
                                             status.variant === "destructive" && "bg-destructive/20 text-destructive-foreground border-destructive",

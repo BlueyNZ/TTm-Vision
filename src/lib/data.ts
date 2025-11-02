@@ -10,6 +10,11 @@ export type Staff = {
   role: 'TC' | 'STMS' | 'Operator';
   avatarUrl: string;
   certifications: Certification[];
+  emergencyContact: {
+    name: string;
+    phone: string;
+  };
+  accessLevel: 'Staff Member' | 'Admin';
 };
 
 export type Truck = {
@@ -42,6 +47,11 @@ export const staffData: Staff[] = [
       { name: 'STMS-L1', expiryDate: new Date(today.getFullYear() + 1, today.getMonth(), 15) },
       { name: 'TMO', expiryDate: new Date(today.getFullYear(), today.getMonth() + 2, 5) },
     ],
+    emergencyContact: {
+      name: 'Jane Doe',
+      phone: '021 987 6543'
+    },
+    accessLevel: 'Admin',
   },
   {
     id: '2',
@@ -51,6 +61,11 @@ export const staffData: Staff[] = [
     certifications: [
       { name: 'TTM', expiryDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 20) }, // Expiring soon
     ],
+    emergencyContact: {
+      name: 'John Smith',
+      phone: '022 123 4567'
+    },
+    accessLevel: 'Staff Member',
   },
   {
     id: '3',
@@ -60,6 +75,12 @@ export const staffData: Staff[] = [
     certifications: [
        { name: 'TMO-NP', expiryDate: new Date(today.getFullYear() - 1, today.getMonth(), 1) }, // Expired
     ],
+    emergencyContact: {
+      name: 'Mary Johnson',
+      phone: '027 890 1234'
+    },
+    accessLevel: 'Staff Member',
+toc
   },
    {
     id: '4',
@@ -69,6 +90,11 @@ export const staffData: Staff[] = [
     certifications: [
       { name: 'STMS-L2', expiryDate: new Date(today.getFullYear() + 2, 5, 20) },
     ],
+    emergencyContact: {
+      name: 'David White',
+      phone: '021 555 8888'
+    },
+    accessLevel: 'Staff Member',
   },
 ];
 

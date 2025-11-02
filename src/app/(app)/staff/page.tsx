@@ -27,7 +27,7 @@ const getOverallCertStatus = (staff: Staff) => {
   let isExpired = false;
 
   for (const cert of staff.certifications) {
-    const daysUntilExpiry = differenceInDays(cert.expiryDate, new Date());
+    const daysUntilExpiry = differenceInDays(new Date(cert.expiryDate), new Date());
     if (daysUntilExpiry < 0) {
       isExpired = true;
       break;
@@ -44,7 +44,6 @@ const getOverallCertStatus = (staff: Staff) => {
 
 
 export default function StaffPage() {
-  const [staffList, setStaffList] = useState<Staff[]>(staffData);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const { toast } = useToast();
   // We use a simple counter to force re-renders when staffData is mutated.
