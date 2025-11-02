@@ -1,6 +1,7 @@
 
 'use client';
-import { staffData } from "@/lib/data";
+import { useState } from "react";
+import { staffData, Staff } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { AddStaffDialog } from "@/components/staff/add-staff-dialog";
 
-const getOverallCertStatus = (staff: typeof staffData[0]) => {
+const getOverallCertStatus = (staff: Staff) => {
   if (staff.certifications.length === 0) return { label: 'No Certs', variant: 'outline' as const };
   
   let soonestExpiry = Infinity;
@@ -35,6 +36,17 @@ const getOverallCertStatus = (staff: typeof staffData[0]) => {
 
 
 export default function StaffPage() {
+  const [staffList, setStaffList] = useState<Staff[]>(staffData);
+
+  const handleAddStaff = (newStaff: Omit<Staff, 'id' | 'avatarUrl'>) => {
+    const newStaffMember: Staff = {
+      ...newStaff,
+      id: (staffList.length + 1).toString(),
+      avatarUrl: `https://picsum.photos/seed/${staffList.length + 1}/200/200`,
+    };
+    setStaffList([...staffList, newStaffMember]);
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -44,7 +56,7 @@ export default function StaffPage() {
             View and manage all staff members and their certification status.
           </CardDescription>
         </div>
-        <AddStaffDialog>
+        <AddStaffDialog onAddStaff={handleAddStaff}>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Staff
@@ -62,7 +74,7 @@ export default function StaffPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {staffData.map((staff) => {
+            {staffList.map((staff) => {
               const soonestExpiringCert = [...staff.certifications].sort((a, b) => a.expiryDate.getTime() - b.expiryDate.getTime())[0];
               const status = getOverallCertStatus(staff);
               return (
@@ -95,4 +107,3 @@ export default function StaffPage() {
     </Card>
   );
 }
-

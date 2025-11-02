@@ -43,12 +43,11 @@ import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Staff } from "@/lib/data";
 
 const addStaffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
-  dob: z.date({ required_error: "Date of birth is required." }),
-  licenseDetails: z.string().optional(),
-  role: z.enum(["TC", "STMS", "Operator", "Labourer"]),
+  role: z.enum(["TC", "STMS", "Operator"]),
   certificationName: z.enum(["TC", "STMS Level 1", "First Aid"]).optional(),
   certificationExpiryDate: z.date().optional(),
   emergencyContactName: z.string().min(2, "Emergency contact name is required."),
@@ -58,21 +57,38 @@ const addStaffSchema = z.object({
 
 type AddStaffFormValues = z.infer<typeof addStaffSchema>;
 
-export function AddStaffDialog({ children }: { children: React.ReactNode }) {
+type AddStaffDialogProps = {
+  children: React.ReactNode;
+  onAddStaff: (staff: Omit<Staff, 'id' | 'avatarUrl'>) => void;
+};
+
+export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const form = useForm<AddStaffFormValues>({
     resolver: zodResolver(addStaffSchema),
     defaultValues: {
       name: "",
-      licenseDetails: "",
       emergencyContactName: "",
       emergencyContactNumber: "",
     },
   });
 
   function onSubmit(data: AddStaffFormValues) {
-    console.log(data);
+    const certifications = [];
+    if (data.certificationName && data.certificationExpiryDate) {
+      certifications.push({
+        name: data.certificationName,
+        expiryDate: data.certificationExpiryDate,
+      });
+    }
+
+    onAddStaff({
+      name: data.name,
+      role: data.role,
+      certifications,
+    });
+    
     toast({
       title: "Staff Added",
       description: `${data.name} has been added to the team.`,
@@ -122,7 +138,6 @@ export function AddStaffDialog({ children }: { children: React.ReactNode }) {
                       <SelectItem value="TC">Traffic Controller (TC)</SelectItem>
                       <SelectItem value="STMS">STMS</SelectItem>
                       <SelectItem value="Operator">Operator</SelectItem>
-                      <SelectItem value="Labourer">Labourer</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
