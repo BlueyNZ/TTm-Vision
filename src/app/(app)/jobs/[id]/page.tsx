@@ -4,9 +4,11 @@ import { useParams } from 'next/navigation';
 import { jobData } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, User, Info, MapPin, FileText } from 'lucide-react';
+import { Calendar, User, Info, MapPin, FileText, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 const getStatusVariant = (status: (typeof jobData)[0]['status']) => {
   switch (status) {
@@ -47,11 +49,19 @@ export default function JobDetailPage() {
 
   return (
     <div className="flex flex-col gap-6">
-       <div className="flex items-center gap-4">
-        <MapPin className="h-8 w-8 text-muted-foreground" />
-        <div>
-            <h1 className="text-3xl font-bold tracking-tight">{job.location}</h1>
-        </div>
+       <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <MapPin className="h-8 w-8 text-muted-foreground" />
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">{job.location}</h1>
+            </div>
+          </div>
+          <Button asChild variant="outline">
+            <Link href={`/jobs/${job.id}/edit`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Job
+            </Link>
+          </Button>
       </div>
       <Card>
         <CardHeader>
