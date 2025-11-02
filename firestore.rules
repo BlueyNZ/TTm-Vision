@@ -7,23 +7,8 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    match /users/{userId} {
-      allow read, write: if request.auth.uid == userId;
+    match /{document=**} {
+      allow read, write: if isSignedIn();
     }
-
-    // Allow any signed-in user to read and write to the staff collection.
-    // This is a temporary rule for development.
-    match /staff/{staffId} {
-      allow read, create, update, delete: if isSignedIn();
-    }
-
-    match /job_packs/{jobPackId} {
-      allow read, create, update, delete: if isSignedIn();
-    }
-
-    match /trucks/{truckId} {
-      allow read, create, update, delete: if isSignedIn();
-    }
-
   }
 }
