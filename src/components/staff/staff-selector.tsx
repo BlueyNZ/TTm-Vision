@@ -36,7 +36,7 @@ export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeho
 
   const handleSelect = (currentValue: string) => {
     const staff = staffList.find(
-      (staff) => staff.name.toLowerCase() === currentValue.toLowerCase()
+      (s) => s.name.toLowerCase() === currentValue.toLowerCase()
     );
     onSelectStaff(staff || null);
     setOpen(false);
