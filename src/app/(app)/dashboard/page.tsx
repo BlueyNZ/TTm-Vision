@@ -87,8 +87,8 @@ export default function DashboardPage() {
 
         <Card>
             <CardHeader>
-                <CardTitle>My Assigned Jobs</CardTitle>
-                <CardDescription>All jobs you are currently assigned to.</CardDescription>
+                <CardTitle>My Jobs</CardTitle>
+                <CardDescription>Your assigned jobs.</CardDescription>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
