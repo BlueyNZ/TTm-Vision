@@ -49,7 +49,7 @@ const addStaffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   role: z.enum(["TC", "STMS", "Operator"]),
   certifications: z.array(z.object({
-    name: z.enum(["TTM", "TMO-NP", "TMO", "STMS-U", "STMS-L1 - L3", "STMS-NP"]),
+    name: z.enum(["TTM", "TMO-NP", "TMO", "STMS-U", "STMS-L1", "STMS-L2", "STMS-L3", "STMS-NP"]),
     expiryDate: z.date(),
   })).optional(),
   emergencyContactName: z.string().min(2, "Emergency contact name is required."),
@@ -166,7 +166,9 @@ export function AddStaffDialog({ children, onAddStaff }: AddStaffDialogProps) {
                               <SelectItem value="TMO-NP">TMO-NP</SelectItem>
                               <SelectItem value="TMO">TMO</SelectItem>
                               <SelectItem value="STMS-U">STMS-U</SelectItem>
-                              <SelectItem value="STMS-L1 - L3">STMS-L1 - L3</SelectItem>
+                              <SelectItem value="STMS-L1">STMS-L1</SelectItem>
+                              <SelectItem value="STMS-L2">STMS-L2</SelectItem>
+                              <SelectItem value="STMS-L3">STMS-L3</SelectItem>
                               <SelectItem value="STMS-NP">STMS-NP</SelectItem>
                             </SelectContent>
                           </Select>
