@@ -16,6 +16,7 @@ import {
   Settings,
   LifeBuoy,
   TrafficCone,
+  Shield,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -70,6 +71,17 @@ export function AppSidebar() {
               <Link href="/fleet">
                 <Truck />
                 <span>Fleet</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Admin"
+            >
+              <Link href="/admin">
+                <Shield />
+                <span>Admin</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
