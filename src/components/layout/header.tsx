@@ -57,6 +57,8 @@ export function AppHeader() {
     const id = parts[1];
     const action = parts[2];
 
+    if (page === 'settings') return 'Settings';
+
     if (action === 'edit') {
       if(page === 'jobs') return 'Edit Job';
       if(page === 'staff') return 'Edit Staff';
@@ -84,9 +86,11 @@ export function AppHeader() {
   }
 
 
-  if (pathParts.length > 1) {
+  if (pathParts.length > 1 || pathParts[0] === 'settings') {
       showBackButton = true;
-      if (pathParts.length > 2 && pathParts[2] === 'edit') {
+      if (pathParts[0] === 'settings') {
+        backPath = '/dashboard';
+      } else if (pathParts.length > 2 && pathParts[2] === 'edit') {
         backPath = `/${pathParts[0]}/${pathParts[1]}`;
       } else {
         backPath = `/${pathParts[0]}`;
@@ -140,7 +144,7 @@ export function AppHeader() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{user?.displayName || 'My Account'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push('/settings')}>Settings</DropdownMenuItem>
             <DropdownMenuItem>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
