@@ -104,7 +104,6 @@ export default function JobDetailPage() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem className="border my-1">CREATE ALL Crew Timesheets</DropdownMenuItem>
                     <DropdownMenuItem className="border my-1">CREATE a Single Crew Timesheet</DropdownMenuItem>
                     <DropdownMenuItem className="border my-1">CREATE Truck Inspection</DropdownMenuItem>
                     <DropdownMenuItem className="border my-1">CREATE ESTOP Inspection</DropdownMenuItem>

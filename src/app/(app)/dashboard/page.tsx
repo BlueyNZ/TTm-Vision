@@ -171,7 +171,6 @@ export default function DashboardPage() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                                <DropdownMenuItem className="border my-1">CREATE ALL Crew Timesheets</DropdownMenuItem>
                                                 <DropdownMenuItem className="border my-1">CREATE a Single Crew Timesheet</DropdownMenuItem>
                                                 <DropdownMenuItem className="border my-1">CREATE Truck Inspection</DropdownMenuItem>
                                                 <DropdownMenuItem className="border my-1">CREATE ESTOP Inspection</DropdownMenuItem>
