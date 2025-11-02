@@ -11,7 +11,6 @@ import Link from "next/link";
 import { format, isPast } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const getDisplayedStatus = (job: Job) => {
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -133,35 +132,19 @@ export default function DashboardPage() {
                                         </Badge>
                                     </div>
                                     <div className="border-t my-4"></div>
-                                    <div className="space-y-3">
+                                    <div className="flex items-center gap-6 text-sm">
                                         {job.stms && (
                                             <div className="flex items-center gap-2">
                                                 <UserSquare className="h-4 w-4 text-muted-foreground" />
-                                                <p className="text-sm font-medium">STMS:</p>
-                                                <div className="flex items-center gap-2">
-                                                    <Avatar className="h-6 w-6">
-                                                        <AvatarImage src={`https://picsum.photos/seed/${job.stmsId}/200/200`} />
-                                                        <AvatarFallback>{job.stms.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="text-sm text-muted-foreground">{job.stms}</span>
-                                                </div>
+                                                <p className="font-medium">STMS:</p>
+                                                <span className="text-muted-foreground">{job.stms}</span>
                                             </div>
                                         )}
                                         {job.tcs && job.tcs.length > 0 && (
-                                            <div className="flex items-start gap-2">
-                                                <Users className="h-4 w-4 text-muted-foreground mt-1" />
-                                                <p className="text-sm font-medium">TCs:</p>
-                                                <div className="flex flex-wrap gap-x-2 gap-y-1">
-                                                    {job.tcs.map(tc => (
-                                                        <div key={tc.id} className="flex items-center gap-2">
-                                                            <Avatar className="h-6 w-6">
-                                                                <AvatarImage src={`https://picsum.photos/seed/${tc.id}/200/200`} />
-                                                                <AvatarFallback>{tc.name.charAt(0)}</AvatarFallback>
-                                                            </Avatar>
-                                                            <span className="text-sm text-muted-foreground">{tc.name}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                            <div className="flex items-center gap-2">
+                                                <Users className="h-4 w-4 text-muted-foreground" />
+                                                <p className="font-medium">TCs:</p>
+                                                <span className="text-muted-foreground">{job.tcs.length} assigned</span>
                                             </div>
                                         )}
                                     </div>
