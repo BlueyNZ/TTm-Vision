@@ -1,4 +1,6 @@
 
+'use client';
+
 import { staffData, Staff } from "@/lib/data";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Phone, Shield, User, Award, Calendar, AlertTriangle } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 function getCertificationStatus(expiryDate: Date): { label: string, variant: "destructive" | "warning" | "success" } {
   const today = new Date();
@@ -24,10 +27,19 @@ function getCertificationStatus(expiryDate: Date): { label: string, variant: "de
 
 
 export default function StaffProfilePage({ params }: { params: { id: string } }) {
-  const staffMember = staffData.find((s) => s.id === params.id);
+  const [staffMember, setStaffMember] = useState<Staff | undefined>(undefined);
+
+  useEffect(() => {
+    const member = staffData.find((s) => s.id === params.id);
+    setStaffMember(member);
+  }, [params.id]);
+
 
   if (!staffMember) {
-    notFound();
+    // We can show a loading state or return null
+    // If it remains undefined after effect, it's not found.
+    // A better loading state could be added here.
+    return null;
   }
   
   const sortedCerts = [...staffMember.certifications].sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
