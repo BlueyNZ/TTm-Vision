@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -22,7 +23,11 @@ import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 
-export function AppHeader() {
+interface AppHeaderProps {
+  isAdmin?: boolean;
+}
+
+export function AppHeader({ isAdmin }: AppHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useUser();
@@ -93,7 +98,12 @@ export function AppHeader() {
       } else if (pathParts.length > 2 && pathParts[2] === 'edit') {
         backPath = `/${pathParts[0]}/${pathParts[1]}`;
       } else {
-        backPath = `/${pathParts[0]}`;
+        // This is the updated logic
+        if (pathParts[0] === 'jobs' && !isAdmin) {
+          backPath = '/dashboard';
+        } else {
+          backPath = `/${pathParts[0]}`;
+        }
       }
   } 
 
