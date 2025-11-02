@@ -77,7 +77,7 @@ const ClientFormattedDate = ({ date }: { date: Date | Timestamp | string }) => {
     } else {
       d = new Date(date);
     }
-    setFormattedDate(format(d, 'dd MMM yyyy, HH:mm'));
+    setFormattedDate(format(d, 'dd MMM yyyy'));
   }, [date]);
 
   return <>{formattedDate || '...'}</>;
@@ -140,6 +140,7 @@ export default function JobsPage() {
               <TableRow>
                 <TableHead>Location</TableHead>
                 <TableHead className="hidden lg:table-cell">Start Date</TableHead>
+                <TableHead className="hidden lg:table-cell">Start Time</TableHead>
                 <TableHead>STMS</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
@@ -156,6 +157,7 @@ export default function JobsPage() {
                   <TableCell className="hidden lg:table-cell text-muted-foreground">
                     <ClientFormattedDate date={job.startDate} />
                   </TableCell>
+                  <TableCell className="hidden lg:table-cell text-muted-foreground">{job.startTime || 'N/A'}</TableCell>
                   <TableCell>{job.stms || 'N/A'}</TableCell>
                   <TableCell>
                     <Badge 
