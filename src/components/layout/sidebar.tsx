@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -21,6 +22,7 @@ import {
   TrafficCone,
   Shield,
   ChevronDown,
+  FileText,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -31,7 +33,7 @@ import {
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const isAdminPagesActive = ["/admin", "/staff", "/fleet"].includes(pathname);
+  const isAdminPagesActive = ["/admin", "/staff", "/fleet", "/jobs"].some(path => pathname.startsWith(path));
 
   return (
     <Sidebar>
@@ -80,16 +82,23 @@ export function AppSidebar() {
                     </SidebarMenuSubButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/staff"}>
+                    <SidebarMenuSubButton asChild isActive={pathname.startsWith("/staff")}>
                       <Link href="/staff">
                         Staff
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuSubButton asChild isActive={pathname === "/fleet"}>
+                    <SidebarMenuSubButton asChild isActive={pathname.startsWith("/fleet")}>
                        <Link href="/fleet">
                         Fleet
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuItem>
+                   <SidebarMenuItem>
+                    <SidebarMenuSubButton asChild isActive={pathname.startsWith("/jobs")}>
+                       <Link href="/jobs">
+                        Jobs
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuItem>

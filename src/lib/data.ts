@@ -36,6 +36,15 @@ export type Truck = {
   }[];
 };
 
+export type Job = {
+  id: string;
+  name: string;
+  location: string;
+  startDate: Date;
+  status: 'Upcoming' | 'In Progress' | 'Completed' | 'On Hold';
+  stms: string;
+};
+
 export const truckData: Truck[] = [
   {
     id: 'T-01',
@@ -77,5 +86,41 @@ export const truckData: Truck[] = [
     },
     currentKms: 119800,
     fuelLog: [],
+  },
+];
+
+
+export const jobData: Job[] = [
+  {
+    id: "JOB-001",
+    name: "SH1 Motorway Closure",
+    location: "Km 24-28, Northern Mwy",
+    startDate: new Date("2024-08-15T20:00:00Z"),
+    status: "Upcoming",
+    stms: "Harrison Price",
+  },
+  {
+    id: "JOB-002",
+    name: "Local Road Maintenance",
+    location: "Smith Street, Suburbia",
+    startDate: new Date("2024-07-20T08:00:00Z"),
+    status: "In Progress",
+    stms: "Harrison Price",
+  },
+  {
+    id: "JOB-003",
+    name: "Event Traffic Control",
+    location: "City Stadium",
+    startDate: new Date("2024-07-12T16:00:00Z"),
+    status: "Completed",
+    stms: "Jane Doe",
+  },
+  {
+    id: "JOB-004",
+    name: "Emergency Watermain Repair",
+    location: "Main & First Ave",
+    startDate: new Date("2024-07-22T10:00:00Z"),
+    status: "On Hold",
+    stms: "Harrison Price",
   },
 ];
