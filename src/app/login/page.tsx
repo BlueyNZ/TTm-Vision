@@ -28,12 +28,17 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Store the user's choice in localStorage so it can be picked up on the next app load.
       if (typeof window !== 'undefined') {
         localStorage.setItem('keepLoggedIn', JSON.stringify(keepLoggedIn));
       }
+      
+      // Set persistence for the *current* sign-in attempt.
       const persistence = keepLoggedIn ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
+      
       await signInWithEmailAndPassword(auth, email, password);
+      
       toast({
         title: 'Login Successful',
         description: "Welcome back!",

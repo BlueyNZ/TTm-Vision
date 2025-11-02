@@ -12,35 +12,50 @@ interface FirebaseClientProviderProps {
 export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
   const [servicesReady, setServicesReady] = useState(false);
 
+  // Memoize the core Firebase services so they are initialized only once.
   const firebaseServices = useMemo(() => {
-    // Initialize Firebase services, but don't set persistence here yet.
     return initializeFirebase();
   }, []);
 
+  // This effect handles setting the correct auth persistence.
   useEffect(() => {
+    // This function will run only once when the component mounts.
     const setupPersistence = async (auth: Auth) => {
       try {
+        // Check localStorage for the user's preference.
         const keepLoggedIn = localStorage.getItem('keepLoggedIn');
-        const persistence = keepLoggedIn === 'true' ? browserLocalPersistence : browserSessionPersistence;
+        
+        // Determine the desired persistence level. Default to session if not specified.
+        const persistence = keepLoggedIn === 'true' 
+          ? browserLocalPersistence 
+          : browserSessionPersistence;
+        
+        // Asynchronously set the persistence on the auth object.
         await setPersistence(auth, persistence);
       } catch (error) {
-        console.error("Failed to set auth persistence:", error);
+        // Log an error if persistence fails, but don't block the app.
+        console.error("FirebaseClientProvider: Failed to set auth persistence:", error);
       } finally {
+        // Once persistence is set (or has failed), mark the services as ready.
+        // This unblocks the rendering of the rest of the application.
         setServicesReady(true);
       }
     };
 
+    // Only run the setup if the auth service has been initialized.
     if (firebaseServices.auth) {
       setupPersistence(firebaseServices.auth);
     }
-  }, [firebaseServices.auth]);
+  }, [firebaseServices.auth]); // This effect depends only on the auth service instance.
 
-  // Don't render children until persistence has been set.
+  // Render nothing until persistence has been configured.
+  // This is the crucial step that prevents race conditions.
   if (!servicesReady) {
-    // You can render a loading spinner here if desired
+    // You could render a global loading spinner here, but returning null is fine.
     return null;
   }
 
+  // Once services are ready, provide them to the rest of the application.
   return (
     <FirebaseProvider
       firebaseApp={firebaseServices.firebaseApp}
