@@ -52,17 +52,15 @@ const staffSchema = z.object({
     name: z.enum(["TTM", "TMO-NP", "TMO", "STMS-U", "STMS-L1", "STMS-L2", "STMS-L3", "STMS-NP"]),
     expiryDate: z.date(),
   })).optional(),
-  emergencyContactName: z.string().min(2, "Emergency contact name is required."),
-  emergencyContactNumber: z.string().min(8, "Emergency contact number is required."),
-  accessLevel: z.enum(["Staff Member", "Admin"]),
 });
 
-type StaffFormValues = z.infer<typeof staffSchema>;
+type StaffFormValues = Omit<Staff, 'id' | 'avatarUrl'>;
+
 
 type StaffDialogProps = {
   children: React.ReactNode;
   staffToEdit?: Staff | null;
-  onAddStaff: (staff: Omit<Staff, 'id' | 'avatarUrl'>) => void;
+  onAddStaff: (staff: StaffFormValues) => void;
   onEditStaff?: (staff: Staff) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -77,42 +75,33 @@ export function AddStaffDialog({ children, staffToEdit, onAddStaff, onEditStaff,
   const { toast } = useToast();
 
   const form = useForm<StaffFormValues>({
-    resolver: zodResolver(staffSchema),
+    resolver: zodResolver(staffSchema.extend({
+        emergencyContactName: z.string().min(2, "Emergency contact name is required.").optional(),
+        emergencyContactNumber: z.string().min(8, "Emergency contact number is required.").optional(),
+        accessLevel: z.enum(["Staff Member", "Admin"]).optional(),
+      })),
     defaultValues: isEditMode ? {
       name: staffToEdit.name,
       role: staffToEdit.role,
       certifications: staffToEdit.certifications,
-      // Assuming these fields will be added to the Staff type
-      emergencyContactName: "Jane Doe", 
-      emergencyContactNumber: "021 987 6543",
-      accessLevel: "Staff Member",
     } : {
       name: "",
-      emergencyContactName: "",
-      emergencyContactNumber: "",
       certifications: [],
     },
   });
 
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && staffToEdit) {
       form.reset({
         name: staffToEdit.name,
         role: staffToEdit.role,
         certifications: staffToEdit.certifications.map(c => ({...c, expiryDate: new Date(c.expiryDate)})),
-        // These fields would be populated from staffToEdit if they existed on the type
-        emergencyContactName: "Jane Doe",
-        emergencyContactNumber: "0219876543",
-        accessLevel: "Staff Member"
       });
     } else {
       form.reset({
         name: "",
         role: undefined,
         certifications: [],
-        emergencyContactName: "",
-        emergencyContactNumber: "",
-        accessLevel: undefined,
       });
     }
   }, [staffToEdit, form, isEditMode, open]);
@@ -124,7 +113,7 @@ export function AddStaffDialog({ children, staffToEdit, onAddStaff, onEditStaff,
   });
 
   function onSubmit(data: StaffFormValues) {
-    if (isEditMode && onEditStaff) {
+    if (isEditMode && onEditStaff && staffToEdit) {
       onEditStaff({ ...staffToEdit, ...data, certifications: data.certifications || [] });
       toast({
         title: "Staff Updated",
@@ -279,54 +268,6 @@ export function AddStaffDialog({ children, staffToEdit, onAddStaff, onEditStaff,
                 </Button>
               </div>
             </div>
-
-            <FormField
-              control={form.control}
-              name="emergencyContactName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Emergency Contact Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Jane Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="emergencyContactNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Emergency Contact Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="021 123 4567" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="accessLevel"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>System Access Level</FormLabel>
-                   <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select access level" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Staff Member">Staff Member</SelectItem>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit">{isEditMode ? 'Save Changes' : 'Add Staff'}</Button>

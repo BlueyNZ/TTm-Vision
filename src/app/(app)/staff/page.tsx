@@ -47,29 +47,42 @@ export default function StaffPage() {
   const [staffList, setStaffList] = useState<Staff[]>(staffData);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const { toast } = useToast();
+  // We use a simple counter to force re-renders when staffData is mutated.
+  const [version, setVersion] = useState(0);
+
+  const forceRerender = () => setVersion(v => v + 1);
 
   const handleAddStaff = (newStaff: Omit<Staff, 'id' | 'avatarUrl'>) => {
     const newStaffMember: Staff = {
       ...newStaff,
-      id: (staffList.length + 1).toString(),
-      avatarUrl: `https://picsum.photos/seed/${staffList.length + 1}/200/200`,
+      id: (staffData.length + 1).toString(),
+      avatarUrl: `https://picsum.photos/seed/${staffData.length + 1}/200/200`,
     };
-    setStaffList([...staffList, newStaffMember]);
+    staffData.push(newStaffMember);
+    forceRerender();
   };
   
   const handleEditStaff = (updatedStaff: Staff) => {
-    setStaffList(staffList.map(staff => staff.id === updatedStaff.id ? updatedStaff : staff));
+    const staffIndex = staffData.findIndex(staff => staff.id === updatedStaff.id);
+    if (staffIndex !== -1) {
+      staffData[staffIndex] = updatedStaff;
+    }
     setEditingStaff(null);
+    forceRerender();
   };
 
   const handleDeleteStaff = (staffId: string) => {
-    const staffToDelete = staffList.find(staff => staff.id === staffId);
-    setStaffList(staffList.filter(staff => staff.id !== staffId));
-    toast({
-      title: "Staff Member Removed",
-      description: `${staffToDelete?.name} has been removed from the staff list.`,
-      variant: "destructive",
-    });
+    const staffIndex = staffData.findIndex(staff => staff.id === staffId);
+    if (staffIndex !== -1) {
+      const staffToDelete = staffData[staffIndex];
+      staffData.splice(staffIndex, 1);
+      toast({
+        title: "Staff Member Removed",
+        description: `${staffToDelete?.name} has been removed from the staff list.`,
+        variant: "destructive",
+      });
+      forceRerender();
+    }
   };
 
   return (
@@ -102,7 +115,7 @@ export default function StaffPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {staffList.map((staff) => {
+            {staffData.map((staff) => {
               const status = getOverallCertStatus(staff);
               return (
               <TableRow key={staff.id}>
