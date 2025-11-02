@@ -139,7 +139,6 @@ export default function JobsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Location</TableHead>
-                <TableHead className="hidden md:table-cell">Description</TableHead>
                 <TableHead className="hidden lg:table-cell">Start Date</TableHead>
                 <TableHead>STMS</TableHead>
                 <TableHead>Status</TableHead>
@@ -154,7 +153,6 @@ export default function JobsPage() {
                 return (
                 <TableRow key={job.id}>
                   <TableCell className="font-medium">{job.location}</TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground">{job.name}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">
                     <ClientFormattedDate date={job.startDate} />
                   </TableCell>
