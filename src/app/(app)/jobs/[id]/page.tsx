@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Calendar, User, Info, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
 
 const getStatusVariant = (status: (typeof jobData)[0]['status']) => {
   switch (status) {
@@ -25,8 +26,16 @@ const getStatusVariant = (status: (typeof jobData)[0]['status']) => {
 export default function JobDetailPage() {
   const params = useParams();
   const jobId = params.id as string;
+  const [formattedDate, setFormattedDate] = useState('');
 
   const job = jobData.find((j) => j.id === jobId);
+
+  useEffect(() => {
+    if (job) {
+      setFormattedDate(format(new Date(job.startDate), 'eeee, dd MMMM yyyy, p'));
+    }
+  }, [job]);
+
 
   if (!job) {
     return (
@@ -54,7 +63,7 @@ export default function JobDetailPage() {
                 <Calendar className="h-6 w-6 text-primary" />
                 <div>
                     <p className="font-semibold">Date & Time</p>
-                    <p className="text-muted-foreground">{format(new Date(job.startDate), 'eeee, dd MMMM yyyy, p')}</p>
+                    <p className="text-muted-foreground">{formattedDate || 'Loading...'}</p>
                 </div>
             </div>
              <div className="flex items-start gap-4">
