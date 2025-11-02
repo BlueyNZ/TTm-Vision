@@ -83,7 +83,7 @@ export default function DashboardPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href="/jobs">View</Link>
+                      <Link href={`/jobs/${job.id}`}>View</Link>
                     </Button>
                   </TableCell>
                 </TableRow>
