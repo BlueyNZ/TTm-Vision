@@ -31,8 +31,7 @@ export function AppHeader() {
   if (pathParts[0] === 'staff' && pathParts.length > 1) {
     title = "Overview";
   } else if (pathParts[0] === 'jobs' && pathParts.length > 1) {
-    const job = jobData.find(j => j.id === pathParts[1]);
-    title = job ? job.location : "Job Details";
+    title = "Jobs";
   }
   else {
     title = pathname.split("/").pop()?.replace(/-/g, " ") ?? "Dashboard";
