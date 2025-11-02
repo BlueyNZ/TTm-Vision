@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   Sidebar,
@@ -53,7 +55,7 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <Collapsible asChild>
+          <Collapsible asChild defaultOpen={isAdminPagesActive}>
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton
@@ -65,7 +67,7 @@ export function AppSidebar() {
                     <Shield />
                     <span>Admin</span>
                   </div>
-                  <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:-rotate-90" />
+                  <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
                 </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent>
