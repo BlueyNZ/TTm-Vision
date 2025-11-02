@@ -189,7 +189,7 @@ export default function JobDetailPage() {
           <CardContent>
             <div className="flex items-start gap-4">
                 <FileText className="h-6 w-6 text-primary" />
-                <p className="text-muted-foreground">{job.name}</p>
+                <p className="text-muted-foreground whitespace-pre-wrap">{job.name}</p>
             </div>
           </CardContent>
       </Card>
