@@ -152,13 +152,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       ];
       await seedCollection('staff', initialStaff, ['certifications.expiryDate']);
 
-      // Seed Trucks
-      const initialTrucks: Omit<Truck, 'id'>[] = [
-        { name: 'Big Bertha', plate: 'TRUCK1', status: 'Operational', service: { lastServiceDate: '2024-05-10T00:00:00Z', nextServiceDate: '2024-11-10T00:00:00Z', nextServiceKms: 150000 }, currentKms: 145000, fuelLog: [{ date: '2024-07-02T00:00:00Z', volumeLiters: 120, cost: 240.50 }] },
-        { name: 'The Workhorse', plate: 'TRUCK2', status: 'Check Required', service: { lastServiceDate: '2024-06-20T00:00:00Z', nextServiceDate: '2024-12-20T00:00:00Z', nextServiceKms: 160000 }, currentKms: 158500, fuelLog: [] },
-        { name: 'Old Reliable', plate: 'TRUCK3', status: 'In Service', service: { lastServiceDate: '2024-01-01T00:00:00Z', nextServiceDate: '2024-07-25T00:00:00Z', nextServiceKms: 120000 }, currentKms: 119800, fuelLog: [] },
-      ];
-      await seedCollection('trucks', initialTrucks, ['service.lastServiceDate', 'service.nextServiceDate']);
       
       // Seed Jobs
       const jobsCollectionRef = collection(firestore, 'job_packs');
