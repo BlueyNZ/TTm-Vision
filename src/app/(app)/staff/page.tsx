@@ -1,6 +1,7 @@
 
 'use client';
 import { useState } from "react";
+import Link from "next/link";
 import { staffData, Staff } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -115,7 +116,7 @@ export default function StaffPage() {
                       <AvatarImage src={`https://picsum.photos/seed/${staff.id}/200/200`} />
                       <AvatarFallback>{staff.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className="font-medium">{staff.name}</div>
+                    <Link href={`/staff/${staff.id}`} className="font-medium hover:underline">{staff.name}</Link>
                   </div>
                 </TableCell>
                 <TableCell>{staff.role}</TableCell>
