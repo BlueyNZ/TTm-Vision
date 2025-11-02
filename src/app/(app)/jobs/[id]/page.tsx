@@ -11,7 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export default function JobDetailsPage({ params }: { params: { id: string } }) {
+export default async function JobDetailsPage({ params }: { params: { id: string } }) {
   const job = jobData.find(j => j.id === params.id);
 
   if (!job) {
