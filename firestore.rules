@@ -17,5 +17,9 @@ service cloud.firestore {
       allow read, create, update, delete: if isSignedIn();
     }
 
+    match /job_packs/{jobPackId} {
+      allow read, create, update, delete: if isSignedIn();
+    }
+
   }
 }

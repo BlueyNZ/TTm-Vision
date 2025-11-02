@@ -1,7 +1,7 @@
 
 'use client';
 import { useParams, useRouter } from 'next/navigation';
-import { jobData, Staff } from '@/lib/data';
+import { Job, Staff } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,11 +10,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState }from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, doc, Timestamp } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { X } from 'lucide-react';
+import { X, LoaderCircle } from 'lucide-react';
 
 
 export default function JobEditPage() {
@@ -24,39 +25,42 @@ export default function JobEditPage() {
   const jobId = params.id as string;
   const firestore = useFirestore();
 
-  const [job, setJob] = useState(jobData.find((j) => j.id === jobId));
+  const [jobName, setJobName] = useState('');
+  const [jobLocation, setJobLocation] = useState('');
+  const [jobStatus, setJobStatus] = useState<Job['status'] | undefined>();
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
 
+  const jobRef = useMemoFirebase(() => {
+    if (!firestore || !jobId) return null;
+    return doc(firestore, 'job_packs', jobId);
+  }, [firestore, jobId]);
+  const { data: job, isLoading: isLoadingJob } = useDoc<Job>(jobRef);
 
   const staffCollection = useMemoFirebase(() => {
     if (!firestore) return null;
     return collection(firestore, 'staff');
   }, [firestore]);
-
-  const { data: staffList, isLoading: isLoadingStaff } = useCollection<Staff>(staffCollection);
+  const { data: staffList } = useCollection<Staff>(staffCollection);
 
   useEffect(() => {
-    // In a real app, you'd fetch this data from a server
-    const currentJob = jobData.find((j) => j.id === jobId);
-    if (currentJob) {
-      setJob(currentJob);
+    if (job) {
+      setJobName(job.name);
+      setJobLocation(job.location);
+      setJobStatus(job.status);
+
       if (staffList) {
-        const stms = staffList.find(s => s.name === currentJob.stms);
+        const stms = staffList.find(s => s.id === job.stmsId);
         setSelectedStms(stms || null);
+        const tcs = job.tcs.map(tc => staffList.find(s => s.id === tc.id)).filter((s): s is Staff => !!s);
+        setSelectedTcs(tcs);
       }
     }
-  }, [jobId, staffList]);
+  }, [job, staffList]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (!job) return;
-    const { name, value } = e.target;
-    setJob({ ...job, [name]: value });
-  };
   
-  const handleStatusChange = (value: string) => {
-    if (!job) return;
-    setJob({ ...job, status: value as typeof job.status });
+  const handleStatusChange = (value: Job['status']) => {
+    setJobStatus(value);
   };
 
   const handleAddTc = (staff: Staff | null) => {
@@ -70,9 +74,9 @@ export default function JobEditPage() {
   }
 
   const handleSelectStms = (staff: Staff | null) => {
-    setSelectedStms(staff);
-    // Remove from TCs if they are also selected there
     if (staff) {
+        setSelectedStms(staff);
+        // Remove from TCs if they are also selected there
         handleRemoveTc(staff.id);
     }
   }
@@ -84,21 +88,34 @@ export default function JobEditPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would send this data to your API to save it
-    console.log('Updated Job Data:', {
-        ...job,
-        stms: selectedStms?.name,
-        tcs: selectedTcs.map(tc => tc.name)
-    });
+    if (!firestore || !job) return;
+
+    const updatedJob = {
+        name: jobName,
+        location: jobLocation,
+        status: jobStatus,
+        stms: selectedStms?.name || null,
+        stmsId: selectedStms?.id || null,
+        tcs: selectedTcs.map(tc => ({ id: tc.id, name: tc.name })),
+        startDate: job.startDate, // Keep original start date
+    };
+
+    const jobDocRef = doc(firestore, 'job_packs', job.id);
+    setDocumentNonBlocking(jobDocRef, updatedJob, { merge: true });
+
     toast({
       title: 'Job Updated',
-      description: `The details for ${job?.location} have been saved.`,
+      description: `The details for ${jobLocation} have been saved.`,
     });
     router.push(`/jobs/${jobId}`);
   };
 
-  if (!job) {
-    return <p>Loading job details...</p>;
+  if (isLoadingJob || !job) {
+    return (
+        <div className="flex justify-center items-center h-64">
+            <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+        </div>
+    );
   }
 
   return (
@@ -111,16 +128,22 @@ export default function JobEditPage() {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
-            <Input id="location" name="location" value={job.location} onChange={handleInputChange} />
+            <Input id="location" name="location" value={jobLocation} onChange={(e) => setJobLocation(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">Job Description</Label>
-            <Textarea id="name" name="name" value={job.name} onChange={handleInputChange} />
+            <Textarea id="name" name="name" value={jobName} onChange={(e) => setJobName(e.target.value)} />
           </div>
            <div className="space-y-2">
             <Label htmlFor="stms">STMS</Label>
-             {selectedStms ? (
-                <div className="flex items-center justify-between p-2 bg-muted rounded-md">
+            <StaffSelector 
+                staffList={staffList || []}
+                onSelectStaff={handleSelectStms}
+                placeholder="Select STMS"
+                disabledIds={[...selectedTcs.map(tc => tc.id), selectedStms?.id].filter(id => !!id) as string[]}
+            />
+             {selectedStms && (
+                <div className="flex items-center justify-between p-2 bg-muted rounded-md mt-2">
                     <div className='flex items-center gap-3'>
                         <Avatar className="h-8 w-8">
                             <AvatarImage src={`https://picsum.photos/seed/${selectedStms.id}/200/200`} />
@@ -135,13 +158,6 @@ export default function JobEditPage() {
                         <X className="h-4 w-4" />
                     </Button>
                 </div>
-             ) : (
-                <StaffSelector 
-                    staffList={staffList || []}
-                    onSelectStaff={handleSelectStms}
-                    placeholder="Select STMS"
-                    disabledIds={selectedTcs.map(tc => tc.id)}
-                />
              )}
           </div>
           <div className="space-y-2">
@@ -177,7 +193,7 @@ export default function JobEditPage() {
           </div>
            <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select onValueChange={handleStatusChange} value={job.status}>
+            <Select onValueChange={handleStatusChange} value={jobStatus}>
                 <SelectTrigger id="status">
                     <SelectValue placeholder="Select status" />
                 </SelectTrigger>

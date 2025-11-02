@@ -1,7 +1,7 @@
 
 'use client';
 import { useRouter } from 'next/navigation';
-import { Staff } from '@/lib/data';
+import { Job, Staff } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useState }from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, Timestamp } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { X } from 'lucide-react';
@@ -45,9 +46,10 @@ export default function JobCreatePage() {
   }
 
   const handleSelectStms = (staff: Staff | null) => {
-    setSelectedStms(staff);
     if (staff) {
-        handleRemoveTc(staff.id);
+      setSelectedStms(staff);
+      // Remove from TCs if they are also selected there
+      handleRemoveTc(staff.id);
     }
   }
 
@@ -57,15 +59,21 @@ export default function JobCreatePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would send this data to your API to save it
-    console.log('New Job Data:', {
+    if (!firestore) return;
+
+    const newJob: Omit<Job, 'id'> = {
         name,
         location,
-        stms: selectedStms?.name,
-        tcs: selectedTcs.map(tc => tc.name),
+        stms: selectedStms?.name || null,
+        stmsId: selectedStms?.id || null,
+        tcs: selectedTcs.map(tc => ({id: tc.id, name: tc.name })),
         status: 'Upcoming',
-        startDate: new Date().toISOString(),
-    });
+        startDate: Timestamp.now(),
+    };
+
+    const jobsCollectionRef = collection(firestore, 'job_packs');
+    addDocumentNonBlocking(jobsCollectionRef, newJob);
+
     toast({
       title: 'Job Created',
       description: `The job at ${location} has been created.`,
@@ -91,13 +99,13 @@ export default function JobCreatePage() {
           </div>
            <div className="space-y-2">
             <Label htmlFor="stms">STMS</Label>
-             <StaffSelector 
+            <StaffSelector 
                 staffList={staffList || []}
                 onSelectStaff={handleSelectStms}
                 placeholder="Select STMS"
-                disabledIds={[...selectedTcs.map(tc => tc.id), selectedStms?.id].filter((id): id is string => !!id)}
+                disabledIds={[...selectedTcs.map(tc => tc.id)]}
             />
-            {selectedStms && (
+             {selectedStms && (
                 <div className="flex items-center justify-between p-2 bg-muted rounded-md mt-2">
                     <div className='flex items-center gap-3'>
                         <Avatar className="h-8 w-8">

@@ -1,19 +1,19 @@
 
 'use client';
 import { useParams } from 'next/navigation';
-import { jobData, Staff } from '@/lib/data';
+import { Job, Staff } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, User, Info, MapPin, FileText, Edit, Users, UserSquare } from 'lucide-react';
+import { Calendar, User, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, Timestamp } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-const getStatusVariant = (status: (typeof jobData)[0]['status']) => {
+const getStatusVariant = (status: Job['status']) => {
   switch (status) {
     case 'Upcoming':
       return 'default';
@@ -34,30 +34,30 @@ export default function JobDetailPage() {
   const [formattedDate, setFormattedDate] = useState('');
   const firestore = useFirestore();
 
-  const job = jobData.find((j) => j.id === jobId);
+  const jobRef = useMemoFirebase(() => {
+    if (!firestore || !jobId) return null;
+    return doc(firestore, 'job_packs', jobId);
+  }, [firestore, jobId]);
 
-  const staffCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'staff');
-  }, [firestore]);
-
-  const { data: staffList } = useCollection<Staff>(staffCollection);
-
-  const stms = staffList?.find(s => s.name === job?.stms);
-  const tcs = staffList?.filter(s => job?.tcs.includes(s.name));
-
+  const { data: job, isLoading } = useDoc<Job>(jobRef);
 
   useEffect(() => {
-    if (job) {
-      setFormattedDate(format(new Date(job.startDate), 'eeee, dd MMMM yyyy, p'));
+    if (job?.startDate) {
+        let date: Date;
+        if (job.startDate instanceof Timestamp) {
+            date = job.startDate.toDate();
+        } else {
+            date = new Date(job.startDate);
+        }
+        setFormattedDate(format(date, 'eeee, dd MMMM yyyy, p'));
     }
   }, [job]);
 
 
-  if (!job) {
+  if (isLoading || !job) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p>Job not found.</p>
+        <LoaderCircle className="h-10 w-10 animate-spin" />
       </div>
     );
   }
@@ -110,19 +110,19 @@ export default function JobDetailPage() {
                 <UserSquare className="h-6 w-6 text-primary" />
                 <div>
                     <p className="font-semibold">Site Traffic Management Supervisor (STMS)</p>
-                    {stms ? (
+                    {job.stms ? (
                       <div className="flex items-center gap-3 mt-2">
                           <Avatar className="h-8 w-8">
-                              <AvatarImage src={`https://picsum.photos/seed/${stms.id}/200/200`} />
-                              <AvatarFallback>{stms.name.charAt(0)}</AvatarFallback>
+                              <AvatarImage src={`https://picsum.photos/seed/${job.stmsId}/200/200`} />
+                              <AvatarFallback>{job.stms.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div>
-                              <p className="font-medium text-sm">{stms.name}</p>
-                              <p className="text-xs text-muted-foreground">{stms.role}</p>
+                              <p className="font-medium text-sm">{job.stms}</p>
+                              <p className="text-xs text-muted-foreground">STMS</p>
                           </div>
                       </div>
                     ) : (
-                      <p className="text-muted-foreground text-sm mt-1">{job.stms || 'Not Assigned'}</p>
+                      <p className="text-muted-foreground text-sm mt-1">Not Assigned</p>
                     )}
                 </div>
             </div>
@@ -130,9 +130,9 @@ export default function JobDetailPage() {
                 <Users className="h-6 w-6 text-primary" />
                 <div>
                     <p className="font-semibold">Traffic Controllers (TCs)</p>
-                    {tcs && tcs.length > 0 ? (
+                    {job.tcs && job.tcs.length > 0 ? (
                       <div className="mt-2 space-y-3">
-                        {tcs.map(tc => (
+                        {job.tcs.map(tc => (
                           <div key={tc.id} className="flex items-center gap-3">
                               <Avatar className="h-8 w-8">
                                   <AvatarImage src={`https://picsum.photos/seed/${tc.id}/200/200`} />
@@ -140,7 +140,7 @@ export default function JobDetailPage() {
                               </Avatar>
                               <div>
                                   <p className="font-medium text-sm">{tc.name}</p>
-                                  <p className="text-xs text-muted-foreground">{tc.role}</p>
+                                  <p className="text-xs text-muted-foreground">TC</p>
                               </div>
                           </div>
                         ))}

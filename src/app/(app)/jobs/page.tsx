@@ -1,11 +1,11 @@
 
 'use client';
-import { jobData } from "@/lib/data";
+import { Job } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Circle, Eye, Edit } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Circle, Eye, Edit, LoaderCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +17,10 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, Timestamp } from "firebase/firestore";
 
-const getStatusVariant = (status: (typeof jobData)[0]['status']) => {
+const getStatusVariant = (status: Job['status']) => {
   switch (status) {
     case 'Upcoming':
       return 'default';
@@ -33,7 +35,7 @@ const getStatusVariant = (status: (typeof jobData)[0]['status']) => {
   }
 };
 
-const getStatusColor = (status: (typeof jobData)[0]['status']) => {
+const getStatusColor = (status: Job['status']) => {
   switch (status) {
     case 'In Progress':
       return 'fill-success';
@@ -44,12 +46,18 @@ const getStatusColor = (status: (typeof jobData)[0]['status']) => {
   }
 };
 
-const ClientFormattedDate = ({ dateString }: { dateString: string }) => {
+const ClientFormattedDate = ({ date }: { date: Date | Timestamp | string }) => {
   const [formattedDate, setFormattedDate] = useState('');
 
   useEffect(() => {
-    setFormattedDate(format(new Date(dateString), 'dd MMM yyyy, HH:mm'));
-  }, [dateString]);
+    let d: Date;
+    if (date instanceof Timestamp) {
+      d = date.toDate();
+    } else {
+      d = new Date(date);
+    }
+    setFormattedDate(format(d, 'dd MMM yyyy, HH:mm'));
+  }, [date]);
 
   return <>{formattedDate || '...'}</>;
 }
@@ -57,6 +65,14 @@ const ClientFormattedDate = ({ dateString }: { dateString: string }) => {
 
 export default function JobsPage() {
   const router = useRouter();
+  const firestore = useFirestore();
+
+  const jobsCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'job_packs');
+  }, [firestore]);
+
+  const { data: jobData, isLoading } = useCollection<Job>(jobsCollection);
   
   return (
     <Card>
@@ -75,6 +91,11 @@ export default function JobsPage() {
         </Button>
       </CardHeader>
       <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+          </div>
+        ) : (
         <Table>
           <TableHeader>
             <TableRow>
@@ -89,14 +110,14 @@ export default function JobsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {jobData.map((job) => (
+            {jobData?.map((job) => (
               <TableRow key={job.id}>
                 <TableCell className="font-medium">{job.name}</TableCell>
                 <TableCell className="hidden md:table-cell text-muted-foreground">{job.location}</TableCell>
                 <TableCell className="hidden lg:table-cell text-muted-foreground">
-                  <ClientFormattedDate dateString={job.startDate} />
+                  <ClientFormattedDate date={job.startDate} />
                 </TableCell>
-                <TableCell>{job.stms}</TableCell>
+                <TableCell>{job.stms || 'N/A'}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(job.status)} className="flex items-center gap-2 w-fit">
                     <Circle className={cn("h-2 w-2", getStatusColor(job.status))}/>
@@ -126,6 +147,7 @@ export default function JobsPage() {
             ))}
           </TableBody>
         </Table>
+        )}
       </CardContent>
     </Card>
   );
