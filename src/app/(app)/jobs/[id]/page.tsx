@@ -98,8 +98,9 @@ export default function JobDetailPage() {
             </Button>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon">
-                        <ChevronDown className="h-5 w-5" />
+                    <Button variant="outline">
+                        Paperwork
+                        <ChevronDown className="h-5 w-5 ml-2" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

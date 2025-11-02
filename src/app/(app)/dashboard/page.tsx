@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useMemo } from "react";
 
 const getDisplayedStatus = (job: Job) => {
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -70,7 +71,7 @@ export default function DashboardPage() {
   const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffCollection);
 
 
-  const assignedJobs = useMemoFirebase(() => {
+  const assignedJobs = useMemo(() => {
     if (!user || !jobData || !staffData) return [];
 
     const currentStaffMember = staffData.find(staff => staff.name === user.displayName);
@@ -164,8 +165,9 @@ export default function DashboardPage() {
                                      <div className="pl-4">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="outline" size="icon" onClick={(e) => e.stopPropagation()}>
-                                                    <ChevronDown className="h-5 w-5" />
+                                                <Button variant="outline" onClick={(e) => e.stopPropagation()}>
+                                                    Paperwork
+                                                    <ChevronDown className="h-5 w-5 ml-2" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
