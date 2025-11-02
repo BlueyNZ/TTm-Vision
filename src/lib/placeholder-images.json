@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "avatar-1",
+      "description": "Male avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1692197393247-c76e1bd8f29e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtYWxlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYyMDIzODkyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "male portrait"
+    },
+    {
+      "id": "avatar-2",
+      "description": "Female avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1524255684952-d7185b509571?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmZW1hbGUlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjIwNTg0NDB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "female portrait"
+    },
+    {
+      "id": "avatar-3",
+      "description": "Male avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjE5ODk0NTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "avatar-4",
+      "description": "Female avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1610655507808-a59293f4e332?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2MjAzMDE4OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman portrait"
+    }
+  ]
 }
