@@ -15,9 +15,6 @@ export function initializeFirebase() {
       firebaseApp = initializeApp();
     } catch (e) {
       // In a local environment, it will fall back to using the explicit config object.
-      if (process.env.NODE_ENV !== "production") {
-         console.warn('Automatic initialization failed. Falling back to firebaseConfig object.');
-      }
       firebaseApp = initializeApp(firebaseConfig);
     }
   } else {
