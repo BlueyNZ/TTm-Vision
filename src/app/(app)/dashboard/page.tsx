@@ -6,11 +6,23 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Job, Staff } from "@/lib/data";
 import { collection, Timestamp } from "firebase/firestore";
-import { LoaderCircle, Circle, MapPin, Calendar, Users, UserSquare } from "lucide-react";
+import { LoaderCircle, Circle, MapPin, Calendar, Users, UserSquare, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { format, isPast } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal
+} from "@/components/ui/dropdown-menu";
 
 const getDisplayedStatus = (job: Job) => {
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -112,47 +124,76 @@ export default function DashboardPage() {
                             const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
 
                             return (
-                                <Link href={`/jobs/${job.id}`} key={job.id} className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1 space-y-2">
-                                            <p className="font-semibold text-lg flex items-center gap-2">
-                                                <MapPin className="h-5 w-5 text-primary"/>
-                                                {job.location}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                                <Calendar className="h-4 w-4"/>
-                                                {format(startDate, 'eeee, dd MMM yyyy')}
-                                            </p>
+                                <div key={job.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex justify-between items-start">
+                                    <Link href={`/jobs/${job.id}`} className="flex-grow">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1 space-y-2">
+                                                <p className="font-semibold text-lg flex items-center gap-2">
+                                                    <MapPin className="h-5 w-5 text-primary"/>
+                                                    {job.location}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                                    <Calendar className="h-4 w-4"/>
+                                                    {format(startDate, 'eeee, dd MMM yyyy')}
+                                                </p>
+                                            </div>
+                                            <Badge 
+                                                variant={getStatusVariant(displayedStatus)}
+                                                className={cn(
+                                                    "flex items-center gap-2 w-fit", 
+                                                    displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
+                                                )}
+                                            >
+                                                <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
+                                                {displayedStatus}
+                                            </Badge>
                                         </div>
-                                        <Badge 
-                                            variant={getStatusVariant(displayedStatus)}
-                                            className={cn(
-                                                "flex items-center gap-2 w-fit", 
-                                                displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
+                                        <div className="border-t my-4"></div>
+                                        <div className="flex items-center gap-6 text-sm">
+                                            {job.stms && (
+                                                <div className="flex items-center gap-2">
+                                                    <UserSquare className="h-4 w-4 text-muted-foreground" />
+                                                    <p className="font-medium">STMS:</p>
+                                                    <span className="text-muted-foreground">{job.stms}</span>
+                                                </div>
                                             )}
-                                        >
-                                            <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
-                                            {displayedStatus}
-                                        </Badge>
+                                            {job.tcs && job.tcs.length > 0 && (
+                                                <div className="flex items-center gap-2">
+                                                    <Users className="h-4 w-4 text-muted-foreground" />
+                                                    <p className="font-medium">TCs:</p>
+                                                    <span className="text-muted-foreground">{job.tcs.length} assigned</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Link>
+                                     <div className="pl-4">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                                                    <MoreHorizontal className="h-5 w-5" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenuItem>CREATE ALL Crew Timesheets</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE a Single Crew Timesheet</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Truck Inspection</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE ESTOP Inspection</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Stop/Go Briefing</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE TSL Decision Matrix</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Hazard ID (NZGTTM)</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Hazard ID</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Site Induction Signatures</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Pre-Installation Process</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE NEW On-Site Record</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Mobile Ops On-Site Record</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Job Note</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Incident or Event Report</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Site Audit (COPTTM SCR)</DropdownMenuItem>
+                                                <DropdownMenuItem>CREATE Client Feedback</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
-                                    <div className="border-t my-4"></div>
-                                    <div className="flex items-center gap-6 text-sm">
-                                        {job.stms && (
-                                            <div className="flex items-center gap-2">
-                                                <UserSquare className="h-4 w-4 text-muted-foreground" />
-                                                <p className="font-medium">STMS:</p>
-                                                <span className="text-muted-foreground">{job.stms}</span>
-                                            </div>
-                                        )}
-                                        {job.tcs && job.tcs.length > 0 && (
-                                            <div className="flex items-center gap-2">
-                                                <Users className="h-4 w-4 text-muted-foreground" />
-                                                <p className="font-medium">TCs:</p>
-                                                <span className="text-muted-foreground">{job.tcs.length} assigned</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Link>
+                                </div>
                             )
                         })}
                     </div>
