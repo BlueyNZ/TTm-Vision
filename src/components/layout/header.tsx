@@ -1,7 +1,7 @@
 
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Avatar,
   AvatarFallback,
@@ -15,33 +15,40 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { Input } from "../ui/input";
-import { jobData } from "@/lib/data";
 
 export function AppHeader() {
   const pathname = usePathname();
-  const { state } = useSidebar();
+  const router = useRouter();
   
-  let title;
   const pathParts = pathname.split("/").filter(Boolean);
+  let title = pathParts[0] || "Dashboard";
+  let showBackButton = false;
 
-  if (pathParts[0] === 'staff' && pathParts.length > 1) {
-    title = "Overview";
-  } else if (pathParts[0] === 'jobs' && pathParts.length > 1) {
-    title = "Jobs";
+  if (pathParts.length > 1) {
+      showBackButton = true;
+      if (pathParts[1] !== 'create' && pathParts[2] !== 'edit') {
+        title = "Job Details"
+      } else {
+        title = pathParts.length > 2 ? "Edit Job" : "Create Job";
+      }
+  } else if (pathParts[0]) {
+      title = pathParts[0].replace(/-/g, " ");
   }
-  else {
-    title = pathname.split("/").pop()?.replace(/-/g, " ") ?? "Dashboard";
-  }
-
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
       <SidebarTrigger className="md:hidden" />
-      <div className="flex-1">
+      <div className="flex-1 flex items-center gap-4">
+        {showBackButton && (
+           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4" />
+              <span className="sr-only">Back</span>
+            </Button>
+        )}
         <h1 className="text-lg font-semibold capitalize md:text-2xl truncate">
           {title}
         </h1>
