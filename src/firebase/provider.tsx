@@ -2,7 +2,7 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore } from 'firebase/firestore';
+import { Firestore, collection, getDocs, limit, query, addDoc } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 
@@ -95,7 +95,41 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe(); // Cleanup
-  }, [auth]); // Depends on the auth instance
+  }, [auth]);
+
+  // Effect to seed initial data
+  useEffect(() => {
+    const seedInitialData = async () => {
+      if (!firestore) return;
+      
+      const staffCollectionRef = collection(firestore, 'staff');
+      const q = query(staffCollectionRef, limit(1));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        // Add a default staff member
+        await addDoc(staffCollectionRef, {
+          name: 'Harrison Price',
+          role: 'STMS',
+          accessLevel: 'Admin',
+          emergencyContact: {
+            name: 'Jane Price',
+            phone: '021-987-6543'
+          },
+          certifications: [
+            { name: 'STMS-L1', expiryDate: new Date('2025-08-15T00:00:00Z') },
+            { name: 'TMO', expiryDate: new Date('2026-01-20T00:00:00Z') }
+          ]
+        });
+      }
+    };
+    
+    // Only run this check once when the provider mounts and firestore is available
+    if(firestore) {
+      seedInitialData();
+    }
+
+  }, [firestore]);
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
