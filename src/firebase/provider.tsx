@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -89,7 +88,12 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
              setUserAuthState({ user: null, isUserLoading: false, userError: error });
           })
         } else {
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+          // Here we can set a display name for the mock user
+          const userWithDisplayName = {
+            ...firebaseUser,
+            displayName: "Harrison Price"
+          }
+          setUserAuthState({ user: userWithDisplayName, isUserLoading: false, userError: null });
         }
       },
       (error) => { // Auth listener error
@@ -123,26 +127,57 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           { name: 'Lucas Miller', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mia Miller', phone: '021-222-3333' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2025-10-25T00:00:00Z') }] },
           { name: 'Isla Garcia', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Leo Garcia', phone: '021-333-4444' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2026-07-18T00:00:00Z') }] },
         ];
-        for (const staff of initialStaff) { await addDoc(staffCollectionRef, staff); }
-      }
-      
-      // Seed Jobs
-      const jobsCollectionRef = collection(firestore, 'job_packs');
-      const jobsQuery = query(jobsCollectionRef, limit(1));
-      const jobsSnapshot = await getDocs(jobsQuery);
-
-      if (jobsSnapshot.empty) {
+        const addedDocs = [];
+        for (const staff of initialStaff) { 
+           const docRef = await addDoc(staffCollectionRef, staff);
+           addedDocs.push({ ...staff, id: docRef.id });
+        }
+         // Seed Jobs with correct staff IDs
+        const jobsCollectionRef = collection(firestore, 'job_packs');
         for (const job of jobData) {
-          const docToAdd: Omit<Job, 'id'> = {
-            ...job,
-            startDate: Timestamp.fromDate(new Date(job.startDate)),
-          };
-          await addDoc(jobsCollectionRef, docToAdd);
+            const stms = addedDocs.find(s => s.name === job.stms);
+            const tcs = job.tcs.map(jobTc => {
+                const tc = addedDocs.find(s => s.name === jobTc.name);
+                return { id: tc?.id || '', name: jobTc.name };
+            }).filter(tc => tc.id);
+
+            const docToAdd: Omit<Job, 'id'> = {
+                ...job,
+                stmsId: stms?.id || null,
+                tcs: tcs,
+                startDate: Timestamp.fromDate(new Date(job.startDate)),
+            };
+            await addDoc(jobsCollectionRef, docToAdd);
+        }
+      } else {
+        // If staff data exists, check if jobs exist
+         const jobsCollectionRef = collection(firestore, 'job_packs');
+        const jobsQuery = query(jobsCollectionRef, limit(1));
+        const jobsSnapshot = await getDocs(jobsQuery);
+
+        if (jobsSnapshot.empty) {
+            const staffSnapshot = await getDocs(staffCollectionRef);
+            const staffWithIds = staffSnapshot.docs.map(doc => ({ ...doc.data() as Staff, id: doc.id }));
+            
+            for (const job of jobData) {
+                const stms = staffWithIds.find(s => s.name === job.stms);
+                const tcs = job.tcs.map(jobTc => {
+                    const tc = staffWithIds.find(s => s.name === jobTc.name);
+                    return { id: tc?.id || '', name: jobTc.name };
+                }).filter(tc => tc.id);
+
+                const docToAdd: Omit<Job, 'id'> = {
+                    ...job,
+                    stmsId: stms?.id || null,
+                    tcs: tcs,
+                    startDate: Timestamp.fromDate(new Date(job.startDate)),
+                };
+                await addDoc(jobsCollectionRef, docToAdd);
+            }
         }
       }
     };
     
-    // Only run this check once when the provider mounts and firestore is available
     if(firestore) {
       seedInitialData();
     }
