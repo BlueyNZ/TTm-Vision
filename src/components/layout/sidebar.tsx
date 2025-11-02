@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -126,8 +125,8 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Support">
-              <Link href="#">
+            <SidebarMenuButton asChild tooltip="Support" isActive={pathname === "/support"}>
+              <Link href="/support">
                 <LifeBuoy />
                 <span>Support</span>
               </Link>

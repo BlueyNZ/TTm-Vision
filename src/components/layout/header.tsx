@@ -1,4 +1,3 @@
-
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -58,6 +57,7 @@ export function AppHeader() {
     const action = parts[2];
 
     if (page === 'settings') return 'Settings';
+    if (page === 'support') return 'Support';
 
     if (action === 'edit') {
       if(page === 'jobs') return 'Edit Job';
@@ -86,9 +86,9 @@ export function AppHeader() {
   }
 
 
-  if (pathParts.length > 1 || pathParts[0] === 'settings') {
+  if (pathParts.length > 1 || ['settings', 'support'].includes(pathParts[0])) {
       showBackButton = true;
-      if (pathParts[0] === 'settings') {
+      if (['settings', 'support'].includes(pathParts[0])) {
         backPath = '/dashboard';
       } else if (pathParts.length > 2 && pathParts[2] === 'edit') {
         backPath = `/${pathParts[0]}/${pathParts[1]}`;
@@ -145,7 +145,7 @@ export function AppHeader() {
             <DropdownMenuLabel>{user?.displayName || 'My Account'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push('/settings')}>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push('/support')}>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
