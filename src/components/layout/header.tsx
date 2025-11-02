@@ -3,11 +3,6 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -17,8 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, LogOut } from "lucide-react";
-import { Input } from "../ui/input";
+import { ArrowLeft, LogOut, ChevronDown } from "lucide-react";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -134,11 +128,9 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
       <div className="flex flex-1 items-center gap-4 md:ml-auto md:flex-initial md:justify-end">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={user?.photoURL || `https://picsum.photos/seed/${user?.uid}/200/200`} alt={user?.displayName || "User"} />
-                <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
-              </Avatar>
+            <Button variant="ghost" className="flex items-center gap-2">
+              <span>{user?.displayName || 'My Account'}</span>
+              <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
