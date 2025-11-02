@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Job, Staff } from "@/lib/data";
 import { collection, Timestamp } from "firebase/firestore";
-import { LoaderCircle, Circle, MapPin, Calendar, Users, UserSquare, MoreHorizontal } from "lucide-react";
+import { LoaderCircle, Circle, MapPin, Calendar, Users, UserSquare, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { format, isPast } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +17,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuPortal
 } from "@/components/ui/dropdown-menu";
 
 const getDisplayedStatus = (job: Job) => {
@@ -169,27 +164,27 @@ export default function DashboardPage() {
                                      <div className="pl-4">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                                                    <MoreHorizontal className="h-5 w-5" />
+                                                <Button variant="outline" size="icon" onClick={(e) => e.stopPropagation()}>
+                                                    <ChevronDown className="h-5 w-5" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                                <DropdownMenuItem>CREATE ALL Crew Timesheets</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE a Single Crew Timesheet</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Truck Inspection</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE ESTOP Inspection</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Stop/Go Briefing</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE TSL Decision Matrix</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Hazard ID (NZGTTM)</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Hazard ID</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Site Induction Signatures</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Pre-Installation Process</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE NEW On-Site Record</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Mobile Ops On-Site Record</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Job Note</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Incident or Event Report</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Site Audit (COPTTM SCR)</DropdownMenuItem>
-                                                <DropdownMenuItem>CREATE Client Feedback</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE ALL Crew Timesheets</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE a Single Crew Timesheet</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Truck Inspection</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE ESTOP Inspection</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Stop/Go Briefing</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE TSL Decision Matrix</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Hazard ID (NZGTTM)</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Hazard ID</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Site Induction Signatures</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Pre-Installation Process</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE NEW On-Site Record</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Mobile Ops On-Site Record</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Job Note</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Incident or Event Report</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Site Audit (COPTTM SCR)</DropdownMenuItem>
+                                                <DropdownMenuItem className="border my-1">CREATE Client Feedback</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
