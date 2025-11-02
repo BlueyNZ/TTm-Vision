@@ -27,12 +27,20 @@ interface StaffSelectorProps {
     selectedStaff?: Staff | null;
     onSelectStaff: (staff: Staff | null) => void;
     placeholder?: string;
-    loading?: boolean;
     disabledIds?: string[];
 }
 
-export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeholder = "Select staff...", loading = false, disabledIds = []}: StaffSelectorProps) {
+export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeholder = "Select staff...", disabledIds = []}: StaffSelectorProps) {
   const [open, setOpen] = React.useState(false)
+  const [value, setValue] = React.useState(() => selectedStaff?.name || "");
+
+  React.useEffect(() => {
+    if (selectedStaff) {
+      setValue(selectedStaff.name);
+    } else {
+      setValue("");
+    }
+  }, [selectedStaff]);
 
   const handleSelect = (currentValue: string) => {
     const staff = staffList.find(
@@ -42,6 +50,8 @@ export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeho
     setOpen(false);
   }
 
+  const isLoading = !staffList || staffList.length === 0;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -50,9 +60,9 @@ export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeho
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between"
-          disabled={loading}
+          disabled={isLoading}
         >
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center">
                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                 <span>Loading Staff...</span>

@@ -9,13 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState }from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 
 
 export default function JobEditPage() {
@@ -28,7 +27,6 @@ export default function JobEditPage() {
   const [job, setJob] = useState(jobData.find((j) => j.id === jobId));
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
-  const [tcSelectorValue, setTcSelectorValue] = useState<Staff | null>(null);
 
 
   const staffCollection = useMemoFirebase(() => {
@@ -65,8 +63,6 @@ export default function JobEditPage() {
     if (staff && !selectedTcs.find(tc => tc.id === staff.id) && selectedStms?.id !== staff.id) {
         setSelectedTcs([...selectedTcs, staff]);
     }
-    // Clear the selector after adding
-    setTcSelectorValue(null);
   };
 
   const handleRemoveTc = (staffId: string) => {
@@ -79,6 +75,10 @@ export default function JobEditPage() {
     if (staff) {
         handleRemoveTc(staff.id);
     }
+  }
+
+  const handleRemoveStms = () => {
+    setSelectedStms(null);
   }
 
 
@@ -119,23 +119,37 @@ export default function JobEditPage() {
           </div>
            <div className="space-y-2">
             <Label htmlFor="stms">STMS</Label>
-             <StaffSelector 
-                staffList={staffList || []}
-                selectedStaff={selectedStms}
-                onSelectStaff={handleSelectStms}
-                placeholder="Select STMS"
-                loading={isLoadingStaff}
-                disabledIds={selectedTcs.map(tc => tc.id)}
-             />
+             {selectedStms ? (
+                <div className="flex items-center justify-between p-2 bg-muted rounded-md">
+                    <div className='flex items-center gap-3'>
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={`https://picsum.photos/seed/${selectedStms.id}/200/200`} />
+                            <AvatarFallback>{selectedStms.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-medium text-sm">{selectedStms.name}</p>
+                            <p className="text-xs text-muted-foreground">{selectedStms.role}</p>
+                        </div>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={handleRemoveStms}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+             ) : (
+                <StaffSelector 
+                    staffList={staffList || []}
+                    onSelectStaff={handleSelectStms}
+                    placeholder="Select STMS"
+                    disabledIds={selectedTcs.map(tc => tc.id)}
+                />
+             )}
           </div>
           <div className="space-y-2">
             <Label>Traffic Controllers (TCs)</Label>
              <StaffSelector 
                 staffList={staffList || []}
-                selectedStaff={tcSelectorValue}
                 onSelectStaff={handleAddTc}
                 placeholder="Add a TC to the job"
-                loading={isLoadingStaff}
                 disabledIds={[selectedStms?.id, ...selectedTcs.map(tc => tc.id)].filter((id): id is string => !!id)}
              />
              <div className="space-y-2 pt-2">
