@@ -28,6 +28,9 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('keepLoggedIn', JSON.stringify(keepLoggedIn));
+      }
       const persistence = keepLoggedIn ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
       await signInWithEmailAndPassword(auth, email, password);
