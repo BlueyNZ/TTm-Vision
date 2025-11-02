@@ -27,16 +27,33 @@ export function AppHeader() {
   const pathParts = pathname.split("/").filter(Boolean);
   let title = pathParts[0] || "Dashboard";
   let showBackButton = false;
+  let backPath = "";
 
   if (pathParts.length > 1) {
       showBackButton = true;
-      if (pathParts[1] !== 'create' && pathParts[2] !== 'edit') {
-        title = "Job Details"
+      if (pathParts.length > 2 && pathParts[2] === 'edit') {
+        // On an edit page like /jobs/[id]/edit, go back to the details page /jobs/[id]
+        title = "Edit " + (pathParts[0] === 'jobs' ? 'Job' : 'Item');
+        backPath = `/${pathParts[0]}/${pathParts[1]}`;
       } else {
-        title = pathParts.length > 2 ? "Edit Job" : "Create Job";
+        // On a detail page like /jobs/[id], go back to the list page /jobs
+        title = (pathParts[0] === 'jobs' ? 'Job' : 'Staff') + " Details";
+        backPath = `/${pathParts[0]}`;
+      }
+      if (pathParts[1] === 'create') {
+        title = "Create " + (pathParts[0] === 'jobs' ? 'Job' : 'Item');
+        backPath = `/${pathParts[0]}`;
       }
   } else if (pathParts[0]) {
       title = pathParts[0].replace(/-/g, " ");
+  }
+
+  const handleBackClick = () => {
+    if (backPath) {
+      router.push(backPath);
+    } else {
+      router.back();
+    }
   }
 
   return (
@@ -44,7 +61,7 @@ export function AppHeader() {
       <SidebarTrigger className="md:hidden" />
       <div className="flex-1 flex items-center gap-4">
         {showBackButton && (
-           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => router.back()}>
+           <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBackClick}>
               <ArrowLeft className="h-4 w-4" />
               <span className="sr-only">Back</span>
             </Button>
