@@ -1,3 +1,4 @@
+
 'use client';
 import { Staff } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -39,7 +40,9 @@ export function CertificationsExpiry() {
 
 
   const expiringCerts: CertificationWithStaff[] = (staffData ?? []).flatMap(staff => 
-    (staff.certifications || []).map(cert => {
+    (staff.certifications || [])
+    .filter(cert => cert.name !== 'TTMW') // Exclude non-expiring TTMW certs
+    .map(cert => {
       // Firestore timestamp needs to be converted to Date object for date-fns
       const expiryDate = (cert.expiryDate as any).toDate ? (cert.expiryDate as any).toDate() : new Date(cert.expiryDate);
       return {
