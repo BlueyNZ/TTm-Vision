@@ -79,48 +79,44 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
 
   const form = useForm<z.infer<typeof staffSchema>>({
     resolver: zodResolver(staffSchema),
-    defaultValues: {
-      name: "",
-      certifications: [],
-      emergencyContactName: "",
-      emergencyContactNumber: "",
-      accessLevel: "Staff Member",
-    },
   });
   
-  useEffect(() => {
-    if (isEditMode && staffToEdit) {
-      const certsWithDates = staffToEdit.certifications?.map(c => {
-        // Firestore timestamp needs to be converted to Date object for the form
-        const expiryDate = c.expiryDate instanceof Timestamp ? c.expiryDate.toDate() : new Date(c.expiryDate);
-        return {...c, expiryDate };
-      }) || [];
-
-      form.reset({
-        name: staffToEdit.name,
-        role: staffToEdit.role,
-        certifications: certsWithDates,
-        emergencyContactName: staffToEdit.emergencyContact.name,
-        emergencyContactNumber: staffToEdit.emergencyContact.phone,
-        accessLevel: staffToEdit.accessLevel,
-      });
-    } else {
-      form.reset({
-        name: "",
-        role: undefined,
-        certifications: [],
-        emergencyContactName: "",
-        emergencyContactNumber: "",
-        accessLevel: "Staff Member",
-      });
-    }
-  }, [staffToEdit, form, isEditMode, open]);
-
-
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: "certifications",
   });
+
+  useEffect(() => {
+    if (open) {
+      if (isEditMode && staffToEdit) {
+        const certsWithDates = staffToEdit.certifications?.map(c => ({
+          ...c,
+          expiryDate: c.expiryDate instanceof Timestamp ? c.expiryDate.toDate() : new Date(c.expiryDate),
+        })) || [];
+
+        form.reset({
+          name: staffToEdit.name,
+          role: staffToEdit.role,
+          certifications: certsWithDates,
+          emergencyContactName: staffToEdit.emergencyContact.name,
+          emergencyContactNumber: staffToEdit.emergencyContact.phone,
+          accessLevel: staffToEdit.accessLevel,
+        });
+        replace(certsWithDates); // Explicitly set the fields in the field array
+      } else {
+        form.reset({
+          name: "",
+          role: undefined,
+          certifications: [],
+          emergencyContactName: "",
+          emergencyContactNumber: "",
+          accessLevel: "Staff Member",
+        });
+        replace([]); // Clear the field array for new entries
+      }
+    }
+  }, [staffToEdit, form, isEditMode, open, replace]);
+
 
   function onSubmit(data: z.infer<typeof staffSchema>) {
     if (!firestore) return;
@@ -128,7 +124,10 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     const staffPayload = {
         name: data.name,
         role: data.role,
-        certifications: data.certifications || [],
+        certifications: data.certifications?.map(cert => ({
+          ...cert,
+          expiryDate: Timestamp.fromDate(cert.expiryDate)
+        })) || [],
         emergencyContact: {
             name: data.emergencyContactName,
             phone: data.emergencyContactNumber,
