@@ -1,3 +1,4 @@
+
 import { jobData } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 
 export default function JobsPage() {
@@ -54,11 +56,17 @@ export default function JobsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                       {job.permitUrl && <DropdownMenuItem>
-                        <FileText className="mr-2 h-4 w-4" />
-                        View Permit
-                      </DropdownMenuItem>}
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
+                       {job.permitUrl && (
+                        <DropdownMenuItem asChild>
+                          <Link href={job.permitUrl} target="_blank">
+                            <FileText className="mr-2 h-4 w-4" />
+                            View Permit
+                          </Link>
+                        </DropdownMenuItem>
+                       )}
+                      <DropdownMenuItem asChild>
+                        <Link href={`/jobs/${job.id}`}>View Details</Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem>Log Hazard</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
