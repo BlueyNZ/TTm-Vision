@@ -1,46 +1,562 @@
 {
   "entities": {
-    "user": {
-      "title": "User",
-      "description": "A user of the application.",
+    "JobPack": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "JobPack",
       "type": "object",
+      "description": "Represents a job pack containing details about a specific job.",
       "properties": {
-        "name": {
+        "id": {
           "type": "string",
-          "description": "The user's name."
+          "description": "Unique identifier for the Job Pack entity."
         },
-        "email": {
+        "jobName": {
           "type": "string",
-          "format": "email",
-          "description": "The user's email address."
+          "description": "The name or title of the job."
         },
-        "photoURL": {
+        "description": {
           "type": "string",
-          "format": "uri",
-          "description": "The URL of the user's profile picture."
+          "description": "Detailed description of the job."
         },
-        "isAdmin": {
-          "type": "boolean",
-          "description": "Whether the user is an administrator."
+        "location": {
+          "type": "string",
+          "description": "The location or address of the job site."
+        },
+        "permitId": {
+          "type": "string",
+          "description": "Reference to Permit. (Relationship: JobPack 1:1 Permit)"
+        },
+        "scheduleId": {
+          "type": "string",
+          "description": "Reference to Schedule. (Relationship: JobPack 1:1 Schedule)"
+        },
+        "hazardLogIds": {
+          "type": "array",
+          "description": "References to HazardLogs. (Relationship: JobPack 1:N HazardLog)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "equipmentChecklistId": {
+          "type": "string",
+          "description": "Reference to EquipmentChecklist. (Relationship: JobPack 1:1 EquipmentChecklist)"
+        },
+        "completionSignOffId": {
+          "type": "string",
+          "description": "Reference to CompletionSignOff. (Relationship: JobPack 1:1 CompletionSignOff)"
         }
       },
       "required": [
+        "id",
+        "jobName",
+        "description",
+        "location"
+      ]
+    },
+    "Permit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Permit",
+      "type": "object",
+      "description": "Represents a permit associated with a job.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Permit entity."
+        },
+        "documentUrl": {
+          "type": "string",
+          "description": "URL to the permit document.",
+          "format": "uri"
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "Expiry date of the permit.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "documentUrl",
+        "expiryDate"
+      ]
+    },
+    "Schedule": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Schedule",
+      "type": "object",
+      "description": "Represents the schedule for a job.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Schedule entity."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Start date of the job schedule.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "End date of the job schedule.",
+          "format": "date-time"
+        },
+        "staffIds": {
+          "type": "array",
+          "description": "References to Staff. (Relationship: Schedule N:N Staff)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "startDate",
+        "endDate"
+      ]
+    },
+    "Staff": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Staff",
+      "type": "object",
+      "description": "Represents a staff member.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Staff entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the staff member."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the staff member (e.g., TC, STMS)."
+        },
+        "clockInTime": {
+          "type": "string",
+          "description": "Clock in time of the staff member.",
+          "format": "date-time"
+        },
+        "clockOutTime": {
+          "type": "string",
+          "description": "Clock out time of the staff member.",
+          "format": "date-time"
+        },
+        "certificationIds": {
+          "type": "array",
+          "description": "References to Certifications. (Relationship: Staff N:N Certification)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
         "name",
-        "email"
+        "role"
+      ]
+    },
+    "Certification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Certification",
+      "type": "object",
+      "description": "Represents a staff certification.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Certification entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the certification (e.g., TC, STMS)."
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "Expiry date of the certification.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "expiryDate"
+      ]
+    },
+    "HazardLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HazardLog",
+      "type": "object",
+      "description": "Represents a hazard log entry.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the HazardLog entity."
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL to the photo of the hazard.",
+          "format": "uri"
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the hazard."
+        },
+        "jobPackId": {
+          "type": "string",
+          "description": "Reference to JobPack. (Relationship: JobPack 1:N HazardLog)"
+        }
+      },
+      "required": [
+        "id",
+        "photoUrl",
+        "description"
+      ]
+    },
+    "EquipmentChecklist": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EquipmentChecklist",
+      "type": "object",
+      "description": "Represents an equipment checklist for a job.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the EquipmentChecklist entity."
+        },
+        "preJobSignOff": {
+          "type": "boolean",
+          "description": "Indicates if the pre-job checklist has been signed off."
+        },
+        "postJobSignOff": {
+          "type": "boolean",
+          "description": "Indicates if the post-job checklist has been signed off."
+        }
+      },
+      "required": [
+        "id",
+        "preJobSignOff",
+        "postJobSignOff"
+      ]
+    },
+    "CompletionSignOff": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CompletionSignOff",
+      "type": "object",
+      "description": "Represents the completion sign-off for a job.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CompletionSignOff entity."
+        },
+        "siteClearancePhotoUrl": {
+          "type": "string",
+          "description": "URL to the site clearance photo.",
+          "format": "uri"
+        },
+        "clientSignature": {
+          "type": "string",
+          "description": "Client or council signature (e.g., base64 encoded image)."
+        }
+      },
+      "required": [
+        "id",
+        "siteClearancePhotoUrl",
+        "clientSignature"
+      ]
+    },
+    "Truck": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Truck",
+      "type": "object",
+      "description": "Represents a truck in the fleet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Truck entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name or identifier of the truck."
+        },
+        "serviceDueDate": {
+          "type": "string",
+          "description": "The date when the truck is due for service.",
+          "format": "date-time"
+        },
+        "kilometers": {
+          "type": "number",
+          "description": "The current kilometers on the truck."
+        },
+        "defectReportId": {
+          "type": "string",
+          "description": "Reference to DefectReport. (Relationship: Truck 1:1 DefectReport)"
+        },
+        "fuelLogIds": {
+          "type": "array",
+          "description": "References to FuelLogs. (Relationship: Truck 1:N FuelLog)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "serviceDueDate",
+        "kilometers"
+      ]
+    },
+    "DefectReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DefectReport",
+      "type": "object",
+      "description": "Represents a defect report for a truck.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DefectReport entity."
+        },
+        "checklistComplete": {
+          "type": "boolean",
+          "description": "Indicates if the defect report checklist is complete."
+        },
+        "defectsFound": {
+          "type": "boolean",
+          "description": "Indicates whether or not a defect was found."
+        }
+      },
+      "required": [
+        "id",
+        "checklistComplete",
+        "defectsFound"
+      ]
+    },
+    "FuelLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FuelLog",
+      "type": "object",
+      "description": "Represents a fuel log entry for a truck.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FuelLog entity."
+        },
+        "volume": {
+          "type": "number",
+          "description": "The volume of fuel added (e.g., in liters)."
+        },
+        "cost": {
+          "type": "number",
+          "description": "The cost of the fuel."
+        },
+        "truckId": {
+          "type": "string",
+          "description": "Reference to Truck. (Relationship: Truck 1:N FuelLog)"
+        }
+      },
+      "required": [
+        "id",
+        "volume",
+        "cost"
       ]
     }
   },
   "auth": {
     "providers": [
+      "password",
       "anonymous"
     ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/user"
+    "structure": [
+      {
+        "path": "/job_packs/{jobPackId}",
+        "definition": {
+          "entityName": "JobPack",
+          "schema": {
+            "$ref": "#/backend/entities/JobPack"
+          },
+          "description": "Represents a job pack. Includes denormalized 'members' map for authorization independence.",
+          "params": [
+            {
+              "name": "jobPackId",
+              "description": "The unique identifier for the JobPack."
+            }
+          ]
+        }
       },
-      "description": "Stores user profile information."
-    }
+      {
+        "path": "/job_packs/{jobPackId}/permit",
+        "definition": {
+          "entityName": "Permit",
+          "schema": {
+            "$ref": "#/backend/entities/Permit"
+          },
+          "description": "Represents the permit associated with a JobPack. Inherits authorization from the parent JobPack.",
+          "params": [
+            {
+              "name": "jobPackId",
+              "description": "The unique identifier for the JobPack."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/job_packs/{jobPackId}/schedule",
+        "definition": {
+          "entityName": "Schedule",
+          "schema": {
+            "$ref": "#/backend/entities/Schedule"
+          },
+          "description": "Represents the schedule associated with a JobPack. Inherits authorization from the parent JobPack.",
+          "params": [
+            {
+              "name": "jobPackId",
+              "description": "The unique identifier for the JobPack."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/job_packs/{jobPackId}/hazard_logs/{hazardLogId}",
+        "definition": {
+          "entityName": "HazardLog",
+          "schema": {
+            "$ref": "#/backend/entities/HazardLog"
+          },
+          "description": "Represents a hazard log entry for a JobPack. Inherits authorization from the parent JobPack.",
+          "params": [
+            {
+              "name": "jobPackId",
+              "description": "The unique identifier for the JobPack."
+            },
+            {
+              "name": "hazardLogId",
+              "description": "The unique identifier for the HazardLog."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/job_packs/{jobPackId}/equipment_checklist",
+        "definition": {
+          "entityName": "EquipmentChecklist",
+          "schema": {
+            "$ref": "#/backend/entities/EquipmentChecklist"
+          },
+          "description": "Represents the equipment checklist for a JobPack. Inherits authorization from the parent JobPack.",
+          "params": [
+            {
+              "name": "jobPackId",
+              "description": "The unique identifier for the JobPack."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/job_packs/{jobPackId}/completion_sign_off",
+        "definition": {
+          "entityName": "CompletionSignOff",
+          "schema": {
+            "$ref": "#/backend/entities/CompletionSignOff"
+          },
+          "description": "Represents the completion sign-off for a JobPack. Inherits authorization from the parent JobPack.",
+          "params": [
+            {
+              "name": "jobPackId",
+              "description": "The unique identifier for the JobPack."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trucks/{truckId}",
+        "definition": {
+          "entityName": "Truck",
+          "schema": {
+            "$ref": "#/backend/entities/Truck"
+          },
+          "description": "Represents a truck in the fleet.",
+          "params": [
+            {
+              "name": "truckId",
+              "description": "The unique identifier for the Truck."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trucks/{truckId}/defect_report",
+        "definition": {
+          "entityName": "DefectReport",
+          "schema": {
+            "$ref": "#/backend/entities/DefectReport"
+          },
+          "description": "Represents the defect report associated with a Truck.",
+          "params": [
+            {
+              "name": "truckId",
+              "description": "The unique identifier for the Truck."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trucks/{truckId}/fuel_logs/{fuelLogId}",
+        "definition": {
+          "entityName": "FuelLog",
+          "schema": {
+            "$ref": "#/backend/entities/FuelLog"
+          },
+          "description": "Represents a fuel log entry for a Truck.",
+          "params": [
+            {
+              "name": "truckId",
+              "description": "The unique identifier for the Truck."
+            },
+            {
+              "name": "fuelLogId",
+              "description": "The unique identifier for the FuelLog."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/staff/{staffId}",
+        "definition": {
+          "entityName": "Staff",
+          "schema": {
+            "$ref": "#/backend/entities/Staff"
+          },
+          "description": "Represents a staff member.  Data is private and path-based to the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the User."
+            },
+            {
+              "name": "staffId",
+              "description": "The unique identifier for the Staff."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/certifications/{certificationId}",
+        "definition": {
+          "entityName": "Certification",
+          "schema": {
+            "$ref": "#/backend/entities/Certification"
+          },
+          "description": "Represents a certification.",
+          "params": [
+            {
+              "name": "certificationId",
+              "description": "The unique identifier for the Certification."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support TrafficFlow's core features (Job Packs, Scheduling, Truck/Staff Management) while adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. The structure prioritizes denormalization to avoid `get()` calls in security rules, ensuring atomic operations and easier debugging. Segregation is used to enforce consistent security postures within collections. Explicit state modeling via `status` fields is encouraged.\n\n**Authorization Independence (Denormalization):**\n*   For collaborative data like JobPacks, the `members` map (containing user UIDs and their roles) is denormalized into each document.  This eliminates the need to `get()` parent document data in security rules when accessing JobPack or related subcollections (Permits, Schedules, HazardLogs, etc.).\n*   Ownership is managed via path-based rules (e.g., `/users/{userId}/staff/{staffId}`).\n\n**QAPs (Rules Are Not Filters):**\n*   Structural segregation: Collections like `/trucks` and `/staff` are used to store global data. User-specific data resides under `/users/{userId}`, enabling secure list operations based on path ownership.\n*   Membership maps: The `members` map in JobPacks allows secure listing of job packs a user has access to (roles are also denormalized).\n\n**Specific Design Choices:**\n*   **JobPacks:** This is the central entity. Subcollections (permits, schedules, hazard logs) are nested under it for organizational purposes. The `members` map is crucial for collaborative access.\n*   **Staff and Trucks:** Staff data is primarily private and path-based to the user, whereas Trucks can be globally managed.\n*   **HazardLogs:** Placed as a subcollection of `JobPacks` to limit listing to members only.\n*   **Service Reminders & Expiry Tracking:** These features are implemented through queries and business logic, not directly reflected in the data structure, as the data is derived from existing fields (`serviceDueDate`, `certification.expiryDate`).\n\nThis structure ensures that security rules can be written clearly and efficiently, preventing unauthorized data access while enabling powerful features such as collaborative job management, asset tracking, and regulatory compliance."
   }
 }
