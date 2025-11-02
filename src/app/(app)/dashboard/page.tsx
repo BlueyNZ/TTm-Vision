@@ -1,9 +1,10 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { Job } from "@/lib/data";
+import { Job, Staff } from "@/lib/data";
 import { collection, Timestamp } from "firebase/firestore";
 import { LoaderCircle, Circle, MapPin, Calendar } from "lucide-react";
 import Link from "next/link";
@@ -53,25 +54,30 @@ export default function DashboardPage() {
     if (!firestore) return null;
     return collection(firestore, 'job_packs');
   }, [firestore]);
-
   const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsCollection);
 
+  const staffCollection = useMemoFirebase(() => {
+    if(!firestore) return null;
+    return collection(firestore, 'staff');
+  }, [firestore]);
+  const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffCollection);
+
+
   const assignedJobs = useMemoFirebase(() => {
-    if (!user || !jobData) return [];
-    
-    // In a real application, the user's UID from Firebase Auth would be linked to a Staff ID.
-    // For this demo, we'll find the 'Harrison Price' staff member and use their jobs as the example.
-    // This part would need to be replaced with actual user-to-staff-ID mapping.
-    const mockCurrentStaffId = "Ua30aX8aVqsDE2gE1pDR"; // A mock Staff ID for Harrison Price
+    if (!user || !jobData || !staffData) return [];
+
+    // Find the staff member corresponding to the logged-in user
+    const currentStaffMember = staffData.find(staff => staff.name === user.displayName);
+    if (!currentStaffMember) return [];
 
     return jobData.filter(job => {
-        const isStms = job.stmsId === mockCurrentStaffId;
-        const isTc = job.tcs.some(tc => tc.id === mockCurrentStaffId);
+        const isStms = job.stmsId === currentStaffMember.id;
+        const isTc = job.tcs.some(tc => tc.id === currentStaffMember.id);
         return isStms || isTc;
     });
-  }, [user, jobData]);
+  }, [user, jobData, staffData]);
 
-  const isLoading = isUserLoading || isJobsLoading;
+  const isLoading = isUserLoading || isJobsLoading || isStaffLoading;
 
   return (
     <TooltipProvider>
