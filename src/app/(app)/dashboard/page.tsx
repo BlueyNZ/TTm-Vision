@@ -66,7 +66,6 @@ export default function DashboardPage() {
   const assignedJobs = useMemoFirebase(() => {
     if (!user || !jobData || !staffData) return [];
 
-    // Find the staff member corresponding to the logged-in user
     const currentStaffMember = staffData.find(staff => staff.name === user.displayName);
     if (!currentStaffMember) return [];
 
@@ -74,6 +73,11 @@ export default function DashboardPage() {
         const isStms = job.stmsId === currentStaffMember.id;
         const isTc = job.tcs.some(tc => tc.id === currentStaffMember.id);
         return isStms || isTc;
+    })
+    .sort((a, b) => {
+        const dateA = a.startDate instanceof Timestamp ? a.startDate.toDate() : new Date(a.startDate);
+        const dateB = b.startDate instanceof Timestamp ? b.startDate.toDate() : new Date(b.startDate);
+        return dateA.getTime() - dateB.getTime();
     });
   }, [user, jobData, staffData]);
 
