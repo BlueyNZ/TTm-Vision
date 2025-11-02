@@ -32,7 +32,6 @@ export default function AppLayout({
   
   // --- TEMPORARY CHANGE ---
   // This is temporarily set to true to allow you to make yourself an admin.
-  // We will change this back to: const isAdmin = accessLevel === 'Admin';
   const isAdmin = true;
 
 
@@ -55,7 +54,7 @@ export default function AppLayout({
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <AppSidebar accessLevel={accessLevel} />
+        <AppSidebar isAdmin={isAdmin} />
         <div className="flex flex-1 flex-col">
           <AppHeader />
           <main className="flex-1 p-4 sm:p-6 bg-background">

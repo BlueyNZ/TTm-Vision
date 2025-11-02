@@ -33,13 +33,12 @@ import {
 import { Staff } from "@/lib/data";
 
 interface AppSidebarProps {
-  accessLevel?: Staff['accessLevel'];
+  isAdmin?: boolean;
 }
 
-export function AppSidebar({ accessLevel }: AppSidebarProps) {
+export function AppSidebar({ isAdmin }: AppSidebarProps) {
   const pathname = usePathname();
   const isAdminPagesActive = ["/admin", "/staff", "/fleet", "/jobs"].some(path => pathname.startsWith(path));
-  const isAdmin = accessLevel === 'Admin';
 
   return (
     <Sidebar>
