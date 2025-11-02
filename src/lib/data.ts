@@ -1,12 +1,15 @@
+
+export type Certification = {
+  name: 'TTM' | 'TMO-NP' | 'TMO' | 'STMS-U' | 'STMS-L1' | 'STMS-L2' | 'STMS-L3' | 'STMS-NP';
+  expiryDate: Date;
+};
+
 export type Staff = {
   id: string;
   name: string;
   role: 'TC' | 'STMS' | 'Operator';
   avatarUrl: string;
-  certifications: {
-    name: 'TTM' | 'TMO-NP' | 'TMO' | 'STMS-U' | 'STMS-L1 - L3' | 'STMS-NP' | 'First Aid' | 'TC' | 'STMS Level 1';
-    expiryDate: Date;
-  }[];
+  certifications: Certification[];
 };
 
 export type Truck = {
@@ -36,8 +39,8 @@ export const staffData: Staff[] = [
     role: 'STMS',
     avatarUrl: '/avatars/avatar-1.png',
     certifications: [
-      { name: 'STMS Level 1', expiryDate: new Date(today.getFullYear() + 1, today.getMonth(), 15) },
-      { name: 'First Aid', expiryDate: new Date(today.getFullYear(), today.getMonth() + 2, 5) },
+      { name: 'STMS-L1', expiryDate: new Date(today.getFullYear() + 1, today.getMonth(), 15) },
+      { name: 'TMO', expiryDate: new Date(today.getFullYear(), today.getMonth() + 2, 5) },
     ],
   },
   {
@@ -46,7 +49,7 @@ export const staffData: Staff[] = [
     role: 'TC',
     avatarUrl: '/avatars/avatar-2.png',
     certifications: [
-      { name: 'TC', expiryDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 20) }, // Expiring soon
+      { name: 'TTM', expiryDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 20) }, // Expiring soon
     ],
   },
   {
@@ -55,7 +58,7 @@ export const staffData: Staff[] = [
     role: 'Operator',
     avatarUrl: '/avatars/avatar-3.png',
     certifications: [
-       { name: 'TC', expiryDate: new Date(today.getFullYear() - 1, today.getMonth(), 1) }, // Expired
+       { name: 'TMO-NP', expiryDate: new Date(today.getFullYear() - 1, today.getMonth(), 1) }, // Expired
     ],
   },
    {
@@ -64,7 +67,7 @@ export const staffData: Staff[] = [
     role: 'STMS',
     avatarUrl: '/avatars/avatar-4.png',
     certifications: [
-      { name: 'STMS Level 1', expiryDate: new Date(today.getFullYear() + 2, 5, 20) },
+      { name: 'STMS-L2', expiryDate: new Date(today.getFullYear() + 2, 5, 20) },
     ],
   },
 ];
