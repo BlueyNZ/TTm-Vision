@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { TrafficCone, LoaderCircle } from 'lucide-react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useAuth } from '@/firebase';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -43,53 +44,55 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="mb-4 flex justify-center">
-            <TrafficCone className="h-12 w-12 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">Welcome to TrafficFlow</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader className="text-center">
+            <div className="mb-4 flex justify-center">
+              <TrafficCone className="h-12 w-12 text-primary" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+            <CardTitle className="text-2xl">Welcome to TrafficFlow</CardTitle>
+            <CardDescription>Enter your credentials to access your account</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                Login
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4">
+            <div className="text-sm text-muted-foreground">
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" className="font-semibold text-primary hover:underline">
+                Sign up
+              </Link>
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-              Login
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <div className="text-sm text-muted-foreground">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="font-semibold text-primary hover:underline">
-              Sign up
-            </Link>
-          </div>
-        </CardFooter>
-      </Card>
-    </div>
+          </CardFooter>
+        </Card>
+      </div>
+    </ThemeProvider>
   );
 }

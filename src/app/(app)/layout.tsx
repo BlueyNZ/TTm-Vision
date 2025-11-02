@@ -9,6 +9,7 @@ import { useEffect, useMemo } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Staff } from "@/lib/data";
 import { collection, query, where } from "firebase/firestore";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export default function AppLayout({
   children,
@@ -50,16 +51,23 @@ export default function AppLayout({
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar isAdmin={isAdmin} />
-        <div className="flex flex-1 flex-col">
-          <AppHeader />
-          <main className="flex-1 p-4 sm:p-6 bg-background">
-            {children}
-          </main>
+    <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+    >
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar isAdmin={isAdmin} />
+          <div className="flex flex-1 flex-col">
+            <AppHeader />
+            <main className="flex-1 p-4 sm:p-6 bg-background">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }

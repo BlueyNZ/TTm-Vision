@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -23,7 +24,7 @@ export default function SettingsPage() {
     const firestore = useFirestore();
     const auth = useAuth();
     const { toast } = useToast();
-    const { setTheme } = useTheme();
+    const { theme, setTheme } = useTheme();
 
     const [name, setName] = useState('');
     const [emergencyContactName, setEmergencyContactName] = useState('');
@@ -106,11 +107,11 @@ export default function SettingsPage() {
                             Enable dark mode for a better experience at night.
                         </p>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <Button variant="outline" onClick={() => setTheme('light')}>Light</Button>
-                        <Button variant="outline" onClick={() => setTheme('dark')}>Dark</Button>
-                        <Button variant="outline" onClick={() => setTheme('system')}>System</Button>
-                    </div>
+                    <Switch
+                        id="dark-mode"
+                        checked={theme === 'dark'}
+                        onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                    />
                 </div>
             </CardContent>
         </Card>
