@@ -31,7 +31,7 @@ export default function AppLayout({
   const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
   const accessLevel = currentUserStaffProfile?.accessLevel;
   
-  const isAdmin = true;
+  const isAdmin = accessLevel === 'Admin';
 
 
   const isLoading = isUserLoading || isStaffLoading;
