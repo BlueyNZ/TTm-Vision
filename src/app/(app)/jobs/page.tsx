@@ -100,9 +100,6 @@ export default function JobsPage() {
                       <DropdownMenuItem asChild>
                         <Link href={`/jobs/${job.id}`}>View Job Pack</Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/jobs/${job.id}/edit`}>Edit</Link>
-                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
