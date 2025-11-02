@@ -41,9 +41,12 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, toDate } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Staff } from "@/lib/data";
+import { useFirestore } from "@/firebase";
+import { collection, doc, serverTimestamp } from "firebase/firestore";
+import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -57,54 +60,46 @@ const staffSchema = z.object({
   accessLevel: z.enum(["Staff Member", "Admin"]),
 });
 
-type StaffFormValues = Omit<Staff, 'id' | 'avatarUrl' | 'emergencyContact' | 'accessLevel'> & {
-    emergencyContactName: string;
-    emergencyContactNumber: string;
-    accessLevel: 'Staff Member' | 'Admin';
-};
-
-
 type StaffDialogProps = {
   children: React.ReactNode;
   staffToEdit?: Staff | null;
-  onAddStaff: (staff: Omit<Staff, 'id' | 'avatarUrl'>) => void;
-  onEditStaff?: (staff: Staff) => void;
+  onDialogClose: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
 
-export function AddStaffDialog({ children, staffToEdit, onAddStaff, onEditStaff, open: controlledOpen, onOpenChange: setControlledOpen }: StaffDialogProps) {
+export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: controlledOpen, onOpenChange: setControlledOpen }: StaffDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = setControlledOpen ?? setInternalOpen;
   
   const isEditMode = !!staffToEdit;
   const { toast } = useToast();
+  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof staffSchema>>({
     resolver: zodResolver(staffSchema),
-    defaultValues: isEditMode ? {
-      name: staffToEdit.name,
-      role: staffToEdit.role,
-      certifications: staffToEdit.certifications,
-      emergencyContactName: staffToEdit.emergencyContact.name,
-      emergencyContactNumber: staffToEdit.emergencyContact.phone,
-      accessLevel: staffToEdit.accessLevel,
-    } : {
+    defaultValues: {
       name: "",
       certifications: [],
-      emergencyContactName: "Jane Doe",
-      emergencyContactNumber: "021 987 6543",
+      emergencyContactName: "",
+      emergencyContactNumber: "",
       accessLevel: "Staff Member",
     },
   });
-
+  
   useEffect(() => {
     if (isEditMode && staffToEdit) {
+      const certsWithDates = staffToEdit.certifications?.map(c => {
+        // Firestore timestamp needs to be converted to Date object for the form
+        const expiryDate = (c.expiryDate as any).toDate ? (c.expiryDate as any).toDate() : new Date(c.expiryDate);
+        return {...c, expiryDate };
+      }) || [];
+
       form.reset({
         name: staffToEdit.name,
         role: staffToEdit.role,
-        certifications: staffToEdit.certifications.map(c => ({...c, expiryDate: new Date(c.expiryDate)})),
+        certifications: certsWithDates,
         emergencyContactName: staffToEdit.emergencyContact.name,
         emergencyContactNumber: staffToEdit.emergencyContact.phone,
         accessLevel: staffToEdit.accessLevel,
@@ -114,8 +109,8 @@ export function AddStaffDialog({ children, staffToEdit, onAddStaff, onEditStaff,
         name: "",
         role: undefined,
         certifications: [],
-        emergencyContactName: "Jane Doe",
-        emergencyContactNumber: "021 987 6543",
+        emergencyContactName: "",
+        emergencyContactNumber: "",
         accessLevel: "Staff Member",
       });
     }
@@ -128,7 +123,9 @@ export function AddStaffDialog({ children, staffToEdit, onAddStaff, onEditStaff,
   });
 
   function onSubmit(data: z.infer<typeof staffSchema>) {
-    const staffData = {
+    if (!firestore) return;
+    
+    const staffPayload = {
         name: data.name,
         role: data.role,
         certifications: data.certifications || [],
@@ -139,14 +136,16 @@ export function AddStaffDialog({ children, staffToEdit, onAddStaff, onEditStaff,
         accessLevel: data.accessLevel,
     };
 
-    if (isEditMode && onEditStaff && staffToEdit) {
-      onEditStaff({ ...staffToEdit, ...staffData });
+    if (isEditMode && staffToEdit) {
+      const staffDocRef = doc(firestore, 'staff', staffToEdit.id);
+      setDocumentNonBlocking(staffDocRef, staffPayload, { merge: true });
       toast({
         title: "Staff Updated",
         description: `${data.name}'s details have been updated.`,
       });
     } else {
-      onAddStaff(staffData);
+      const staffCollectionRef = collection(firestore, 'staff');
+      addDocumentNonBlocking(staffCollectionRef, staffPayload);
       toast({
         title: "Staff Added",
         description: `${data.name} has been added to the team.`,
@@ -154,10 +153,11 @@ export function AddStaffDialog({ children, staffToEdit, onAddStaff, onEditStaff,
     }
     
     setOpen(false);
+    onDialogClose();
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) onDialogClose(); }}>
       {!isEditMode && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -341,7 +341,7 @@ export function AddStaffDialog({ children, staffToEdit, onAddStaff, onEditStaff,
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => { setOpen(false); onDialogClose(); }}>Cancel</Button>
               <Button type="submit">{isEditMode ? 'Save Changes' : 'Add Staff'}</Button>
             </DialogFooter>
           </form>

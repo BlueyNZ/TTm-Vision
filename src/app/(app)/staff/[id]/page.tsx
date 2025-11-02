@@ -1,18 +1,18 @@
-
 'use client';
 
-import { staffData, Staff } from "@/lib/data";
+import { Staff } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Phone, Shield, User, Award, Edit } from "lucide-react";
+import { Phone, Shield, User, Award, Edit, LoaderCircle } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { AddStaffDialog } from "@/components/staff/add-staff-dialog";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
 
 function getCertificationStatus(expiryDate: Date): { label: string, variant: "destructive" | "warning" | "success" } {
   const today = new Date();
@@ -29,33 +29,35 @@ function getCertificationStatus(expiryDate: Date): { label: string, variant: "de
 
 
 export default function StaffProfilePage({ params }: { params: { id: string } }) {
-  const [staffMember, setStaffMember] = useState<Staff | undefined>(undefined);
   const [isEditing, setIsEditing] = useState(false);
-  const { toast } = useToast();
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    const member = staffData.find((s) => s.id === params.id);
-    setStaffMember(member);
-  }, [params.id]);
+  const staffMemberRef = useMemoFirebase(() => {
+    if (!firestore || !params.id) return null;
+    return doc(firestore, 'staff', params.id);
+  }, [firestore, params.id]);
 
-  const handleEditStaff = (updatedStaff: Staff) => {
-    const staffIndex = staffData.findIndex(staff => staff.id === updatedStaff.id);
-    if (staffIndex !== -1) {
-      staffData[staffIndex] = updatedStaff;
-      setStaffMember(updatedStaff); // Update the local state to re-render the profile page
-    }
+  const { data: staffMember, isLoading } = useDoc<Staff>(staffMemberRef);
+  
+  const handleEditStaff = () => {
+    // This will now be handled by the dialog's direct Firestore update
     setIsEditing(false);
   };
 
 
+  if (isLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!staffMember) {
-    // We can show a loading state or return null
-    // If it remains undefined after effect, it's not found.
-    // A better loading state could be added here.
-    return null;
+    return <p>Staff member not found.</p>;
   }
   
-  const sortedCerts = [...staffMember.certifications].sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+  const sortedCerts = staffMember.certifications ? [...staffMember.certifications].sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()) : [];
 
   return (
     <>
@@ -124,7 +126,7 @@ export default function StaffProfilePage({ params }: { params: { id: string } })
                       </TableHeader>
                       <TableBody>
                           {sortedCerts.map((cert, index) => {
-                              const status = getCertificationStatus(cert.expiryDate);
+                              const status = getCertificationStatus(new Date(cert.expiryDate));
                               return (
                                   <TableRow key={index}>
                                       <TableCell className="font-medium">{cert.name}</TableCell>
@@ -156,8 +158,7 @@ export default function StaffProfilePage({ params }: { params: { id: string } })
       {isEditing && (
         <AddStaffDialog
           staffToEdit={staffMember}
-          onAddStaff={()=>{}} // Not used in edit mode
-          onEditStaff={handleEditStaff}
+          onDialogClose={handleEditStaff}
           open={isEditing}
           onOpenChange={(isOpen) => !isOpen && setIsEditing(false)}
         >

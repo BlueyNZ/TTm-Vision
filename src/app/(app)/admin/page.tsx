@@ -1,12 +1,20 @@
+'use client';
 import { UtilizationDashboard } from "@/components/dashboard/utilization-dashboard";
 import { CertificationsExpiry } from "@/components/dashboard/certifications-expiry";
 import { FleetServiceStatus } from "@/components/dashboard/fleet-service-status";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { staffData, truckData } from "@/lib/data";
-import { Activity, Truck, Users } from "lucide-react";
+import { truckData } from "@/lib/data";
+import { Activity, LoaderCircle, Truck, Users } from "lucide-react";
+import { useCollection, useFirestore } from "@/firebase";
+import { collection } from "firebase/firestore";
+import { Staff } from "@/lib/data";
 
 export default function AdminPage() {
-  const totalStaff = staffData.length;
+  const firestore = useFirestore();
+  const staffCollection = collection(firestore, 'staff');
+  const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffCollection);
+
+  const totalStaff = staffData?.length ?? 0;
   const totalTrucks = truckData.length;
   const trucksNeedingCheck = truckData.filter(t => t.status === 'Check Required').length;
 
@@ -21,10 +29,16 @@ export default function AdminPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalStaff}</div>
-            <p className="text-xs text-muted-foreground">
-              Active personnel
-            </p>
+            {isStaffLoading ? (
+              <LoaderCircle className="h-6 w-6 animate-spin" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{totalStaff}</div>
+                <p className="text-xs text-muted-foreground">
+                  Active personnel
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
         <Card>
