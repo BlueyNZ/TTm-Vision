@@ -17,17 +17,40 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search, LogOut } from "lucide-react";
 import { Input } from "../ui/input";
+import { useAuth, useUser } from "@/firebase";
+import { signOut } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
 
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useUser();
+  const auth = useAuth();
+  const { toast } = useToast();
   
   const pathParts = pathname.split("/").filter(Boolean);
   let title = pathParts[0] || "Dashboard";
   let showBackButton = false;
   let backPath = "";
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push('/login');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: "Something went wrong. Please try again.",
+      });
+    }
+  };
 
   const getTitleForPage = (parts: string[]) => {
     const page = parts[0];
@@ -109,18 +132,21 @@ export function AppHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="https://picsum.photos/seed/user/200/200" alt="User" />
-                <AvatarFallback>U</AvatarFallback>
+                <AvatarImage src={user?.photoURL || `https://picsum.photos/seed/${user?.uid}/200/200`} alt={user?.displayName || "User"} />
+                <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>{user?.displayName || 'My Account'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuItem>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

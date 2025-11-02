@@ -1,17 +1,20 @@
+
 // src/firebase/auth/use-user.tsx
 'use client';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 
-import { useAuth } from '@/firebase';
+import { useAuth } from '@/firebase/provider';
 
 export function useUser() {
   const auth = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!auth) {
+       setLoading(false);
       return;
     }
     const unsubscribe = onAuthStateChanged(
@@ -20,8 +23,8 @@ export function useUser() {
         setUser(user);
         setLoading(false);
       },
-      () => {
-        // setError(error);
+      (error) => {
+        setError(error);
         setLoading(false);
       }
     );
@@ -29,5 +32,5 @@ export function useUser() {
     return () => unsubscribe();
   }, [auth]);
 
-  return { user, loading };
+  return { user, loading, error };
 }
