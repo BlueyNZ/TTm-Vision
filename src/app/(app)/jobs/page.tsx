@@ -46,7 +46,7 @@ const getStatusVariant = (status: Job['status']) => {
     case 'Upcoming':
       return 'default';
     case 'In Progress':
-      return 'success';
+      return 'default';
     case 'Cancelled':
       return 'destructive';
     case 'Completed':
@@ -160,7 +160,13 @@ export default function JobsPage() {
                   </TableCell>
                   <TableCell>{job.stms || 'N/A'}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusVariant(displayedStatus)} className="flex items-center gap-2 w-fit">
+                    <Badge 
+                      variant={getStatusVariant(displayedStatus)} 
+                      className={cn(
+                        "flex items-center gap-2 w-fit", 
+                        displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
+                      )}
+                    >
                       <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
                       {displayedStatus}
                     </Badge>

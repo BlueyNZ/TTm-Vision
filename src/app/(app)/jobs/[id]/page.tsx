@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, Timestamp } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -27,7 +28,7 @@ const getStatusVariant = (status: Job['status']) => {
     case 'Upcoming':
       return 'default';
     case 'In Progress':
-      return 'success';
+      return 'default'; // Use default variant and custom class for color
     case 'Cancelled':
       return 'destructive';
     case 'Completed':
@@ -116,7 +117,14 @@ export default function JobDetailPage() {
                 <Info className="h-6 w-6 text-primary" />
                 <div>
                     <p className="font-semibold">Status</p>
-                    <Badge variant={getStatusVariant(displayedStatus)}>{displayedStatus}</Badge>
+                    <Badge 
+                      variant={getStatusVariant(displayedStatus)}
+                      className={cn(
+                        displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
+                      )}
+                    >
+                      {displayedStatus}
+                    </Badge>
                 </div>
             </div>
         </CardContent>
