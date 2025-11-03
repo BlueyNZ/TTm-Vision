@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Trash2, Edit, LoaderCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit, LoaderCircle, Eye } from "lucide-react";
 import { AddStaffDialog } from "@/components/staff/add-staff-dialog";
 import {
   DropdownMenu,
@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, doc, deleteDoc } from "firebase/firestore";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useRouter } from "next/navigation";
 
 const getOverallCertStatus = (staff: Staff) => {
   if (!staff.certifications || staff.certifications.length === 0) {
@@ -63,6 +64,7 @@ export default function StaffPage() {
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
+  const router = useRouter();
   
   const staffCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -147,6 +149,10 @@ export default function StaffPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                         <DropdownMenuItem onClick={() => router.push(`/staff/${staff.id}`)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setEditingStaff(staff)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
