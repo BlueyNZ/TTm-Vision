@@ -7,11 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useUser, useFirestore, useMemoFirebase, useAuth } from "@/firebase";
-import { doc, collection, query, where, Timestamp } from "firebase/firestore";
-import { useCollection, useDoc } from "@/firebase/firestore/use-collection";
+import { doc, collection, query, where } from "firebase/firestore";
+import { useCollection } from "@/firebase/firestore/use-collection";
 import { Staff } from "@/lib/data";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LoaderCircle, Edit } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -34,9 +33,9 @@ export default function SettingsPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
 
     const staffQuery = useMemoFirebase(() => {
-        if (!firestore || !user?.displayName) return null;
-        return query(collection(firestore, 'staff'), where('name', '==', user.displayName));
-    }, [firestore, user?.displayName]);
+        if (!firestore || !user?.email) return null;
+        return query(collection(firestore, 'staff'), where('email', '==', user.email));
+    }, [firestore, user?.email]);
 
     const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
     const staffMember = staffData?.[0];

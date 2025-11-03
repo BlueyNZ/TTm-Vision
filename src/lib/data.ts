@@ -43,25 +43,6 @@ export type Truck = {
   }[];
 };
 
-
-export const jobData: Omit<Job, 'id'>[] = [
-  {
-    jobNumber: "TF-0001",
-    name: "SH1 Motorway Closure",
-    location: "Km 24-28, Northern Mwy",
-    startDate: "2030-08-15T20:00:00Z",
-    startTime: "20:00",
-    siteSetupTime: "19:00",
-    status: "Upcoming",
-    stms: "Harrison Price",
-    stmsId: null,
-    tcs: [
-        { id: "1", name: "Ben Carter" },
-        { id: "2", name: "Chloe Williams" }
-    ],
-  }
-];
-
 export type Job = {
   id: string;
   jobNumber: string;
@@ -75,5 +56,3 @@ export type Job = {
   stmsId: Staff['id'] | null;
   tcs: { id: Staff['id'], name: Staff['name']}[];
 };
-
-    

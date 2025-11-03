@@ -5,14 +5,14 @@ import { Truck } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Wrench, Edit, LoaderCircle, Circle, HardHat, Gauge, Calendar } from "lucide-react";
+import { Wrench, Edit, LoaderCircle, Circle, Gauge, Calendar } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc, Timestamp } from "firebase/firestore";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { AddTruckDialog } from "@/components/fleet/add-truck-dialog";
 
 const getTruckStatus = (truck: Truck) => {
@@ -37,7 +37,6 @@ export default function TruckProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const firestore = useFirestore();
   const params = useParams();
-  const router = useRouter();
   const truckId = params.id as string;
 
   const truckRef = useMemoFirebase(() => {

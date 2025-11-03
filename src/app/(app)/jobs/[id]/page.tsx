@@ -1,16 +1,16 @@
 
 'use client';
 import { useParams } from 'next/navigation';
-import { Job, Staff } from '@/lib/data';
+import { Job } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, User, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock, ChevronDown } from 'lucide-react';
+import { Calendar, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock, ChevronDown } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, Timestamp } from 'firebase/firestore';
+import { doc, Timestamp } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import {

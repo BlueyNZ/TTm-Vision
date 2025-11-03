@@ -6,8 +6,7 @@ import { FirebaseApp } from 'firebase/app';
 import { Firestore, collection, getDocs, limit, query, addDoc, Timestamp } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
-import { jobData } from '@/lib/data';
-import type { Job, Staff, Truck } from '@/lib/data';
+import type { Staff } from '@/lib/data';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -139,43 +138,19 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
       // Seed Staff
       const initialStaff: Omit<Staff, 'id'>[] = [
-        { name: 'Harrison Price', role: 'STMS', accessLevel: 'Admin', emergencyContact: { name: 'Jane Price', phone: '021-987-6543' }, certifications: [{ name: 'STMS (CAT A)', expiryDate: new Date('2025-08-15T00:00:00Z') }, { name: 'TMO', expiryDate: new Date('2026-01-20T00:00:00Z') }] },
-        { name: 'Ben Carter', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Sarah Carter', phone: '022-111-2222' }, certifications: [{ name: 'TMO-NP', expiryDate: new Date('2025-11-30T00:00:00Z') }] },
-        { name: 'Chloe Williams', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mike Williams', phone: '027-333-4444' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2099-01-01T00:00:00Z') }] },
-        { name: 'Jack Taylor', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Emily Taylor', phone: '021-555-6666' }, certifications: [{ name: 'TMO', expiryDate: new Date('2024-09-05T00:00:00Z') }, { name: 'TTMW', expiryDate: new Date('2099-01-01T00:00:00Z') }] },
-        { name: 'Liam Wilson', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Grace Wilson', phone: '021-123-1234' }, certifications: [{ name: 'TMO', expiryDate: new Date('2026-05-20T00:00:00Z') }] },
-        { name: 'Olivia Brown', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'David Brown', phone: '021-456-4567' }, certifications: [{ name: 'TMO', expiryDate: new Date('2024-07-15T00:00:00Z') }] },
-        { name: 'Noah Jones', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Sophie Jones', phone: '021-789-7890' }, certifications: [{ name: 'TMO', expiryDate: new Date('2026-08-01T00:00:00Z') }] },
-        { name: 'Ava Smith', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Peter Smith', phone: '021-111-2222' }, certifications: [{ name: 'TMO', expiryDate: new Date('2026-03-10T00:00:00Z') }] },
-        { name: 'Lucas Miller', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mia Miller', phone: '021-222-3333' }, certifications: [{ name: 'TMO', expiryDate: new Date('2025-10-25T00:00:00Z') }] },
-        { name: 'Isla Garcia', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Leo Garcia', phone: '021-333-4444' }, certifications: [{ name: 'TMO', expiryDate: new Date('2026-07-18T00:00:00Z') }] },
+        { name: 'Harrison Price', email: 'harrisonprice124@gmail.com', role: 'STMS', accessLevel: 'Admin', emergencyContact: { name: 'Jane Price', phone: '021-987-6543' }, certifications: [{ name: 'STMS (CAT A)', expiryDate: new Date('2025-08-15T00:00:00Z') }, { name: 'TMO', expiryDate: new Date('2026-01-20T00:00:00Z') }], licenses: [] },
+        { name: 'Ben Carter', email: 'ben.carter@example.com', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Sarah Carter', phone: '022-111-2222' }, certifications: [{ name: 'TMO-NP', expiryDate: new Date('2025-11-30T00:00:00Z') }], licenses: [] },
+        { name: 'Chloe Williams', email: 'chloe.williams@example.com', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mike Williams', phone: '027-333-4444' }, certifications: [{ name: 'TTMW', expiryDate: new Date('2099-01-01T00:00:00Z') }], licenses: [] },
+        { name: 'Jack Taylor', email: 'jack.taylor@example.com', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Emily Taylor', phone: '021-555-6666' }, certifications: [{ name: 'TMO', expiryDate: new Date('2024-09-05T00:00:00Z') }, { name: 'TTMW', expiryDate: new Date('2099-01-01T00:00:00Z') }], licenses: [] },
+        { name: 'Liam Wilson', email: 'liam.wilson@example.com', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Grace Wilson', phone: '021-123-1234' }, certifications: [{ name: 'TMO', expiryDate: new Date('2026-05-20T00:00:00Z') }], licenses: [] },
+        { name: 'Olivia Brown', email: 'olivia.brown@example.com', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'David Brown', phone: '021-456-4567' }, certifications: [{ name: 'TMO', expiryDate: new Date('2024-07-15T00:00:00Z') }], licenses: [] },
+        { name: 'Noah Jones', email: 'noah.jones@example.com', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Sophie Jones', phone: '021-789-7890' }, certifications: [{ name: 'TMO', expiryDate: new Date('2026-08-01T00:00:00Z') }], licenses: [] },
+        { name: 'Ava Smith', email: 'ava.smith@example.com', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Peter Smith', phone: '021-111-2222' }, certifications: [{ name: 'TMO', expiryDate: new Date('2026-03-10T00:00:00Z') }], licenses: [] },
+        { name: 'Lucas Miller', email: 'lucas.miller@example.com', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Mia Miller', phone: '021-222-3333' }, certifications: [{ name: 'TMO', expiryDate: new Date('2025-10-25T00:00:00Z') }], licenses: [] },
+        { name: 'Isla Garcia', email: 'isla.garcia@example.com', role: 'TC', accessLevel: 'Staff Member', emergencyContact: { name: 'Leo Garcia', phone: '021-333-4444' }, certifications: [{ name: 'TMO', expiryDate: new Date('2026-07-18T00:00:00Z') }], licenses: [] },
       ];
-      await seedCollection('staff', initialStaff, ['certifications.expiryDate']);
+      await seedCollection('staff', initialStaff, ['certifications.expiryDate', 'licenses.expiryDate']);
 
-      
-      // Seed Jobs
-      const jobsCollectionRef = collection(firestore, 'job_packs');
-      const jobsSnapshot = await getDocs(query(jobsCollectionRef, limit(1)));
-      if (jobsSnapshot.empty) {
-        console.log('Seeding jobs...');
-        const staffSnapshot = await getDocs(collection(firestore, 'staff'));
-        const staffWithIds = staffSnapshot.docs.map(doc => ({ ...doc.data() as Staff, id: doc.id }));
-        for (const job of jobData) {
-            const stms = staffWithIds.find(s => s.name === job.stms);
-            const tcs = job.tcs.map(jobTc => {
-                const tc = staffWithIds.find(s => s.name === jobTc.name);
-                return { id: tc?.id || '', name: jobTc.name };
-            }).filter(tc => tc.id);
-
-            const docToAdd: Omit<Job, 'id'> = {
-                ...job,
-                stmsId: stms?.id || null,
-                tcs: tcs,
-                startDate: Timestamp.fromDate(new Date(job.startDate)),
-            };
-            await addDoc(jobsCollectionRef, docToAdd);
-        }
-      }
     };
     
     if(firestore) {

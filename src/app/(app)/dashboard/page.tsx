@@ -74,7 +74,7 @@ export default function DashboardPage() {
   const assignedJobs = useMemo(() => {
     if (!user || !jobData || !staffData) return [];
 
-    const currentStaffMember = staffData.find(staff => staff.name === user.displayName);
+    const currentStaffMember = staffData.find(staff => staff.email === user.email);
     if (!currentStaffMember) return [];
 
     return jobData.filter(job => {
