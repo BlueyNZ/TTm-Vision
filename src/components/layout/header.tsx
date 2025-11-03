@@ -24,8 +24,8 @@ interface AppHeaderProps {
 export function AppHeader({ isAdmin }: AppHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = { user: { displayName: 'Admin' } }; // useUser();
-  // const auth = useAuth();
+  const { user } = useUser();
+  const auth = useAuth();
   const { toast } = useToast();
   
   const pathParts = pathname.split("/").filter(Boolean);
@@ -34,20 +34,21 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
   let backPath = "";
 
   const handleLogout = async () => {
-    // try {
-    //   await signOut(auth);
-    //   toast({
-    //     title: "Logged Out",
-    //     description: "You have been successfully logged out.",
-    //   });
-    //   router.push('/login');
-    // } catch (error) {
-    //   toast({
-    //     variant: "destructive",
-    //     title: "Logout Failed",
-    //     description: "Something went wrong. Please try again.",
-    //   });
-    // }
+    if (!auth) return;
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push('/login');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: "Something went wrong. Please try again.",
+      });
+    }
   };
 
   const getTitleForPage = (parts: string[]) => {
@@ -78,6 +79,11 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
       if(page === 'fleet') return 'Create Truck';
       return 'Create Item';
     }
+    
+    if (page === 'admin' && parts.length > 1 && parts[1] === 'create-staff') {
+        return 'Create Staff';
+    }
+
 
     if(page) return page.replace(/-/g, " ");
 
