@@ -41,7 +41,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Staff } from "@/lib/data";
 import { useFirestore } from "@/firebase";
@@ -301,29 +301,35 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                       render={({ field }) => (
                         <FormItem className="flex-1">
                           <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Expiry Date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
+                            <FormControl>
+                                <div className="relative">
+                                    <Input
+                                        value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
+                                        onChange={(e) => {
+                                            try {
+                                                const parsedDate = parse(e.target.value, 'dd/MM/yyyy', new Date());
+                                                if (!isNaN(parsedDate.getTime())) {
+                                                    field.onChange(parsedDate);
+                                                }
+                                            } catch (error) {
+                                                // Ignore invalid date formats while typing
+                                            }
+                                        }}
+                                        placeholder="dd/MM/yyyy"
+                                        className="pr-10"
+                                    />
+                                    <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3">
+                                            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                </div>
+                            </FormControl>
                             <PopoverContent className="w-auto p-0" align="start">
                               <Calendar
                                 mode="single"
                                 selected={field.value}
-                                onSelect={field.onChange}
+                                onSelect={(date) => date && field.onChange(date)}
                                 disabled={(date) => date < new Date()}
                                 initialFocus
                               />
