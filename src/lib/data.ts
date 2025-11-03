@@ -6,11 +6,17 @@ export type Certification = {
   expiryDate: Date | Timestamp;
 };
 
+export type License = {
+  name: 'Class 1' | 'Class 2' | 'Class 3' | 'Class 4' | 'Class 5' | 'WTR Endorsement';
+  expiryDate: Date | Timestamp;
+}
+
 export type Staff = {
   id: string;
   name: string;
   role: 'TC' | 'STMS' | 'Operator';
   certifications: Certification[];
+  licenses?: License[];
   emergencyContact: {
     name: string;
     phone: string;

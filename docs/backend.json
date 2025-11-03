@@ -1,6 +1,32 @@
 
 {
   "entities": {
+    "License": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "License",
+      "type": "object",
+      "description": "Represents a staff driver's license.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the license (e.g., Class 1, WTR Endorsement).",
+          "enum": [
+            "Class 1",
+            "Class 2",
+            "Class 3",
+            "Class 4",
+            "Class 5",
+            "WTR Endorsement"
+          ]
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "Expiry date of the license.",
+          "format": "date-time"
+        }
+      },
+      "required": ["name", "expiryDate"]
+    },
     "JobPack": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "JobPack",
@@ -159,6 +185,13 @@
           "description": "An array of certifications held by the staff member.",
           "items": {
             "$ref": "#/entities/Certification"
+          }
+        },
+        "licenses": {
+          "type": "array",
+          "description": "An array of driver's licenses held by the staff member.",
+          "items": {
+            "$ref": "#/entities/License"
           }
         },
         "emergencyContact": {
@@ -594,6 +627,22 @@
             {
               "name": "certificationId",
               "description": "The unique identifier for the Certification."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/licenses/{licenseId}",
+        "definition": {
+          "entityName": "License",
+          "schema": {
+            "$ref": "#/backend/entities/License"
+          },
+          "description": "Represents a driver's license.",
+          "params": [
+            {
+              "name": "licenseId",
+              "description": "The unique identifier for the License."
             }
           ]
         }

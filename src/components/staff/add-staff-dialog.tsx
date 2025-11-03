@@ -47,12 +47,17 @@ import { Staff } from "@/lib/data";
 import { useFirestore } from "@/firebase";
 import { collection, doc, Timestamp } from "firebase/firestore";
 import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { Separator } from "../ui/separator";
 
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   role: z.enum(["TC", "STMS", "Operator"]),
   certifications: z.array(z.object({
     name: z.enum(["TTMW", "TMO-NP", "TMO", "STMS-U", "STMS (CAT A)", "STMS (CAT B)", "STMS (CAT C)", "STMS-NP"]),
+    expiryDate: z.date({ required_error: "An expiry date is required."}),
+  })).optional(),
+  licenses: z.array(z.object({
+    name: z.enum(["Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "WTR Endorsement"]),
     expiryDate: z.date({ required_error: "An expiry date is required."}),
   })).optional(),
   emergencyContactName: z.string().min(2, "Emergency contact name is required."),
@@ -80,10 +85,11 @@ const DateInput = ({ value, onChange, onBlur, ...props }: { value: Date | undefi
         setInputValue(e.target.value);
     };
 
-    const handleInputBlur = () => {
-        const parsedDate = parse(inputValue, 'dd/MM/yyyy', new Date());
+    const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const parsedDate = parse(e.target.value, 'dd/MM/yyyy', new Date());
         if (isValid(parsedDate)) {
             onChange(parsedDate);
+            setInputValue(format(parsedDate, 'dd/MM/yyyy'));
         } else {
            onChange(undefined);
            setInputValue('');
@@ -145,16 +151,22 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
       name: "",
       role: undefined,
       certifications: [],
+      licenses: [],
       emergencyContactName: "",
       emergencyContactNumber: "",
       accessLevel: "Staff Member",
     }
   });
   
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields: certFields, append: appendCert, remove: removeCert } = useFieldArray({
     control: form.control,
     name: "certifications",
   });
+  const { fields: licenseFields, append: appendLicense, remove: removeLicense } = useFieldArray({
+    control: form.control,
+    name: "licenses",
+  });
+
 
   useEffect(() => {
     if (open) {
@@ -163,11 +175,16 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
           ...c,
           expiryDate: c.expiryDate instanceof Timestamp ? c.expiryDate.toDate() : new Date(c.expiryDate),
         })) || [];
+        const licensesWithDates = staffToEdit.licenses?.map(l => ({
+          ...l,
+          expiryDate: l.expiryDate instanceof Timestamp ? l.expiryDate.toDate() : new Date(l.expiryDate),
+        })) || [];
 
         form.reset({
           name: staffToEdit.name,
           role: staffToEdit.role,
           certifications: certsWithDates,
+          licenses: licensesWithDates,
           emergencyContactName: staffToEdit.emergencyContact.name,
           emergencyContactNumber: staffToEdit.emergencyContact.phone,
           accessLevel: staffToEdit.accessLevel,
@@ -188,6 +205,10 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
         certifications: data.certifications?.map(cert => ({
           ...cert,
           expiryDate: Timestamp.fromDate(cert.expiryDate)
+        })) || [],
+        licenses: data.licenses?.map(license => ({
+          ...license,
+          expiryDate: Timestamp.fromDate(license.expiryDate)
         })) || [],
         emergencyContact: {
             name: data.emergencyContactName,
@@ -219,7 +240,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) onDialogClose(); }}>
       {!isEditMode && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditMode ? 'Edit Staff Member' : 'Add New Staff Member'}</DialogTitle>
           <DialogDescription>
@@ -314,6 +335,8 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
               )}
             />
             
+            <Separator />
+
             <div>
               <div className="flex justify-between items-center mb-2">
                 <Label>Certifications</Label>
@@ -321,14 +344,14 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => append({ name: 'TTMW', expiryDate: new Date() })}
+                    onClick={() => appendCert({ name: 'TTMW', expiryDate: new Date() })}
                   >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add
                   </Button>
               </div>
               <div className="space-y-2">
-                {fields.map((field, index) => (
+                {certFields.map((field, index) => (
                   <div key={field.id} className="flex items-end gap-2">
                     <FormField
                       control={form.control}
@@ -368,13 +391,77 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                         </FormItem>
                       )}
                     />
-                    <Button variant="ghost" size="icon" type="button" onClick={() => remove(index)}>
+                    <Button variant="ghost" size="icon" type="button" onClick={() => removeCert(index)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 ))}
               </div>
             </div>
+
+            <Separator />
+
+             <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label>Driver's Licenses</Label>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => appendLicense({ name: 'Class 1', expiryDate: new Date() })}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add
+                  </Button>
+              </div>
+              <div className="space-y-2">
+                {licenseFields.map((field, index) => (
+                  <div key={field.id} className="flex items-end gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`licenses.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select License" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Class 1">Class 1</SelectItem>
+                              <SelectItem value="Class 2">Class 2</SelectItem>
+                              <SelectItem value="Class 3">Class 3</SelectItem>
+                              <SelectItem value="Class 4">Class 4</SelectItem>
+                              <SelectItem value="Class 5">Class 5</SelectItem>
+                              <SelectItem value="WTR Endorsement">WTR Endorsement</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`licenses.${index}.expiryDate`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <DateInput {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button variant="ghost" size="icon" type="button" onClick={() => removeLicense(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => { setOpen(false); onDialogClose(); }}>Cancel</Button>
               <Button type="submit">{isEditMode ? 'Save Changes' : 'Add Staff'}</Button>
@@ -385,4 +472,3 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     </Dialog>
   );
 }
-
