@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Job, Staff } from "@/lib/data";
-import { collection, Timestamp } from "firebase/firestore";
+import { collection, Timestamp, query, where } from "firebase/firestore";
 import { LoaderCircle, Circle, MapPin, Calendar, Users, UserSquare, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { format, isPast } from "date-fns";
@@ -64,18 +64,16 @@ export default function DashboardPage() {
   }, [firestore]);
   const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsCollection);
 
-  const staffCollection = useMemoFirebase(() => {
-    if(!firestore) return null;
-    return collection(firestore, 'staff');
-  }, [firestore]);
-  const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffCollection);
+  const staffQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.email) return null;
+    return query(collection(firestore, 'staff'), where('email', '==', user.email));
+  }, [firestore, user?.email]);
+  const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
+  const currentStaffMember = useMemo(() => staffData?.[0], [staffData]);
 
 
   const assignedJobs = useMemo(() => {
-    if (!user || !jobData || !staffData) return [];
-
-    const currentStaffMember = staffData.find(staff => staff.email === user.email);
-    if (!currentStaffMember) return [];
+    if (!user || !jobData || !currentStaffMember) return [];
 
     return jobData.filter(job => {
         const isStms = job.stmsId === currentStaffMember.id;
@@ -87,7 +85,7 @@ export default function DashboardPage() {
         const dateB = b.startDate instanceof Timestamp ? b.startDate.toDate() : new Date(b.startDate);
         return dateA.getTime() - dateB.getTime();
     });
-  }, [user, jobData, staffData]);
+  }, [user, jobData, currentStaffMember]);
 
   const isLoading = isUserLoading || isJobsLoading || isStaffLoading;
 
@@ -96,7 +94,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Welcome back, {user ? user.displayName || 'User' : 'User'}!</CardTitle>
+            <CardTitle>Welcome back, {currentStaffMember ? currentStaffMember.name : (user?.displayName || 'User')}!</CardTitle>
             <CardDescription>
               Here's a quick look at what's happening.
             </CardDescription>
