@@ -87,6 +87,7 @@ export default function JobDetailPage() {
             <MapPin className="h-8 w-8 text-muted-foreground" />
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">{job.location}</h1>
+                <p className="text-muted-foreground font-semibold">{job.jobNumber}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

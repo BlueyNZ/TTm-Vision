@@ -11,10 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useState }from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, Timestamp } from 'firebase/firestore';
+import { collection, Timestamp, getDocs } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { X, Calendar as CalendarIcon } from 'lucide-react';
+import { X, Calendar as CalendarIcon, LoaderCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,7 @@ export default function JobCreatePage() {
   const [siteSetupTime, setSiteSetupTime] = useState('');
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
   const staffCollection = useMemoFirebase(() => {
@@ -65,7 +66,7 @@ export default function JobCreatePage() {
     setSelectedStms(null);
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firestore || !startDate) {
         toast({
@@ -75,8 +76,18 @@ export default function JobCreatePage() {
         });
         return;
     }
+    setIsSubmitting(true);
+
+    const jobsCollectionRef = collection(firestore, 'job_packs');
+    
+    // Get the total number of jobs to create the next job number
+    const jobSnapshot = await getDocs(jobsCollectionRef);
+    const jobCount = jobSnapshot.size;
+    const newJobNumber = `TF-${String(jobCount + 1).padStart(4, '0')}`;
+
 
     const newJob: Omit<Job, 'id'> = {
+        jobNumber: newJobNumber,
         name,
         location,
         startDate: Timestamp.fromDate(startDate),
@@ -88,14 +99,14 @@ export default function JobCreatePage() {
         tcs: selectedTcs.map(tc => ({id: tc.id, name: tc.name })),
     };
 
-    const jobsCollectionRef = collection(firestore, 'job_packs');
     addDocumentNonBlocking(jobsCollectionRef, newJob);
 
     toast({
       title: 'Job Created',
-      description: `The job at ${location} has been created.`,
+      description: `Job ${newJobNumber} at ${location} has been created.`,
     });
     router.push(`/jobs`);
+    setIsSubmitting(false);
   };
 
   return (
@@ -208,8 +219,11 @@ export default function JobCreatePage() {
           </div>
         </CardContent>
         <CardFooter className="justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
-            <Button type="submit">Create Job</Button>
+            <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+              Create Job
+            </Button>
         </CardFooter>
       </Card>
     </form>

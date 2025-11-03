@@ -28,7 +28,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, doc, Timestamp } from "firebase/firestore";
+import { collection, doc, Timestamp, orderBy, query } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -90,12 +90,14 @@ export default function JobsPage() {
   const { toast } = useToast();
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
 
-  const jobsCollection = useMemoFirebase(() => {
+  const jobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, 'job_packs');
+    // Order by jobNumber descending to show newest jobs first
+    return query(collection(firestore, 'job_packs'), orderBy('jobNumber', 'desc'));
   }, [firestore]);
 
-  const { data: jobData, isLoading } = useCollection<Job>(jobsCollection);
+  const { data: jobData, isLoading } = useCollection<Job>(jobsQuery);
+
 
   const handleDeleteJob = () => {
     if (!firestore || !jobToDelete) return;
@@ -138,10 +140,9 @@ export default function JobsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Job No.</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead className="hidden lg:table-cell">Start Date</TableHead>
-                <TableHead className="hidden lg:table-cell">Job Start</TableHead>
-                <TableHead className="hidden lg:table-cell">On Site</TableHead>
                 <TableHead>STMS</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
@@ -154,12 +155,11 @@ export default function JobsPage() {
                 const displayedStatus = getDisplayedStatus(job);
                 return (
                 <TableRow key={job.id}>
+                  <TableCell className="font-medium">{job.jobNumber}</TableCell>
                   <TableCell className="font-medium">{job.location}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">
                     <ClientFormattedDate date={job.startDate} />
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell text-muted-foreground">{job.startTime || 'N/A'}</TableCell>
-                  <TableCell className="hidden lg:table-cell text-muted-foreground">{job.siteSetupTime || 'N/A'}</TableCell>
                   <TableCell>{job.stms || 'N/A'}</TableCell>
                   <TableCell>
                     <Badge 

@@ -39,6 +39,7 @@ export type Truck = {
 
 export const jobData: Omit<Job, 'id'>[] = [
   {
+    jobNumber: "TF-0001",
     name: "SH1 Motorway Closure",
     location: "Km 24-28, Northern Mwy",
     startDate: "2030-08-15T20:00:00Z",
@@ -56,6 +57,7 @@ export const jobData: Omit<Job, 'id'>[] = [
 
 export type Job = {
   id: string;
+  jobNumber: string;
   name: string;
   location: string;
   startDate: Timestamp | Date | string;

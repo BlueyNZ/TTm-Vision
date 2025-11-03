@@ -11,6 +11,10 @@
           "type": "string",
           "description": "Unique identifier for the Job Pack entity."
         },
+        "jobNumber": {
+            "type": "string",
+            "description": "A unique, sequential, human-readable identifier for the job (e.g., TF-0001)."
+        },
         "jobName": {
           "type": "string",
           "description": "The name or title of the job."
@@ -62,6 +66,7 @@
       },
       "required": [
         "id",
+        "jobNumber",
         "jobName",
         "description",
         "location",
