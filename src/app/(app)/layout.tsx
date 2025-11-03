@@ -45,13 +45,11 @@ export default function AppLayout({
   useEffect(() => {
     // This is the error recovery logic.
     const handleChunkError = (event: Event) => {
-      if (event.type === 'error') {
         const error = (event as ErrorEvent).error;
         if (error && (error.name === 'ChunkLoadError' || /Loading chunk .* failed/i.test(error.message))) {
-          console.warn('Chunk loading failed. Forcing a page refresh to get the latest version.');
-          window.location.reload();
+            console.warn('Chunk loading failed. Forcing a page refresh to get the latest version.');
+            window.location.reload();
         }
-      }
     };
 
     window.addEventListener('error', handleChunkError);
@@ -64,24 +62,30 @@ export default function AppLayout({
       if (err.name === 'ChunkLoadError' || /Loading chunk .* failed/i.test(err.message)) {
         console.warn(`Chunk load failed for route: ${url}. Refreshing...`);
         window.location.href = url; // Force a full navigation
-        return false; // Prevent Next.js from continuing
+        return true; // Indicate that we handled it
       }
-      return true;
+      return false; // Indicate we did not handle it
     }
 
-    router.push = (href: string, options?: any) => {
-      // @ts-ignore
-      return originalPush(href, options).catch((err: any) => {
-        if (!handleError(err, href)) throw err;
-      });
-    }
+    router.push = async (href: string, options?: any) => {
+      try {
+        await originalPush(href, options);
+      } catch (err: any) {
+        if (!handleError(err, href)) {
+          throw err;
+        }
+      }
+    };
 
-     router.replace = (href: string, options?: any) => {
-      // @ts-ignore
-      return originalReplace(href, options).catch((err: any) => {
-        if (!handleError(err, href)) throw err;
-      });
-    }
+     router.replace = async (href: string, options?: any) => {
+       try {
+        await originalReplace(href, options);
+      } catch (err: any) {
+        if (!handleError(err, href)) {
+          throw err;
+        }
+      }
+    };
 
 
     return () => {
