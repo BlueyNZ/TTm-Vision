@@ -6,7 +6,6 @@ import { Staff } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -125,13 +124,7 @@ export default function StaffPage() {
                 return (
                 <TableRow key={staff.id}>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={`https://picsum.photos/seed/${staff.id}/200/200`} />
-                        <AvatarFallback>{staff.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <Link href={`/staff/${staff.id}`} className="font-medium hover:underline">{staff.name}</Link>
-                    </div>
+                    <Link href={`/staff/${staff.id}`} className="font-medium hover:underline">{staff.name}</Link>
                   </TableCell>
                   <TableCell>{staff.role}</TableCell>
                   <TableCell>
