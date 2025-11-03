@@ -7,13 +7,14 @@ export type Certification = {
 };
 
 export type License = {
-  name: 'Class 1' | 'Class 2' | 'Class 3' | 'Class 4' | 'Class 5' | 'WTR Endorsement';
+  name: 'Class 1 (Learner)' | 'Class 1 (Restricted)' | 'Class 1 (Full)' | 'Class 2' | 'Class 3' | 'Class 4' | 'Class 5' | 'WTR Endorsement';
   expiryDate: Date | Timestamp;
 }
 
 export type Staff = {
   id: string;
   name: string;
+  email: string;
   role: 'TC' | 'STMS' | 'Operator';
   certifications: Certification[];
   licenses?: License[];
@@ -74,3 +75,5 @@ export type Job = {
   stmsId: Staff['id'] | null;
   tcs: { id: Staff['id'], name: Staff['name']}[];
 };
+
+    

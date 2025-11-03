@@ -51,13 +51,14 @@ import { Separator } from "../ui/separator";
 
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
+  email: z.string().email("Please enter a valid email address."),
   role: z.enum(["TC", "STMS", "Operator"]),
   certifications: z.array(z.object({
     name: z.enum(["TTMW", "TMO-NP", "TMO", "STMS-U", "STMS (CAT A)", "STMS (CAT B)", "STMS (CAT C)", "STMS-NP"]),
     expiryDate: z.date({ required_error: "An expiry date is required."}),
   })).optional(),
   licenses: z.array(z.object({
-    name: z.enum(["Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "WTR Endorsement"]),
+    name: z.enum(["Class 1 (Learner)", "Class 1 (Restricted)", "Class 1 (Full)", "Class 2", "Class 3", "Class 4", "Class 5", "WTR Endorsement"]),
     expiryDate: z.date({ required_error: "An expiry date is required."}),
   })).optional(),
   emergencyContactName: z.string().min(2, "Emergency contact name is required."),
@@ -149,6 +150,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     resolver: zodResolver(staffSchema),
     defaultValues: {
       name: "",
+      email: "",
       role: undefined,
       certifications: [],
       licenses: [],
@@ -182,6 +184,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
 
         form.reset({
           name: staffToEdit.name,
+          email: staffToEdit.email,
           role: staffToEdit.role,
           certifications: certsWithDates,
           licenses: licensesWithDates,
@@ -190,7 +193,16 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
           accessLevel: staffToEdit.accessLevel,
         });
       } else {
-        form.reset();
+        form.reset({
+            name: "",
+            email: "",
+            role: undefined,
+            certifications: [],
+            licenses: [],
+            emergencyContactName: "",
+            emergencyContactNumber: "",
+            accessLevel: "Staff Member",
+        });
       }
     }
   }, [staffToEdit, form, isEditMode, open]);
@@ -201,6 +213,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     
     const staffPayload = {
         name: data.name,
+        email: data.email,
         role: data.role,
         certifications: data.certifications?.map(cert => ({
           ...cert,
@@ -257,6 +270,19 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
                     <Input placeholder="John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="john.doe@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -408,7 +434,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => appendLicense({ name: 'Class 1', expiryDate: new Date() })}
+                    onClick={() => appendLicense({ name: 'Class 1 (Full)', expiryDate: new Date() })}
                   >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add
@@ -429,7 +455,9 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Class 1">Class 1</SelectItem>
+                              <SelectItem value="Class 1 (Learner)">Class 1 (Learner)</SelectItem>
+                              <SelectItem value="Class 1 (Restricted)">Class 1 (Restricted)</SelectItem>
+                              <SelectItem value="Class 1 (Full)">Class 1 (Full)</SelectItem>
                               <SelectItem value="Class 2">Class 2</SelectItem>
                               <SelectItem value="Class 3">Class 3</SelectItem>
                               <SelectItem value="Class 4">Class 4</SelectItem>
@@ -472,3 +500,5 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     </Dialog>
   );
 }
+
+    

@@ -11,7 +11,9 @@
           "type": "string",
           "description": "The name of the license (e.g., Class 1, WTR Endorsement).",
           "enum": [
-            "Class 1",
+            "Class 1 (Learner)",
+            "Class 1 (Restricted)",
+            "Class 1 (Full)",
             "Class 2",
             "Class 3",
             "Class 4",
@@ -175,6 +177,11 @@
         "name": {
           "type": "string",
           "description": "The name of the staff member."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email of the staff member.",
+          "format": "email"
         },
         "role": {
           "type": "string",
@@ -651,3 +658,5 @@
     "reasoning": "The Firestore structure is designed to support TrafficFlow's core features (Job Packs, Scheduling, Truck/Staff Management) while adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. The structure prioritizes denormalization to avoid `get()` calls in security rules, ensuring atomic operations and easier debugging. Segregation is used to enforce consistent security postures within collections. Explicit state modeling via `status` fields is encouraged.\n\n**Authorization Independence (Denormalization):**\n*   For collaborative data like JobPacks, the `members` map (containing user UIDs and their roles) is denormalized into each document.  This eliminates the need to `get()` parent document data in security rules when accessing JobPack or related subcollections (Permits, Schedules, HazardLogs, etc.).\n*   Ownership is managed via path-based rules (e.g., `/users/{userId}/staff/{staffId}`).\n\n**QAPs (Rules Are Not Filters):**\n*   Structural segregation: Collections like `/trucks` and `/staff` are used to store global data. User-specific data resides under `/users/{userId}`, enabling secure list operations based on path ownership.\n*   Membership maps: The `members` map in JobPacks allows secure listing of job packs a user has access to (roles are also denormalized).\n\n**Specific Design Choices:**\n*   **JobPacks:** This is the central entity. Subcollections (permits, schedules, hazard logs) are nested under it for organizational purposes. The `members` map is crucial for collaborative access.\n*   **Staff and Trucks:** Staff data is now a top-level collection for easier global management, moving away from user-scoping for this shared resource.\n*   **HazardLogs:** Placed as a subcollection of `JobPacks` to limit listing to members only.\n*   **Service Reminders & Expiry Tracking:** These features are implemented through queries and business logic, not directly reflected in the data structure, as the data is derived from existing fields (`serviceDueDate`, `certification.expiryDate`).\n\nThis structure ensures that security rules can be written clearly and efficiently, preventing unauthorized data access while enabling powerful features such as collaborative job management, asset tracking, and regulatory compliance."
   }
 }
+
+    
