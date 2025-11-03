@@ -32,8 +32,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, addDoc } from 'firebase/firestore';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -62,7 +61,7 @@ export default function CreateStaffPage() {
         }
     });
 
-    function onSubmit(data: z.infer<typeof staffSchema>) {
+    async function onSubmit(data: z.infer<typeof staffSchema>) {
         if (!firestore) return;
         setIsSubmitting(true);
         
@@ -79,15 +78,27 @@ export default function CreateStaffPage() {
             accessLevel: data.accessLevel,
         };
 
-        const staffCollectionRef = collection(firestore, 'staff');
-        addDocumentNonBlocking(staffCollectionRef, staffPayload);
-        toast({
-            title: "Staff Profile Created",
-            description: `A profile for ${data.name} has been created. They can now log in with the credentials you set in the Firebase Console.`,
-        });
-        
-        router.push('/staff');
-        setIsSubmitting(false);
+        try {
+            const staffCollectionRef = collection(firestore, 'staff');
+            await addDoc(staffCollectionRef, staffPayload);
+            
+            toast({
+                title: "Staff Profile Created",
+                description: `A profile for ${data.name} has been created. They can now log in with the credentials you set in the Firebase Console.`,
+            });
+            
+            router.push('/staff');
+
+        } catch (error) {
+             toast({
+                title: "Error Creating Profile",
+                description: "Something went wrong. Please try again.",
+                variant: 'destructive',
+            });
+            console.error("Error adding document: ", error);
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
 
