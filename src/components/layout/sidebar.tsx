@@ -24,6 +24,7 @@ import {
   ChevronDown,
   FileText,
   Briefcase,
+  UserPlus,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -130,6 +131,13 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                         <SidebarMenuSubButton asChild isActive={pathname === "/admin"}>
                            <Link href="/admin">
                             Overview
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/admin/create-staff")}>
+                          <Link href="/admin/create-staff">
+                            Create Staff
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
