@@ -37,11 +37,11 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
-import { format, parse } from "date-fns";
+import { format, parse, isValid } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Staff } from "@/lib/data";
 import { useFirestore } from "@/firebase";
@@ -53,7 +53,7 @@ const staffSchema = z.object({
   role: z.enum(["TC", "STMS", "Operator"]),
   certifications: z.array(z.object({
     name: z.enum(["TTMW", "TMO-NP", "TMO", "STMS-U", "STMS (CAT A)", "STMS (CAT B)", "STMS (CAT C)", "STMS-NP"]),
-    expiryDate: z.date(),
+    expiryDate: z.date({ required_error: "An expiry date is required."}),
   })).optional(),
   emergencyContactName: z.string().min(2, "Emergency contact name is required."),
   emergencyContactNumber: z.string().min(8, "Emergency contact number is required."),
@@ -68,6 +68,68 @@ type StaffDialogProps = {
   onOpenChange?: (open: boolean) => void;
 };
 
+const DateInput = ({ value, onChange, onBlur, ...props }: { value: Date | undefined, onChange: (date: Date | undefined) => void, onBlur: () => void }) => {
+    const [inputValue, setInputValue] = useState(value ? format(value, 'dd/MM/yyyy') : '');
+    const [popoverOpen, setPopoverOpen] = useState(false);
+    
+    useEffect(() => {
+        setInputValue(value ? format(value, 'dd/MM/yyyy') : '');
+    }, [value]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInputValue(e.target.value);
+    };
+
+    const handleInputBlur = () => {
+        const parsedDate = parse(inputValue, 'dd/MM/yyyy', new Date());
+        if (isValid(parsedDate)) {
+            onChange(parsedDate);
+        } else {
+           onChange(undefined);
+           setInputValue('');
+        }
+        onBlur();
+    };
+
+    const handleDateSelect = (date: Date | undefined) => {
+        if (date) {
+            onChange(date);
+            setInputValue(format(date, 'dd/MM/yyyy'));
+            setPopoverOpen(false);
+        }
+    };
+
+    return (
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <div className="relative">
+                <Input
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    placeholder="dd/MM/yyyy"
+                    className="pr-10"
+                    {...props}
+                />
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3">
+                        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                </PopoverTrigger>
+            </div>
+            <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                    mode="single"
+                    selected={value}
+                    onSelect={handleDateSelect}
+                    disabled={(date) => date < new Date("1900-01-01")}
+                    initialFocus
+                />
+            </PopoverContent>
+        </Popover>
+    );
+};
+
+
 export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: controlledOpen, onOpenChange: setControlledOpen }: StaffDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -79,6 +141,14 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
 
   const form = useForm<z.infer<typeof staffSchema>>({
     resolver: zodResolver(staffSchema),
+    defaultValues: {
+      name: "",
+      role: undefined,
+      certifications: [],
+      emergencyContactName: "",
+      emergencyContactNumber: "",
+      accessLevel: "Staff Member",
+    }
   });
   
   const { fields, append, remove, replace } = useFieldArray({
@@ -102,20 +172,11 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
           emergencyContactNumber: staffToEdit.emergencyContact.phone,
           accessLevel: staffToEdit.accessLevel,
         });
-        replace(certsWithDates); // Explicitly set the fields in the field array
       } else {
-        form.reset({
-          name: "",
-          role: undefined,
-          certifications: [],
-          emergencyContactName: "",
-          emergencyContactNumber: "",
-          accessLevel: "Staff Member",
-        });
-        replace([]); // Clear the field array for new entries
+        form.reset();
       }
     }
-  }, [staffToEdit, form, isEditMode, open, replace]);
+  }, [staffToEdit, form, isEditMode, open]);
 
 
   function onSubmit(data: z.infer<typeof staffSchema>) {
@@ -300,46 +361,14 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                       name={`certifications.${index}.expiryDate`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <Popover>
-                            <FormControl>
-                                <div className="relative">
-                                    <Input
-                                        value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
-                                        onChange={(e) => {
-                                            try {
-                                                const parsedDate = parse(e.target.value, 'dd/MM/yyyy', new Date());
-                                                if (!isNaN(parsedDate.getTime())) {
-                                                    field.onChange(parsedDate);
-                                                }
-                                            } catch (error) {
-                                                // Ignore invalid date formats while typing
-                                            }
-                                        }}
-                                        placeholder="dd/MM/yyyy"
-                                        className="pr-10"
-                                    />
-                                    <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3">
-                                            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                </div>
-                            </FormControl>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={(date) => date && field.onChange(date)}
-                                disabled={(date) => date < new Date()}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
+                          <FormControl>
+                            <DateInput {...field} />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button variant="ghost" size="icon" onClick={() => remove(index)}>
+                    <Button variant="ghost" size="icon" type="button" onClick={() => remove(index)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -356,3 +385,4 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     </Dialog>
   );
 }
+
