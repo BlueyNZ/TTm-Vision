@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Phone, Shield, User, Award, Edit, LoaderCircle, CreditCard } from "lucide-react";
+import { Phone, Shield, User, Award, Edit, LoaderCircle, CreditCard, Mail } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -86,6 +86,13 @@ export default function StaffProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                   <div className="flex items-center gap-4">
+                      <Mail className="h-5 w-5 text-muted-foreground" />
+                       <div className="text-sm">
+                          <p className="font-medium">Email</p>
+                          <p className="text-muted-foreground">{staffMember.email}</p>
+                      </div>
+                  </div>
                   <div className="flex items-center gap-4">
                       <User className="h-5 w-5 text-muted-foreground" />
                       <div className="text-sm">
