@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Phone, Shield, User, Award, Edit, LoaderCircle } from "lucide-react";
+import { Phone, Shield, User, Award, Edit, LoaderCircle, CreditCard } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -15,8 +15,8 @@ import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc, Timestamp } from "firebase/firestore";
 import { useParams } from "next/navigation";
 
-function getCertificationStatus(certName: string, expiryDate: Date): { label: string, variant: "destructive" | "warning" | "success" | "outline" } {
-  if (certName === 'TTMW') {
+function getQualificationStatus(name: string, expiryDate: Date): { label: string, variant: "destructive" | "warning" | "success" | "outline" } {
+  if (name === 'TTMW') {
     return { label: "Lifetime", variant: "outline" };
   }
   
@@ -118,7 +118,7 @@ export default function StaffProfilePage() {
           </Card>
         </div>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Certifications</CardTitle>
@@ -139,7 +139,7 @@ export default function StaffProfilePage() {
                       <TableBody>
                           {sortedCerts.map((cert, index) => {
                               const expiryDate = cert.expiryDate instanceof Timestamp ? cert.expiryDate.toDate() : new Date(cert.expiryDate);
-                              const status = getCertificationStatus(cert.name, expiryDate);
+                              const status = getQualificationStatus(cert.name, expiryDate);
                               return (
                                   <TableRow key={index}>
                                       <TableCell className="font-medium">{cert.name}</TableCell>
@@ -162,6 +162,53 @@ export default function StaffProfilePage() {
                   <div className="text-center py-10 text-muted-foreground">
                       <Award className="mx-auto h-12 w-12" />
                       <p className="mt-4">No certifications on record.</p>
+                  </div>
+              )}
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader>
+              <CardTitle>Driver's Licenses</CardTitle>
+              <CardDescription>
+                All licenses and their expiry dates for {staffMember.name}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {staffMember.licenses && staffMember.licenses.length > 0 ? (
+                  <Table>
+                      <TableHeader>
+                          <TableRow>
+                              <TableHead>License Class</TableHead>
+                              <TableHead>Expiry Date</TableHead>
+                              <TableHead className="text-right">Status</TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                          {staffMember.licenses.map((license, index) => {
+                              const expiryDate = license.expiryDate instanceof Timestamp ? license.expiryDate.toDate() : new Date(license.expiryDate);
+                              const status = getQualificationStatus(license.name, expiryDate);
+                              return (
+                                  <TableRow key={index}>
+                                      <TableCell className="font-medium">{license.name}</TableCell>
+                                      <TableCell>{format(expiryDate, "dd MMM yyyy")}</TableCell>
+                                      <TableCell className="text-right">
+                                          <Badge variant={status.variant} className={cn(
+                                              status.variant === "destructive" && "bg-destructive/20 text-destructive-foreground border-destructive",
+                                              status.variant === "warning" && "bg-warning/20 text-yellow-800 border-warning",
+                                              status.variant === "success" && "bg-success/20 text-green-800 border-success"
+                                          )}>
+                                              {status.label}
+                                          </Badge>
+                                      </TableCell>
+                                  </TableRow>
+                              )
+                          })}
+                      </TableBody>
+                  </Table>
+              ) : (
+                  <div className="text-center py-10 text-muted-foreground">
+                      <CreditCard className="mx-auto h-12 w-12" />
+                      <p className="mt-4">No licenses on record.</p>
                   </div>
               )}
             </CardContent>
