@@ -45,11 +45,8 @@ export default function AppLayout({
   useEffect(() => {
     // This is the error recovery logic.
     const handleChunkError = (event: Event) => {
-      // The event for a chunk loading error is not a standard 'error' event
-      // but we can listen for any error and check the message.
       if (event.type === 'error') {
         const error = (event as ErrorEvent).error;
-        // This is a common pattern for chunk load errors.
         if (error && (error.name === 'ChunkLoadError' || /Loading chunk .* failed/i.test(error.message))) {
           console.warn('Chunk loading failed. Forcing a page refresh to get the latest version.');
           window.location.reload();
