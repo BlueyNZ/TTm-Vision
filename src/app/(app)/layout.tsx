@@ -42,6 +42,59 @@ export default function AppLayout({
     }
   }, [user, isLoading, router]);
 
+  useEffect(() => {
+    // This is the error recovery logic.
+    const handleChunkError = (event: Event) => {
+      // The event for a chunk loading error is not a standard 'error' event
+      // but we can listen for any error and check the message.
+      if (event.type === 'error') {
+        const error = (event as ErrorEvent).error;
+        // This is a common pattern for chunk load errors.
+        if (error && (error.name === 'ChunkLoadError' || /Loading chunk .* failed/i.test(error.message))) {
+          console.warn('Chunk loading failed. Forcing a page refresh to get the latest version.');
+          window.location.reload();
+        }
+      }
+    };
+
+    window.addEventListener('error', handleChunkError);
+
+    // This is a Next.js specific way to catch navigation-related errors
+    const originalPush = router.push;
+    const originalReplace = router.replace;
+
+    const handleError = (err: any, url: string) => {
+      if (err.name === 'ChunkLoadError' || /Loading chunk .* failed/i.test(err.message)) {
+        console.warn(`Chunk load failed for route: ${url}. Refreshing...`);
+        window.location.href = url; // Force a full navigation
+        return false; // Prevent Next.js from continuing
+      }
+      return true;
+    }
+
+    router.push = (href: string, options?: any) => {
+      // @ts-ignore
+      return originalPush(href, options).catch((err: any) => {
+        if (!handleError(err, href)) throw err;
+      });
+    }
+
+     router.replace = (href: string, options?: any) => {
+      // @ts-ignore
+      return originalReplace(href, options).catch((err: any) => {
+        if (!handleError(err, href)) throw err;
+      });
+    }
+
+
+    return () => {
+      window.removeEventListener('error', handleChunkError);
+       // Restore original router methods
+      router.push = originalPush;
+      router.replace = originalReplace;
+    };
+  }, [router]);
+
   if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
