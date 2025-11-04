@@ -8,7 +8,11 @@ service cloud.firestore {
     }
 
     match /{document=**} {
-      allow read, write: if isSignedIn();
+      // Allow any client (including the server-side SMS flow) to read data.
+      allow read: if true;
+      
+      // Only allow authenticated users to create, update, or delete data.
+      allow write: if isSignedIn();
     }
   }
 }
