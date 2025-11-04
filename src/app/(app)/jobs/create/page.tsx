@@ -27,6 +27,7 @@ export default function JobCreatePage() {
   const firestore = useFirestore();
 
   const [location, setLocation] = useState('');
+  const [clientName, setClientName] = useState('');
   const [name, setName] = useState('Start Time:\nOn Site:\n\nJob Description:');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState('');
@@ -90,6 +91,7 @@ export default function JobCreatePage() {
         jobNumber: newJobNumber,
         name,
         location,
+        clientName,
         startDate: Timestamp.fromDate(startDate),
         startTime,
         siteSetupTime,
@@ -120,6 +122,10 @@ export default function JobCreatePage() {
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
             <Input id="location" name="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Km 24-28, Northern Mwy" />
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="clientName">Client / Company Name</Label>
+            <Input id="clientName" name="clientName" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="e.g. Fulton Hogan" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">Job Description</Label>

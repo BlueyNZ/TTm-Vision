@@ -31,6 +31,7 @@ export default function JobEditPage() {
 
   const [jobName, setJobName] = useState('');
   const [jobLocation, setJobLocation] = useState('');
+  const [clientName, setClientName] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState('');
   const [siteSetupTime, setSiteSetupTime] = useState('');
@@ -54,6 +55,7 @@ export default function JobEditPage() {
     if (job) {
       setJobName(job.name);
       setJobLocation(job.location);
+      setClientName(job.clientName || '');
       if (job.startDate) {
         setStartDate(job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate));
       }
@@ -113,6 +115,7 @@ export default function JobEditPage() {
     const updatedJob = {
         name: jobName,
         location: jobLocation,
+        clientName: clientName,
         startDate: Timestamp.fromDate(startDate),
         startTime,
         siteSetupTime,
@@ -151,6 +154,10 @@ export default function JobEditPage() {
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
             <Input id="location" name="location" value={jobLocation} onChange={(e) => setJobLocation(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="clientName">Client / Company Name</Label>
+            <Input id="clientName" name="clientName" value={clientName} onChange={(e) => setClientName(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">Job Description</Label>
