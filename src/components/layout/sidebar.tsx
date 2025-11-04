@@ -43,7 +43,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isAdmin }: AppSidebarProps) {
   const pathname = usePathname();
-  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients"].some(path => pathname.startsWith(path));
+  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin"].some(path => pathname.startsWith(path));
   const isAdminPagesActive = pathname.startsWith("/admin");
 
 
@@ -89,6 +89,13 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname === "/admin"}>
+                           <Link href="/admin">
+                            Overview
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/jobs")}>
                            <Link href="/jobs">
                             Jobs
@@ -120,12 +127,12 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
-              <Collapsible asChild defaultOpen={isAdminPagesActive}>
+              <Collapsible asChild defaultOpen={isAdminPagesActive && pathname !== "/admin"}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
                       tooltip="Admin"
-                      isActive={isAdminPagesActive}
+                      isActive={isAdminPagesActive && pathname !== "/admin"}
                       className="justify-between"
                     >
                       <div className="flex items-center gap-2">
@@ -137,13 +144,6 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      <SidebarMenuItem>
-                        <SidebarMenuSubButton asChild isActive={pathname === "/admin"}>
-                           <Link href="/admin">
-                            Overview
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuItem>
                       <SidebarMenuItem>
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/admin/create-staff")}>
                           <Link href="/admin/create-staff">
