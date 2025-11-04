@@ -9,9 +9,11 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getFirestore, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, Timestamp } from 'firebase/firestore';
 import { Job, Staff } from '@/lib/data';
 import { format } from 'date-fns';
+import { initializeFirebaseOnServer } from '@/firebase/server-init';
+
 
 const SendJobSmsInputSchema = z.object({
   jobId: z.string().describe('The ID of the job pack to send notifications for.'),
@@ -58,7 +60,7 @@ const sendJobSmsFlow = ai.defineFlow(
     }),
   },
   async (input) => {
-    const firestore = getFirestore();
+    const firestore = initializeFirebaseOnServer();
     const { jobId } = input;
     let messagesSent = 0;
     const errors: string[] = [];
