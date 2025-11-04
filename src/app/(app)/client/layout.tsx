@@ -31,7 +31,8 @@ export default function ClientLayout({
   const accessLevel = currentUserStaffProfile?.accessLevel;
   const isLoading = isUserLoading || isStaffLoading;
 
-  const isAuthorized = accessLevel === 'Client' || accessLevel === 'Admin';
+  const isAdmin = accessLevel === 'Admin';
+  const isAuthorized = isAdmin || accessLevel === 'Client';
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -66,7 +67,7 @@ export default function ClientLayout({
         <div className="flex min-h-screen w-full">
           <ClientSidebar />
           <div className="flex flex-1 flex-col">
-            <ClientHeader />
+            <ClientHeader isAdmin={isAdmin} />
             <main className="flex-1 p-4 sm:p-6 bg-background">
               {children}
             </main>

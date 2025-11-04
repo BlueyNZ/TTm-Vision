@@ -12,12 +12,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, LogOut, ChevronDown } from "lucide-react";
+import { ArrowLeft, LogOut, ChevronDown, Repeat } from "lucide-react";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
-export function ClientHeader() {
+interface ClientHeaderProps {
+  isAdmin?: boolean;
+}
+
+export function ClientHeader({ isAdmin }: ClientHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useUser();
@@ -70,6 +75,14 @@ export function ClientHeader() {
         </h1>
       </div>
       <div className="flex flex-1 items-center gap-4 md:ml-auto md:flex-initial md:justify-end">
+        {isAdmin && (
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard">
+              <Repeat className="mr-2 h-4 w-4" />
+              Switch to Staff View
+            </Link>
+          </Button>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">
