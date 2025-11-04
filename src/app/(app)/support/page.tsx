@@ -38,10 +38,6 @@ const faqs = [
     {
         question: "My certifications are incorrect. How can I update them?",
         answer: "To update your certifications, please contact an administrator. They have the necessary permissions to edit your staff profile and update your qualifications."
-    },
-    {
-        question: "I can't see the Admin section. Why?",
-        answer: "The Admin section is only visible to users with 'Admin' access level. If you believe you should have access, please contact your system administrator to have your permissions updated."
     }
 ]
 
