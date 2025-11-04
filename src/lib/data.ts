@@ -1,6 +1,11 @@
 
 import { Timestamp } from "firebase/firestore";
 
+export type Client = {
+  id: string;
+  name: string;
+};
+
 export type Certification = {
   name: 'TTMW' | 'TMO-NP' | 'TMO' | 'STMS-U' | 'STMS (CAT A)' | 'STMS (CAT B)' | 'STMS (CAT C)' | 'STMS-NP';
   expiryDate: Date | Timestamp;

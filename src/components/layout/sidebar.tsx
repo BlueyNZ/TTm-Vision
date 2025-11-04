@@ -25,6 +25,7 @@ import {
   FileText,
   Briefcase,
   UserPlus,
+  Building,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -40,7 +41,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isAdmin }: AppSidebarProps) {
   const pathname = usePathname();
-  const isManagementPagesActive = ["/staff", "/fleet", "/jobs"].some(path => pathname.startsWith(path));
+  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients"].some(path => pathname.startsWith(path));
   const isAdminPagesActive = pathname.startsWith("/admin");
 
 
@@ -103,6 +104,13 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/staff")}>
                           <Link href="/staff">
                             Staff
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                       <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/clients")}>
+                           <Link href="/clients">
+                            Clients
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>

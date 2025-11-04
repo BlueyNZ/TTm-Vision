@@ -1,6 +1,23 @@
 
 {
   "entities": {
+    "Client": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Client",
+      "type": "object",
+      "description": "Represents a client company.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Client entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the client company."
+        }
+      },
+      "required": ["id", "name"]
+    },
     "License": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "License",
@@ -443,6 +460,22 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/clients/{clientId}",
+        "definition": {
+          "entityName": "Client",
+          "schema": {
+            "$ref": "#/backend/entities/Client"
+          },
+          "description": "A collection of all clients.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "The unique identifier for the Client."
+            }
+          ]
+        }
+      },
       {
         "path": "/job_packs/{jobPackId}",
         "definition": {
