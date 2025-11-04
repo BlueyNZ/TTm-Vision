@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMemo } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const getDisplayedStatus = (job: Job) => {
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -57,6 +58,7 @@ const getStatusColor = (status: Job['status']) => {
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const jobsCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -99,6 +101,18 @@ export default function DashboardPage() {
               Here's a quick look at what's happening.
             </CardDescription>
           </CardHeader>
+           <CardContent>
+            <Button
+              onClick={() => {
+                toast({
+                  title: "Scheduled: Catch up",
+                  description: "Friday, February 10, 2023 at 5:57 PM",
+                });
+              }}
+            >
+              Show Notification
+            </Button>
+          </CardContent>
         </Card>
 
         <Card>
