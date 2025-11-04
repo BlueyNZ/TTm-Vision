@@ -96,7 +96,9 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
       showBackButton = true;
       if (['settings', 'support'].includes(pathParts[0])) {
         backPath = '/dashboard';
-      } else if (['clients', 'jobs', 'staff', 'fleet'].includes(pathParts[0]) && pathParts.length === 1) {
+      } else if (['clients'].includes(pathParts[0]) && pathParts.length === 1) {
+          backPath = '/admin'; // Go back to management overview
+      } else if (['jobs', 'staff', 'fleet'].includes(pathParts[0]) && pathParts.length === 1) {
         backPath = '/admin'; // Go back to management overview
       } else if (pathParts.length > 2 && pathParts[2] === 'edit') {
         backPath = `/${pathParts[0]}/${pathParts[1]}`;
