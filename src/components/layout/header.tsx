@@ -101,18 +101,17 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
       backPath = '/dashboard';
     } 
     // Handle top-level management pages
-    else if (['jobs', 'staff', 'fleet', 'clients'].includes(page) && pathParts.length === 1) {
+    else if (['jobs', 'staff', 'fleet'].includes(page) && pathParts.length === 1) {
       showBackButton = true;
       backPath = '/admin';
     }
     // Handle detail or edit pages within management sections
     else if (['jobs', 'staff', 'fleet', 'clients'].includes(page) && pathParts.length > 1) {
       showBackButton = true;
-      // 'edit' page should go back to the detail page
-      if (pathParts[2] === 'edit') {
+      // edit page or deeper should go back to detail page
+      if (pathParts[2] === 'edit' || pathParts.length > 2) { 
         backPath = `/${pathParts[0]}/${pathParts[1]}`;
-      } else {
-        // Detail page should go back to the list page
+      } else { // Detail page should go back to list page
         backPath = `/${pathParts[0]}`;
       }
     }
