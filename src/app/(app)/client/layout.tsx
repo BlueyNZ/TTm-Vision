@@ -33,6 +33,8 @@ export default function ClientLayout({
   const accessLevel = currentUserStaffProfile?.accessLevel;
   const isLoading = isUserLoading || isStaffLoading;
 
+  const isAuthorized = accessLevel === 'Client' || accessLevel === 'Admin';
+
   const handleLogout = async () => {
       if (!auth) return;
       try {
@@ -55,7 +57,7 @@ export default function ClientLayout({
     if (!isLoading && !user) {
       router.replace('/client-login');
     }
-    if (!isLoading && user && accessLevel && accessLevel !== 'Client') {
+    if (!isLoading && user && accessLevel && !isAuthorized) {
       toast({
         variant: "destructive",
         title: "Access Denied",
@@ -63,9 +65,9 @@ export default function ClientLayout({
       });
       router.replace('/dashboard');
     }
-  }, [user, isLoading, router, accessLevel, toast]);
+  }, [user, isLoading, router, accessLevel, toast, isAuthorized]);
 
-  if (isLoading || !user || accessLevel !== 'Client') {
+  if (isLoading || !user || !isAuthorized) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
