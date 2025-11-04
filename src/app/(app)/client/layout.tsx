@@ -1,14 +1,16 @@
 
 'use client';
-import { useUser } from "@/firebase";
+import { useUser, useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { LoaderCircle, LogOut } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
+import { Staff } from "@/lib/data";
+import { collection, query, where } from "firebase/firestore";
 
 export default function ClientLayout({
   children,
@@ -18,7 +20,18 @@ export default function ClientLayout({
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
+
+  const staffQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.email) return null;
+    return query(collection(firestore, 'staff'), where('email', '==', user.email));
+  }, [firestore, user?.email]);
+
+  const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
+  const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
+  const accessLevel = currentUserStaffProfile?.accessLevel;
+  const isLoading = isUserLoading || isStaffLoading;
 
   const handleLogout = async () => {
       if (!auth) return;
@@ -39,12 +52,20 @@ export default function ClientLayout({
   };
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (!isLoading && !user) {
       router.replace('/client-login');
     }
-  }, [user, isUserLoading, router]);
+    if (!isLoading && user && accessLevel && accessLevel !== 'Client') {
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "You are not authorized to view the client portal.",
+      });
+      router.replace('/dashboard');
+    }
+  }, [user, isLoading, router, accessLevel, toast]);
 
-  if (isUserLoading || !user) {
+  if (isLoading || !user || accessLevel !== 'Client') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
