@@ -85,29 +85,44 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
         return 'Create Staff';
     }
 
-
     if(page) return page.replace(/-/g, " ");
 
     return "Dashboard";
   }
 
 
-  if (pathParts.length > 1 || ['settings', 'support', 'clients'].includes(pathParts[0])) {
+  // Determine if the back button should be shown and where it should go.
+  if (pathParts.length > 0) {
+    const page = pathParts[0];
+
+    // Always show back button for settings and support
+    if (page === 'settings' || page === 'support') {
       showBackButton = true;
-      if (['settings', 'support'].includes(pathParts[0])) {
-        backPath = '/dashboard';
-      } else if ((['clients', 'jobs', 'staff', 'fleet'].includes(pathParts[0])) && pathParts.length === 1) {
-          backPath = '/admin'; // Go back to management overview
-      } else if (pathParts.length > 2 && pathParts[2] === 'edit') {
+      backPath = '/dashboard';
+    } 
+    // Handle top-level management pages
+    else if (['jobs', 'staff', 'fleet', 'clients'].includes(page) && pathParts.length === 1) {
+      showBackButton = true;
+      backPath = '/admin';
+    }
+    // Handle detail or edit pages within management sections
+    else if (['jobs', 'staff', 'fleet', 'clients'].includes(page) && pathParts.length > 1) {
+      showBackButton = true;
+      // 'edit' page should go back to the detail page
+      if (pathParts[2] === 'edit') {
         backPath = `/${pathParts[0]}/${pathParts[1]}`;
       } else {
-        if (pathParts[0] === 'jobs' && !isAdmin) {
-          backPath = '/dashboard';
-        } else {
-          backPath = `/${pathParts[0]}`;
-        }
+        // Detail page should go back to the list page
+        backPath = `/${pathParts[0]}`;
       }
-  } 
+    }
+    // Handle create staff page
+    else if (page === 'admin' && pathParts.length > 1) {
+        showBackButton = true;
+        backPath = '/admin';
+    }
+  }
+
 
   title = getTitleForPage(pathParts);
 
