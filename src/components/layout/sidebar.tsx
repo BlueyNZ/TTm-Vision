@@ -116,13 +116,6 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
-                       <SidebarMenuItem>
-                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/clients")}>
-                           <Link href="/clients">
-                            Clients
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuItem>
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>
