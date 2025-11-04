@@ -95,7 +95,7 @@ export default function DashboardPage() {
     <TooltipProvider>
       <div className="flex flex-col gap-6">
         <Card>
-          <CardHeader>
+          <CardHeader className="text-center">
             <CardTitle>Welcome back, {currentStaffMember ? currentStaffMember.name : (user?.displayName || 'User')}!</CardTitle>
             <CardDescription>
               Here's a quick look at what's happening.
@@ -165,7 +165,7 @@ export default function DashboardPage() {
                                             )}
                                         </div>
                                     </Link>
-                                     <div className="pl-4">
+                                     <div className="pl-4 flex items-center">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="outline" onClick={(e) => e.stopPropagation()}>
