@@ -15,6 +15,7 @@ export type Staff = {
   id: string;
   name: string;
   email: string;
+  phone: string; // Added for SMS notifications
   role: 'TC' | 'STMS' | 'Operator';
   certifications: Certification[];
   licenses?: License[];

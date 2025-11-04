@@ -52,6 +52,7 @@ import { Separator } from "../ui/separator";
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
+  phone: z.string().min(1, "Phone number is required."),
   role: z.enum(["TC", "STMS", "Operator"]),
   certifications: z.array(z.object({
     name: z.enum(["TTMW", "TMO-NP", "TMO", "STMS-U", "STMS (CAT A)", "STMS (CAT B)", "STMS (CAT C)", "STMS-NP"]),
@@ -151,6 +152,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     defaultValues: {
       name: "",
       email: "",
+      phone: "",
       role: undefined,
       certifications: [],
       licenses: [],
@@ -185,6 +187,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
         form.reset({
           name: staffToEdit.name,
           email: staffToEdit.email,
+          phone: staffToEdit.phone || '',
           role: staffToEdit.role,
           certifications: certsWithDates,
           licenses: licensesWithDates,
@@ -196,6 +199,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
         form.reset({
             name: "",
             email: "",
+            phone: "",
             role: undefined,
             certifications: [],
             licenses: [],
@@ -214,6 +218,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     const staffPayload = {
         name: data.name,
         email: data.email,
+        phone: data.phone,
         role: data.role,
         certifications: data.certifications?.map(cert => ({
           ...cert,
@@ -283,6 +288,19 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input placeholder="john.doe@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="021 123 4567" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -500,5 +518,3 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     </Dialog>
   );
 }
-
-    

@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { Job } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock, ChevronDown } from 'lucide-react';
+import { Calendar, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock, ChevronDown, MessageSquare } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { sendJobSms } from '@/ai/flows/send-job-sms-flow';
+import { useToast } from '@/hooks/use-toast';
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -48,7 +50,9 @@ export default function JobDetailPage() {
   const params = useParams();
   const jobId = params.id as string;
   const [formattedDate, setFormattedDate] = useState('');
+  const [isSendingSms, setIsSendingSms] = useState(false);
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -68,6 +72,41 @@ export default function JobDetailPage() {
         setFormattedDate(format(date, 'eeee, dd MMMM yyyy'));
     }
   }, [job]);
+
+  const handleSendSms = async () => {
+    setIsSendingSms(true);
+    try {
+      const result = await sendJobSms({ jobId });
+      if (result.success) {
+        toast({
+          title: "SMS Notifications Sent",
+          description: `Successfully sent job details to ${result.messagesSent} crew member(s).`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Some SMS Notifications Failed",
+          description: (
+            <div>
+              <p>Sent: {result.messagesSent}. Failed: {result.errors.length}.</p>
+              <ul className="mt-2 list-disc list-inside">
+                {result.errors.map((e, i) => <li key={i}>{e}</li>)}
+              </ul>
+            </div>
+          ),
+          duration: 9000,
+        });
+      }
+    } catch (error: any) {
+       toast({
+        variant: "destructive",
+        title: "Failed to Send SMS",
+        description: error.message || "An unexpected error occurred.",
+      });
+    } finally {
+      setIsSendingSms(false);
+    }
+  };
 
 
   if (isLoading || !job) {
@@ -96,6 +135,14 @@ export default function JobDetailPage() {
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Job
               </Link>
+            </Button>
+            <Button onClick={handleSendSms} disabled={isSendingSms}>
+              {isSendingSms ? (
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <MessageSquare className="mr-2 h-4 w-4" />
+              )}
+              Send SMS to Crew
             </Button>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>

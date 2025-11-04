@@ -26,6 +26,7 @@ export default function SettingsPage() {
     const { theme, setTheme } = useTheme();
 
     const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
     const [emergencyContactName, setEmergencyContactName] = useState('');
     const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
     const [currentPassword, setCurrentPassword] = useState('');
@@ -43,6 +44,7 @@ export default function SettingsPage() {
     useEffect(() => {
         if (staffMember) {
             setName(staffMember.name);
+            setPhone(staffMember.phone || '');
             setEmergencyContactName(staffMember.emergencyContact.name);
             setEmergencyContactPhone(staffMember.emergencyContact.phone);
         }
@@ -54,6 +56,7 @@ export default function SettingsPage() {
         const staffDocRef = doc(firestore, 'staff', staffMember.id);
         setDocumentNonBlocking(staffDocRef, { 
             name: name,
+            phone: phone,
             emergencyContact: {
                 name: emergencyContactName,
                 phone: emergencyContactPhone,
@@ -128,6 +131,10 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" value={user?.email || ''} disabled />
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input id="phone" value={phone} onChange={e => setPhone(e.target.value)} />
           </div>
            <div className="space-y-2">
             <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>

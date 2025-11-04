@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Staff } from "@/lib/data";
@@ -91,6 +92,13 @@ export default function StaffProfilePage() {
                        <div className="text-sm">
                           <p className="font-medium">Email</p>
                           <p className="text-muted-foreground">{staffMember.email}</p>
+                      </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                      <Phone className="h-5 w-5 text-muted-foreground" />
+                       <div className="text-sm">
+                          <p className="font-medium">Phone</p>
+                          <p className="text-muted-foreground">{staffMember.phone}</p>
                       </div>
                   </div>
                   <div className="flex items-center gap-4">
