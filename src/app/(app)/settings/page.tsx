@@ -164,6 +164,9 @@ export default function SettingsPage() {
                      <div className="space-y-2">
                         <Label htmlFor="new-password">New Password</Label>
                         <Input id="new-password" type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)}/>
+                         <p className="text-xs text-muted-foreground px-1">
+                            Use a strong, unique password to keep your account secure. It should be at least 8 characters long.
+                        </p>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="confirm-password">Confirm New Password</Label>

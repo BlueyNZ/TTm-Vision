@@ -86,9 +86,6 @@ export default function ClientLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                 <p className="text-xs text-muted-foreground px-1">
-                  Use a strong, unique password to keep your account secure.
-                </p>
               </div>
                <div className="flex items-center space-x-2">
                 <Checkbox 
