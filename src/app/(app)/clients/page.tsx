@@ -6,7 +6,7 @@ import { Client } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Building, MoreHorizontal, PlusCircle, Trash2, Edit, LoaderCircle, Eye, ArrowLeft } from 'lucide-react';
+import { Building, MoreHorizontal, PlusCircle, Trash2, Edit, LoaderCircle, Eye } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,13 +57,6 @@ export default function ClientsPage() {
   
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-         <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => router.push('/admin')}>
-            <ArrowLeft className="h-4 w-4" />
-            <span className="sr-only">Back</span>
-          </Button>
-          <h1 className="text-2xl font-semibold">Client Management</h1>
-      </div>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
