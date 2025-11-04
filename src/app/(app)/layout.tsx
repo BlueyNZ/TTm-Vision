@@ -11,53 +11,41 @@ import { Staff } from "@/lib/data";
 import { collection, query, where } from "firebase/firestore";
 import { ThemeProvider } from "@/components/theme-provider";
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function ClientRouteHandler({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      {children}
+    </ThemeProvider>
+  );
+}
+
+function StaffAppLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const pathname = usePathname();
   const firestore = useFirestore();
 
-  // Redirect client users away from the main app
-  if (pathname.startsWith('/client')) {
-    return (
-        <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-        >
-            {children}
-        </ThemeProvider>
-    );
-  }
-
-  // Find the staff profile for the current user based on email
   const staffQuery = useMemoFirebase(() => {
     if (!firestore || !user?.email) return null;
     return query(collection(firestore, 'staff'), where('email', '==', user.email));
   }, [firestore, user?.email]);
 
   const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
-
   const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
   const accessLevel = currentUserStaffProfile?.accessLevel;
-  
   const isAdmin = accessLevel === 'Admin';
-
-
   const isLoading = isUserLoading || isStaffLoading;
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.replace('/login');
     }
-    // If user is loaded and is a client, redirect them away from the staff app
     if (!isLoading && user && accessLevel === 'Client') {
-        router.replace('/client/dashboard');
+      router.replace('/client/dashboard');
     }
   }, [user, isLoading, router, accessLevel]);
 
@@ -71,10 +59,10 @@ export default function AppLayout({
 
   return (
     <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
     >
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
@@ -89,4 +77,18 @@ export default function AppLayout({
       </SidebarProvider>
     </ThemeProvider>
   );
+}
+
+export default function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+
+  if (pathname.startsWith('/client')) {
+    return <ClientRouteHandler>{children}</ClientRouteHandler>;
+  }
+
+  return <StaffAppLayout>{children}</StaffAppLayout>;
 }
