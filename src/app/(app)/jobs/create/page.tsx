@@ -1,7 +1,7 @@
 
 'use client';
 import { useRouter } from 'next/navigation';
-import { Job, Staff } from '@/lib/data';
+import { Job, Staff, Client } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { ClientSelector } from '@/components/clients/client-selector';
 
 
 export default function JobCreatePage() {
@@ -27,7 +28,7 @@ export default function JobCreatePage() {
   const firestore = useFirestore();
 
   const [location, setLocation] = useState('');
-  const [clientName, setClientName] = useState('');
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [name, setName] = useState('Start Time:\nOn Site:\n\nJob Description:');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState('');
@@ -41,8 +42,13 @@ export default function JobCreatePage() {
     if (!firestore) return null;
     return collection(firestore, 'staff');
   }, [firestore]);
-
   const { data: staffList } = useCollection<Staff>(staffCollection);
+
+  const clientsCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'clients');
+  }, [firestore]);
+  const { data: clientList } = useCollection<Client>(clientsCollection);
 
   const handleAddTc = (staff: Staff | null) => {
     if (staff && !selectedTcs.find(tc => tc.id === staff.id) && selectedStms?.id !== staff.id) {
@@ -91,7 +97,8 @@ export default function JobCreatePage() {
         jobNumber: newJobNumber,
         name,
         location,
-        clientName,
+        clientName: selectedClient?.name || '',
+        clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
         startTime,
         siteSetupTime,
@@ -125,7 +132,12 @@ export default function JobCreatePage() {
           </div>
            <div className="space-y-2">
             <Label htmlFor="clientName">Client / Company Name</Label>
-            <Input id="clientName" name="clientName" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="e.g. Fulton Hogan" />
+            <ClientSelector
+              clientList={clientList || []}
+              selectedClient={selectedClient}
+              onSelectClient={setSelectedClient}
+              placeholder="Search or select a client..."
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">Job Description</Label>
@@ -163,7 +175,7 @@ export default function JobCreatePage() {
             </div>
              <div className="space-y-2">
                 <Label htmlFor="startTime">Job Start Time</Label>
-                <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.target.value)} placeholder="e.g. 20:00"/>
+                <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.g.value)} placeholder="e.g. 20:00"/>
             </div>
           </div>
            <div className="space-y-2">

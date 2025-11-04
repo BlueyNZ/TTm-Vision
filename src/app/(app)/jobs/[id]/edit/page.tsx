@@ -1,7 +1,7 @@
 
 'use client';
 import { useParams, useRouter } from 'next/navigation';
-import { Job, Staff } from '@/lib/data';
+import { Job, Staff, Client } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { ClientSelector } from '@/components/clients/client-selector';
 
 
 export default function JobEditPage() {
@@ -31,7 +32,7 @@ export default function JobEditPage() {
 
   const [jobName, setJobName] = useState('');
   const [jobLocation, setJobLocation] = useState('');
-  const [clientName, setClientName] = useState('');
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState('');
   const [siteSetupTime, setSiteSetupTime] = useState('');
@@ -51,11 +52,22 @@ export default function JobEditPage() {
   }, [firestore]);
   const { data: staffList } = useCollection<Staff>(staffCollection);
 
+  const clientsCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'clients');
+  }, [firestore]);
+  const { data: clientList } = useCollection<Client>(clientsCollection);
+
   useEffect(() => {
     if (job) {
       setJobName(job.name);
       setJobLocation(job.location);
-      setClientName(job.clientName || '');
+      if (job.clientId && clientList) {
+        setSelectedClient(clientList.find(c => c.id === job.clientId) || null);
+      } else if (job.clientName) {
+        // Fallback for older data
+        setSelectedClient({ id: '', name: job.clientName });
+      }
       if (job.startDate) {
         setStartDate(job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate));
       }
@@ -70,7 +82,7 @@ export default function JobEditPage() {
         setSelectedTcs(tcs);
       }
     }
-  }, [job, staffList]);
+  }, [job, staffList, clientList]);
 
   
   const handleStatusChange = (value: Job['status']) => {
@@ -115,7 +127,8 @@ export default function JobEditPage() {
     const updatedJob = {
         name: jobName,
         location: jobLocation,
-        clientName: clientName,
+        clientName: selectedClient?.name || '',
+        clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
         startTime,
         siteSetupTime,
@@ -157,7 +170,12 @@ export default function JobEditPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="clientName">Client / Company Name</Label>
-            <Input id="clientName" name="clientName" value={clientName} onChange={(e) => setClientName(e.target.value)} />
+            <ClientSelector
+              clientList={clientList || []}
+              selectedClient={selectedClient}
+              onSelectClient={setSelectedClient}
+              placeholder="Search or select a client..."
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">Job Description</Label>

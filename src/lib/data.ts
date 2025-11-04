@@ -55,6 +55,7 @@ export type Job = {
   name: string;
   location: string;
   clientName: string;
+  clientId?: string;
   startDate: Timestamp | Date | string;
   startTime: string;
   siteSetupTime: string;
