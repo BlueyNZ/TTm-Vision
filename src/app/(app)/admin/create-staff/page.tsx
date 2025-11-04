@@ -41,7 +41,7 @@ const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
   role: z.enum(["TC", "STMS", "Operator"]),
-  accessLevel: z.enum(["Staff Member", "Admin"]),
+  accessLevel: z.enum(["Staff Member", "Admin", "Client"]),
 });
 
 
@@ -108,7 +108,7 @@ export default function CreateStaffPage() {
                 <Info className="h-4 w-4" />
                 <AlertTitle>Two-Step Process</AlertTitle>
                 <AlertDescription>
-                   <p className='mb-2'>To create a new staff account, you must first create the user in Firebase Authentication and then create their profile here.</p>
+                   <p className='mb-2'>To create a new staff or client account, you must first create the user in Firebase Authentication and then create their profile here.</p>
                    <ol className="list-decimal list-inside space-y-1">
                         <li>
                             <strong>Create Firebase User:</strong> Go to the Firebase Console, add a new user with their email and a temporary password.
@@ -118,7 +118,7 @@ export default function CreateStaffPage() {
                                 </Button>
                             </a>
                         </li>
-                        <li><strong>Create Staff Profile:</strong> Fill out and submit the form below using the exact same email address.</li>
+                        <li><strong>Create Profile:</strong> Fill out and submit the form below using the exact same email address.</li>
                    </ol>
                 </AlertDescription>
             </Alert>
@@ -126,9 +126,9 @@ export default function CreateStaffPage() {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
                         <CardHeader>
-                            <CardTitle>Create Staff Profile</CardTitle>
+                            <CardTitle>Create Staff/Client Profile</CardTitle>
                             <CardDescription>
-                                Enter the details for the new staff member. Ensure the email matches the one in Firebase.
+                                Enter the details for the new user. Ensure the email matches the one in Firebase Auth.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -195,6 +195,7 @@ export default function CreateStaffPage() {
                                     <SelectContent>
                                     <SelectItem value="Staff Member">Staff Member</SelectItem>
                                     <SelectItem value="Admin">Admin</SelectItem>
+                                    <SelectItem value="Client">Client</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -205,7 +206,7 @@ export default function CreateStaffPage() {
                         <CardFooter>
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Staff Profile
+                                Create Profile
                             </Button>
                         </CardFooter>
                     </form>

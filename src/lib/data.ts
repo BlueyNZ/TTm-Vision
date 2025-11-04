@@ -4,6 +4,7 @@ import { Timestamp } from "firebase/firestore";
 export type Client = {
   id: string;
   name: string;
+  userId?: string; // The Firebase Auth UID of the user associated with this client account.
 };
 
 export type Certification = {
@@ -28,7 +29,7 @@ export type Staff = {
     name: string;
     phone: string;
   };
-  accessLevel: 'Staff Member' | 'Admin';
+  accessLevel: 'Staff Member' | 'Admin' | 'Client';
 };
 
 export type Truck = {

@@ -4,7 +4,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar";
 import { AppHeader } from "@/components/layout/header";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Staff } from "@/lib/data";
@@ -18,7 +18,22 @@ export default function AppLayout({
 }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const firestore = useFirestore();
+
+  // Redirect client users away from the main app
+  if (pathname.startsWith('/client')) {
+    return (
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+        >
+            {children}
+        </ThemeProvider>
+    );
+  }
 
   // Find the staff profile for the current user based on email
   const staffQuery = useMemoFirebase(() => {
@@ -40,9 +55,13 @@ export default function AppLayout({
     if (!isLoading && !user) {
       router.replace('/login');
     }
-  }, [user, isLoading, router]);
+    // If user is loaded and is a client, redirect them away from the staff app
+    if (!isLoading && user && accessLevel === 'Client') {
+        router.replace('/client/dashboard');
+    }
+  }, [user, isLoading, router, accessLevel]);
 
-  if (isLoading || !user) {
+  if (isLoading || !user || accessLevel === 'Client') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />

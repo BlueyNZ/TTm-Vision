@@ -64,7 +64,7 @@ const staffSchema = z.object({
   })).optional(),
   emergencyContactName: z.string().min(2, "Emergency contact name is required."),
   emergencyContactNumber: z.string().min(8, "Emergency contact number is required."),
-  accessLevel: z.enum(["Staff Member", "Admin"]),
+  accessLevel: z.enum(["Staff Member", "Admin", "Client"]),
 });
 
 type StaffDialogProps = {
@@ -372,6 +372,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                     <SelectContent>
                       <SelectItem value="Staff Member">Staff Member</SelectItem>
                       <SelectItem value="Admin">Admin</SelectItem>
+                      <SelectItem value="Client">Client</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
