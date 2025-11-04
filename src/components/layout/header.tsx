@@ -58,6 +58,7 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
 
     if (page === 'settings') return 'Settings';
     if (page === 'support') return 'Support';
+    if (page === 'clients') return 'Client Management';
 
     if (action === 'edit') {
       if(page === 'jobs') return 'Edit Job';
@@ -91,10 +92,12 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
   }
 
 
-  if (pathParts.length > 1 || ['settings', 'support'].includes(pathParts[0])) {
+  if (pathParts.length > 1 || ['settings', 'support', 'clients'].includes(pathParts[0])) {
       showBackButton = true;
       if (['settings', 'support'].includes(pathParts[0])) {
         backPath = '/dashboard';
+      } else if (['clients', 'jobs', 'staff', 'fleet'].includes(pathParts[0]) && pathParts.length === 1) {
+        backPath = '/admin'; // Go back to management overview
       } else if (pathParts.length > 2 && pathParts[2] === 'edit') {
         backPath = `/${pathParts[0]}/${pathParts[1]}`;
       } else {
