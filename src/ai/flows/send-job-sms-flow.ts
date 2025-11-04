@@ -9,11 +9,11 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { Job, Staff } from '@/lib/data';
 import { format } from 'date-fns';
 
-export const SendJobSmsInputSchema = z.object({
+const SendJobSmsInputSchema = z.object({
   jobId: z.string().describe('The ID of the job pack to send notifications for.'),
 });
 export type SendJobSmsInput = z.infer<typeof SendJobSmsInputSchema>;
