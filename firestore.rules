@@ -3,16 +3,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
     match /{document=**} {
-      // Allow any client (including the server-side SMS flow) to read data.
-      allow read: if true;
-      
-      // Only allow authenticated users to create, update, or delete data.
-      allow write: if isSignedIn();
+      // Allow any client to read and write data.
+      // NOTE: This is insecure and is intended for initial development.
+      // You should secure your rules before deploying to production.
+      allow read, write: if true;
     }
   }
 }
