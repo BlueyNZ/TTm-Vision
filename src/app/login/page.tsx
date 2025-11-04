@@ -110,6 +110,12 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <div className="text-sm text-muted-foreground">
+              Are you a client?{' '}
+              <Link href="/client-login" className="font-semibold text-primary hover:underline">
+                Client Portal
+              </Link>
+            </div>
+            <div className="text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}
               <Link href="/signup" className="font-semibold text-primary hover:underline">
                 Sign up
