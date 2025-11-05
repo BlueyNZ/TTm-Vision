@@ -74,6 +74,7 @@ export function JobRequestsList() {
       title: "Job Request Deleted",
       description: `The request for ${jobToDelete.location} has been removed.`,
       variant: "destructive",
+      duration: 5000,
     });
 
     setJobToDelete(null); // Close the dialog
@@ -180,4 +181,3 @@ export function JobRequestsList() {
     </>
   );
 }
-
