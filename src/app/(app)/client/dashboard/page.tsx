@@ -3,16 +3,40 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { collection, query, where, Timestamp, doc } from 'firebase/firestore';
 import { Staff, Job } from '@/lib/data';
-import { useMemo } from 'react';
-import { LoaderCircle, MapPin, Calendar, Circle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { LoaderCircle, MapPin, Calendar, Circle, MoreHorizontal, Trash2, Edit } from 'lucide-react';
 import { format, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useRouter } from "next/navigation";
+
 
 const getDisplayedStatus = (job: Job) => {
+  if (job.status === 'Pending') {
+    return 'Pending';
+  }
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
   if (job.status === 'Upcoming' && isPast(startDate)) {
     return 'In Progress';
@@ -22,6 +46,8 @@ const getDisplayedStatus = (job: Job) => {
 
 const getStatusVariant = (status: Job['status']) => {
   switch (status) {
+    case 'Pending':
+      return 'warning';
     case 'Upcoming':
       return 'secondary';
     case 'In Progress':
@@ -41,6 +67,8 @@ const getStatusColor = (status: Job['status']) => {
         return 'fill-success';
       case 'Cancelled':
         return 'fill-destructive';
+      case 'Pending':
+        return 'fill-warning';
       default:
         return 'fill-muted-foreground';
     }
@@ -50,6 +78,9 @@ const getStatusColor = (status: Job['status']) => {
 export default function ClientDashboardPage() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
+    const router = useRouter();
+    const { toast } = useToast();
+    const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
 
     const staffQuery = useMemoFirebase(() => {
         if (!firestore || !user?.email) return null;
@@ -61,7 +92,6 @@ export default function ClientDashboardPage() {
     
     const jobsQuery = useMemoFirebase(() => {
         if (!firestore || !currentUserStaffProfile?.name) return null;
-        // This assumes the client's name in the staff profile matches the clientName in job_packs
         return query(collection(firestore, 'job_packs'), where('clientName', '==', currentUserStaffProfile.name));
     }, [firestore, currentUserStaffProfile?.name]);
     
@@ -69,7 +99,20 @@ export default function ClientDashboardPage() {
     
     const isLoading = isUserLoading || isStaffLoading || isJobsLoading;
 
+    const handleDeleteJob = () => {
+        if (!firestore || !jobToDelete) return;
+        const jobDocRef = doc(firestore, 'job_packs', jobToDelete.id);
+        deleteDocumentNonBlocking(jobDocRef);
+        toast({
+            title: "Job Request Deleted",
+            description: `The request for ${jobToDelete.location} has been removed.`,
+            variant: "destructive",
+        });
+        setJobToDelete(null);
+    };
+
     return (
+        <>
         <div className="space-y-6">
             <Card>
                 <CardHeader>
@@ -96,34 +139,55 @@ export default function ClientDashboardPage() {
 
                                 return (
                                     <div key={job.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                        <Link href={`/jobs/${job.id}`}>
-                                            <div className="flex justify-between items-start">
-                                                <div className="space-y-2">
-                                                    <p className="font-semibold text-base flex items-center gap-2">
-                                                        {job.jobNumber}
-                                                    </p>
-                                                    <p className="text-lg flex items-center gap-2">
-                                                        <MapPin className="h-5 w-5 text-primary"/>
-                                                        {job.location}
-                                                    </p>
+                                        <div className="flex justify-between items-start gap-4">
+                                            <Link href={`/jobs/${job.id}`} className="flex-grow">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="space-y-2">
+                                                        <p className="font-semibold text-base flex items-center gap-2">
+                                                            {job.jobNumber}
+                                                        </p>
+                                                        <p className="text-lg flex items-center gap-2">
+                                                            <MapPin className="h-5 w-5 text-primary"/>
+                                                            {job.location}
+                                                        </p>
+                                                    </div>
+                                                    <Badge 
+                                                        variant={getStatusVariant(displayedStatus)}
+                                                        className={cn(
+                                                            "flex items-center gap-2 w-fit", 
+                                                            displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success',
+                                                            displayedStatus === 'Pending' && 'bg-warning/20 text-yellow-800 border-warning'
+                                                        )}
+                                                    >
+                                                        <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
+                                                        {displayedStatus}
+                                                    </Badge>
                                                 </div>
-                                                <Badge 
-                                                    variant={getStatusVariant(displayedStatus)}
-                                                    className={cn(
-                                                        "flex items-center gap-2 w-fit", 
-                                                        displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
-                                                    )}
-                                                >
-                                                    <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
-                                                    {displayedStatus}
-                                                </Badge>
-                                            </div>
-                                            <div className="border-t my-3"></div>
-                                            <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                                <Calendar className="h-4 w-4"/>
-                                                {format(startDate, 'eeee, dd MMM yyyy')}
-                                            </div>
-                                        </Link>
+                                                <div className="border-t my-3"></div>
+                                                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                                    <Calendar className="h-4 w-4"/>
+                                                    {format(startDate, 'eeee, dd MMM yyyy')}
+                                                </div>
+                                            </Link>
+                                            {job.status === 'Pending' && (
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem
+                                                            className="text-destructive"
+                                                            onClick={() => setJobToDelete(job)}
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            )}
+                                        </div>
                                     </div>
                                 )
                             })}
@@ -134,5 +198,26 @@ export default function ClientDashboardPage() {
                 </CardContent>
             </Card>
         </div>
+        <AlertDialog open={!!jobToDelete} onOpenChange={(open) => !open && setJobToDelete(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete your job request for 
+                    <span className="font-semibold"> {jobToDelete?.location}</span>.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                    onClick={handleDeleteJob}
+                    className="bg-destructive hover:bg-destructive/90"
+                    >
+                    Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+      </AlertDialog>
+      </>
     );
 }
