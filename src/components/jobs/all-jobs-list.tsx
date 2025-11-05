@@ -27,7 +27,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, doc, Timestamp, orderBy, query, where, QueryConstraint } from "firebase/firestore";
+import { collection, doc, Timestamp, orderBy, query } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -90,14 +90,17 @@ export function AllJobsList() {
 
   const jobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    const constraints: QueryConstraint[] = [
-        where('status', 'in', ['Upcoming', 'In Progress', 'Completed', 'Cancelled']),
-        orderBy('jobNumber', 'desc')
-    ];
-    return query(collection(firestore, 'job_packs'), ...constraints);
+    // Fetch all jobs and order them. Filtering will happen in the useMemo below.
+    return query(collection(firestore, 'job_packs'), orderBy('jobNumber', 'desc'));
   }, [firestore]);
 
-  const { data: jobData, isLoading } = useCollection<Job>(jobsQuery);
+  const { data: allJobData, isLoading } = useCollection<Job>(jobsQuery);
+
+  // Filter out pending jobs in the component code to avoid query conflicts.
+  const jobData = useMemo(() => {
+    return allJobData?.filter(job => job.status !== 'Pending') || null;
+  }, [allJobData]);
+
 
   const handleDeleteJob = () => {
     if (!firestore || !jobToDelete) return;
@@ -114,7 +117,7 @@ export function AllJobsList() {
     setJobToDelete(null); // Close the dialog
   };
   
-  if (isLoading) {
+  if (isLoading && !jobData) {
     return (
         <div className="flex justify-center items-center h-64">
             <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
