@@ -34,6 +34,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Staff } from '@/lib/data';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const requestJobSchema = z.object({
   location: z.string().min(3, { message: "Please provide a location." }),
@@ -42,6 +43,18 @@ const requestJobSchema = z.object({
   }),
   startTime: z.string().min(1, { message: "Please provide a start time." }),
   description: z.string().min(10, { message: "Please provide a detailed description." }),
+  setupType: z.enum(['Stop-Go', 'Lane Shift', 'Shoulder', 'Mobiles', 'Other'], {
+      required_error: "Please select a setup type."
+  }),
+  otherSetupType: z.string().optional(),
+}).refine(data => {
+    if (data.setupType === 'Other') {
+        return !!data.otherSetupType && data.otherSetupType.length > 0;
+    }
+    return true;
+}, {
+    message: "Please specify the setup type.",
+    path: ['otherSetupType']
 });
 
 export default function RequestJobPage() {
@@ -69,6 +82,8 @@ export default function RequestJobPage() {
     }
   });
 
+  const setupType = form.watch('setupType');
+
   async function onSubmit(data: z.infer<typeof requestJobSchema>) {
     if (!firestore || !currentUserStaffProfile) {
         toast({
@@ -95,6 +110,8 @@ export default function RequestJobPage() {
             name: data.description,
             startDate: Timestamp.fromDate(data.startDate),
             startTime: data.startTime,
+            setupType: data.setupType,
+            otherSetupType: data.otherSetupType || '',
             siteSetupTime: '',
             status: 'Pending',
             stms: null,
@@ -207,6 +224,45 @@ export default function RequestJobPage() {
                     </div>
                      <FormField
                         control={form.control}
+                        name="setupType"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Setup Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select the type of setup required" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Stop-Go">Stop-Go</SelectItem>
+                                    <SelectItem value="Lane Shift">Lane Shift</SelectItem>
+                                    <SelectItem value="Shoulder">Shoulder Work</SelectItem>
+                                    <SelectItem value="Mobiles">Mobile Operations</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    {setupType === 'Other' && (
+                        <FormField
+                            control={form.control}
+                            name="otherSetupType"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Please Specify Setup</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Describe the custom setup" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                     <FormField
+                        control={form.control}
                         name="description"
                         render={({ field }) => (
                             <FormItem>
@@ -234,5 +290,3 @@ export default function RequestJobPage() {
     </div>
   );
 }
-
-    
