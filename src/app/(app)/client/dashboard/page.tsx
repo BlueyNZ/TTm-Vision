@@ -123,7 +123,7 @@ export default function ClientDashboardPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Active Jobs</CardTitle>
+                    <CardTitle>Job</CardTitle>
                     <CardDescription>All jobs currently associated with your account.</CardDescription>
                 </CardHeader>
                 <CardContent>
