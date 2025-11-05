@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const getDisplayedStatus = (job: Job) => {
+  if(job.status === 'Pending') return 'Pending';
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
   if (job.status === 'Upcoming' && isPast(startDate)) {
     return 'In Progress';
@@ -41,7 +42,7 @@ const getDisplayedStatus = (job: Job) => {
 };
 
 
-const getStatusVariant = (status: Job['status']) => {
+const getStatusVariant = (status: Job['status'] | 'Pending') => {
   switch (status) {
     case 'Upcoming':
       return 'secondary';
@@ -51,17 +52,21 @@ const getStatusVariant = (status: Job['status']) => {
       return 'destructive';
     case 'Completed':
       return 'outline';
+    case 'Pending':
+        return 'warning';
     default:
       return 'secondary';
   }
 };
 
-const getStatusColor = (status: Job['status']) => {
+const getStatusColor = (status: Job['status'] | 'Pending') => {
   switch (status) {
     case 'In Progress':
       return 'fill-success';
     case 'Cancelled':
       return 'fill-destructive';
+    case 'Pending':
+        return 'fill-warning';
     default:
       return 'fill-muted-foreground';
   }
@@ -169,7 +174,8 @@ export default function JobsPage() {
                       variant={getStatusVariant(displayedStatus)} 
                       className={cn(
                         "flex items-center gap-2 w-fit", 
-                        displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
+                        displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success',
+                        displayedStatus === 'Pending' && 'bg-warning/20 text-yellow-800 border-warning'
                       )}
                     >
                       <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
@@ -232,3 +238,5 @@ export default function JobsPage() {
     </>
   );
 }
+
+    
