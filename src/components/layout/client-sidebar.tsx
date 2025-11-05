@@ -16,7 +16,6 @@ import {
   Settings,
   LifeBuoy,
   TrafficCone,
-  FilePlus,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,18 +43,6 @@ export function ClientSidebar() {
               <Link href="/client/dashboard">
                 <LayoutDashboard />
                 <span>Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Request Job"
-              isActive={pathname === "/client/request-job"}
-            >
-              <Link href="/client/request-job">
-                <FilePlus />
-                <span>Request Job</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

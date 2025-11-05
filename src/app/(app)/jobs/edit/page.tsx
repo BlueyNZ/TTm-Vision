@@ -36,7 +36,7 @@ export default function JobEditPage() {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState('');
   const [siteSetupTime, setSiteSetupTime] = useState('');
-  const [jobStatus, setJobStatus] = useState<Job['status'] | 'Pending' | undefined>();
+  const [jobStatus, setJobStatus] = useState<Job['status'] | undefined>();
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
 
@@ -85,7 +85,7 @@ export default function JobEditPage() {
   }, [job, staffList, clientList]);
 
   
-  const handleStatusChange = (value: Job['status'] | 'Pending') => {
+  const handleStatusChange = (value: Job['status']) => {
     setJobStatus(value);
   };
 
@@ -280,7 +280,6 @@ export default function JobEditPage() {
                     <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="Upcoming">Upcoming</SelectItem>
                     <SelectItem value="In Progress">In Progress</SelectItem>
                     <SelectItem value="Cancelled">Cancelled</SelectItem>
@@ -298,4 +297,3 @@ export default function JobEditPage() {
   );
 }
 
-    

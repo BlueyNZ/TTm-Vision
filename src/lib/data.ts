@@ -62,7 +62,7 @@ export type Job = {
   siteSetupTime: string;
   setupType?: 'Stop-Go' | 'Lane Shift' | 'Shoulder' | 'Mobiles' | 'Other';
   otherSetupType?: string;
-  status: 'Upcoming' | 'In Progress' | 'Completed' | 'Cancelled' | 'Pending';
+  status: 'Upcoming' | 'In Progress' | 'Completed' | 'Cancelled';
   stms: Staff['name'] | null;
   stmsId: Staff['id'] | null;
   tcs: { id: Staff['id'], name: Staff['name']}[];
