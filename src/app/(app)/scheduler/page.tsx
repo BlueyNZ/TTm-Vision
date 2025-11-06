@@ -3,14 +3,14 @@
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './scheduler.css';
-import { Calendar, dateFnsLocalizer, Event as BigCalendarEvent, Views, View } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, addDays, subDays } from 'date-fns';
+import { Calendar, dateFnsLocalizer, Event as BigCalendarEvent } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay, addDays, subDays, isSameDay } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Job } from '@/lib/data';
 import { collection, Timestamp } from 'firebase/firestore';
 import { useMemo, useState } from 'react';
-import { LoaderCircle, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { LoaderCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DateGrid } from '@/components/scheduler/date-grid';
 import { Button } from '@/components/ui/button';
@@ -33,13 +33,10 @@ interface JobEvent extends BigCalendarEvent {
   };
 }
 
-const CustomToolbar = () => null; // Empty component to hide the toolbar
-
 export default function SchedulerPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<View>(Views.WEEK);
 
   const jobsCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -51,9 +48,13 @@ export default function SchedulerPage() {
   const events: JobEvent[] = useMemo(() => {
     if (!jobData) return [];
     
-    return jobData
-      .filter(job => job.status !== 'Cancelled' && job.status !== 'Pending')
-      .map(job => {
+    // Filter jobs to only include those for the currently selected date
+    const filteredJobs = jobData.filter(job => {
+        const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+        return isSameDay(startDate, currentDate) && job.status !== 'Cancelled' && job.status !== 'Pending';
+    });
+
+    return filteredJobs.map(job => {
         const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
         
         const jobStartTime = job.startTime?.match(/(\d{2}):(\d{2})/) ? job.startTime.split(':') : ['08', '00'];
@@ -69,7 +70,7 @@ export default function SchedulerPage() {
           resource: { id: job.id },
         };
       });
-  }, [jobData]);
+  }, [jobData, currentDate]); // Rerun this logic when the currentDate changes
 
   const handleSelectEvent = (event: JobEvent) => {
     router.push(`/jobs/${event.resource.id}`);
@@ -77,22 +78,14 @@ export default function SchedulerPage() {
   
   const handlePrevDay = () => {
     setCurrentDate(prevDate => subDays(prevDate, 1));
-    setView(Views.DAY);
   };
   
   const handleNextDay = () => {
     setCurrentDate(prevDate => addDays(prevDate, 1));
-    setView(Views.DAY);
   };
 
   const handleDateSelect = (date: Date) => {
     setCurrentDate(date);
-    setView(Views.DAY);
-  }
-
-  const handleShowWeek = () => {
-    setCurrentDate(new Date());
-    setView(Views.WEEK);
   }
 
   if (isLoading) {
@@ -115,10 +108,6 @@ export default function SchedulerPage() {
         <Button variant="outline" size="icon" onClick={handleNextDay} aria-label="Next day">
           <ChevronRight className="h-4 w-4" />
         </Button>
-         <Button variant="outline" onClick={handleShowWeek}>
-          <CalendarDays className="mr-2 h-4 w-4" />
-          This Week
-        </Button>
       </div>
       <div className="flex-grow h-[calc(100vh-16rem)]">
          <Calendar
@@ -130,11 +119,10 @@ export default function SchedulerPage() {
           onNavigate={() => {}} // We handle navigation ourselves
           style={{ height: '100%' }}
           onSelectEvent={handleSelectEvent}
-          view={view}
-          onView={(v) => setView(v)}
-          views={[Views.DAY, Views.WEEK]}
+          defaultView='agenda'
+          views={['agenda']}
           components={{
-            toolbar: CustomToolbar // Hide the default toolbar
+            toolbar: () => null // Hide the default toolbar
           }}
           eventPropGetter={(event) => {
             return {

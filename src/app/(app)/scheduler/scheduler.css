@@ -7,45 +7,10 @@
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
-.rbc-toolbar {
-    border-bottom: 1px solid hsl(var(--border));
-    padding: 0.75rem 1rem;
-    margin-bottom: 0;
-}
-
-.rbc-toolbar button {
-    background-color: hsl(var(--secondary));
-    color: hsl(var(--secondary-foreground));
-    border-radius: var(--radius);
-    border: 1px solid hsl(var(--input));
-    transition: background-color 0.2s;
-}
-
-.rbc-toolbar button:hover,
-.rbc-toolbar button:focus {
-    background-color: hsl(var(--accent));
-    color: hsl(var(--accent-foreground));
-    border-color: hsl(var(--ring));
-}
-
-.rbc-toolbar button.rbc-active,
-.rbc-toolbar button.rbc-active:hover,
-.rbc-toolbar button.rbc-active:focus {
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    border-color: hsl(var(--primary));
-    box-shadow: none;
-}
-
-.rbc-toolbar .rbc-toolbar-label {
-    color: hsl(var(--foreground));
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-/* Agenda View Specific Styles */
 .rbc-agenda-view {
     overflow: auto;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
 }
 
 .rbc-agenda-table {
