@@ -106,7 +106,13 @@ export default function ClientLoginPage() {
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex justify-center">
+          <CardFooter className="flex-col items-center justify-center gap-4">
+            <div className="text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <Link href="/signup" className="font-semibold text-primary hover:underline">
+                Register
+              </Link>
+            </div>
              <div className="text-sm text-muted-foreground">
               Are you staff?{' '}
               <Link href="/login" className="font-semibold text-primary hover:underline">
