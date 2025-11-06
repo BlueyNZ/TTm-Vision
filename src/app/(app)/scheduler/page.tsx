@@ -52,7 +52,8 @@ export default function SchedulerPage() {
         return {
           title: `${job.jobNumber}: ${job.location}`,
           start: startDate,
-          end: startDate, // Assuming jobs are single-day events for now
+          end: startDate, // Assuming jobs are single-day events
+          allDay: true, // This makes the event appear at the top, not in the time grid
           resource: { id: job.id },
         };
       });
@@ -62,7 +63,7 @@ export default function SchedulerPage() {
     router.push(`/jobs/${event.resource.id}`);
   };
   
-  const calendarViews = useMemo(() => [Views.WEEK, Views.WORK_WEEK, Views.AGENDA], []);
+  const calendarViews = useMemo(() => [Views.WEEK, Views.AGENDA], []);
 
   if (isLoading) {
     return (

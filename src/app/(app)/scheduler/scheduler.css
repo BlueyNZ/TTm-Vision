@@ -1,4 +1,5 @@
 
+
 .rbc-calendar {
     background-color: hsl(var(--card));
     border-radius: var(--radius);
@@ -55,6 +56,12 @@
 .rbc-time-content,
 .rbc-time-header-content {
     border-color: hsl(var(--border));
+}
+
+/* Hide the time grid part of the calendar */
+.rbc-time-view .rbc-time-content,
+.rbc-time-view .rbc-time-header {
+    display: none;
 }
 
 .rbc-time-view .rbc-time-gutter {
