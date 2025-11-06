@@ -1,3 +1,4 @@
+
 'use client';
 import { Job } from "@/lib/data";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
@@ -11,9 +12,9 @@ import { useMemo } from "react";
 import dynamic from 'next/dynamic';
 import './map.css';
 
-const MapComponent = dynamic(() => import('@/components/map/map-component'), {
-  ssr: false,
-});
+const MapComponent = useMemo(() => dynamic(() => import('@/components/map/map-component'), {
+    ssr: false,
+}), []);
 
 
 const getDisplayedStatus = (job: Job) => {
