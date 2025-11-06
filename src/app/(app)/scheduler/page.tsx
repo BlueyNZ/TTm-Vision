@@ -116,6 +116,9 @@ export default function SchedulerPage() {
           onSelectEvent={handleSelectEvent}
           views={[Views.AGENDA]}
           defaultView={Views.AGENDA}
+          agenda={{
+            length: 1,
+          }}
           components={{
             toolbar: CustomToolbar // Hide the default toolbar
           }}
