@@ -29,7 +29,7 @@ export default function JobCreatePage() {
 
   const [location, setLocation] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [name, setName] = useState('Start Time:\nOn Site:\n\nJob Description:');
+  const [name, setName] = useState('Start Time:\nOn Site:\nSite Setup Time:\n\nJob Description:');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState('');
   const [siteSetupTime, setSiteSetupTime] = useState('');
@@ -170,12 +170,12 @@ export default function JobCreatePage() {
                 </Popover>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="startTime">Job Start Time</Label>
-                <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.target.value)} placeholder="e.g. 20:00"/>
-            </div>
-            <div className="space-y-2">
                 <Label htmlFor="siteSetupTime">On Site</Label>
                 <Input id="siteSetupTime" type="text" value={siteSetupTime} onChange={e => setSiteSetupTime(e.target.value)} placeholder="e.g. 19:00"/>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="startTime">Job Start Time</Label>
+                <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.target.value)} placeholder="e.g. 20:00"/>
             </div>
           </div>
            <div className="space-y-2">
