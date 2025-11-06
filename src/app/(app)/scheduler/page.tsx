@@ -3,14 +3,14 @@
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './scheduler.css';
-import { Calendar, dateFnsLocalizer, Event as BigCalendarEvent, Views } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer, Event as BigCalendarEvent, Views, View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addDays, subDays } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Job } from '@/lib/data';
 import { collection, Timestamp } from 'firebase/firestore';
 import { useMemo, useState } from 'react';
-import { LoaderCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LoaderCircle, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DateGrid } from '@/components/scheduler/date-grid';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ export default function SchedulerPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [view, setView] = useState<View>(Views.WEEK);
 
   const jobsCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -65,7 +66,6 @@ export default function SchedulerPage() {
           title: `${job.jobNumber}: ${job.location}`,
           start: startDate,
           end: endDate,
-          allDay: false, 
           resource: { id: job.id },
         };
       });
@@ -77,11 +77,23 @@ export default function SchedulerPage() {
   
   const handlePrevDay = () => {
     setCurrentDate(prevDate => subDays(prevDate, 1));
+    setView(Views.DAY);
   };
   
   const handleNextDay = () => {
     setCurrentDate(prevDate => addDays(prevDate, 1));
+    setView(Views.DAY);
   };
+
+  const handleDateSelect = (date: Date) => {
+    setCurrentDate(date);
+    setView(Views.DAY);
+  }
+
+  const handleShowWeek = () => {
+    setCurrentDate(new Date());
+    setView(Views.WEEK);
+  }
 
   if (isLoading) {
     return (
@@ -98,10 +110,14 @@ export default function SchedulerPage() {
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className='flex-grow'>
-          <DateGrid currentDate={currentDate} onDateSelect={setCurrentDate} />
+          <DateGrid currentDate={currentDate} onDateSelect={handleDateSelect} />
         </div>
         <Button variant="outline" size="icon" onClick={handleNextDay} aria-label="Next day">
           <ChevronRight className="h-4 w-4" />
+        </Button>
+         <Button variant="outline" onClick={handleShowWeek}>
+          <CalendarDays className="mr-2 h-4 w-4" />
+          This Week
         </Button>
       </div>
       <div className="flex-grow h-[calc(100vh-16rem)]">
@@ -114,11 +130,9 @@ export default function SchedulerPage() {
           onNavigate={() => {}} // We handle navigation ourselves
           style={{ height: '100%' }}
           onSelectEvent={handleSelectEvent}
-          views={[Views.AGENDA]}
-          defaultView={Views.AGENDA}
-          agenda={{
-            length: 1,
-          }}
+          view={view}
+          onView={(v) => setView(v)}
+          views={[Views.DAY, Views.WEEK]}
           components={{
             toolbar: CustomToolbar // Hide the default toolbar
           }}
