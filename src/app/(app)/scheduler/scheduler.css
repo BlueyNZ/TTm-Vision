@@ -67,11 +67,11 @@
 }
 
 
-/* Change all cell text to primary color (orange) */
+/* Use the standard foreground color for text */
 .rbc-agenda-table .rbc-agenda-time-cell,
 .rbc-agenda-table .rbc-agenda-date-cell,
 .rbc-agenda-table .rbc-agenda-event-cell {
-    color: hsl(var(--primary));
+    color: hsl(var(--foreground));
     font-weight: 600;
 }
 
