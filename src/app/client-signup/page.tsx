@@ -104,7 +104,7 @@ export default function ClientSignupPage() {
         duration: 8000,
       });
 
-      router.push('/client-login');
+      router.push('/client-pending-approval');
 
     } catch (error: any) {
       toast({
