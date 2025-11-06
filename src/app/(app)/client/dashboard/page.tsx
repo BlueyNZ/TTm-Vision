@@ -4,7 +4,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, Timestamp } from 'firebase/firestore';
-import { Staff, Job } from '@/lib/data';
+import { Staff, Job, Client } from '@/lib/data';
 import { useMemo } from 'react';
 import { LoaderCircle, MapPin, Calendar, Circle } from 'lucide-react';
 import { format, isPast } from "date-fns";
@@ -53,28 +53,28 @@ export default function ClientDashboardPage() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
 
-    const staffQuery = useMemoFirebase(() => {
-        if (!firestore || !user?.email) return null;
-        return query(collection(firestore, 'staff'), where('email', '==', user.email));
-    }, [firestore, user?.email]);
+    const clientQuery = useMemoFirebase(() => {
+        if (!firestore || !user?.uid) return null;
+        return query(collection(firestore, 'clients'), where('userId', '==', user.uid));
+    }, [firestore, user?.uid]);
 
-    const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
-    const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
+    const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
+    const currentClient = useMemo(() => clientData?.[0], [clientData]);
     
     const jobsQuery = useMemoFirebase(() => {
-        if (!firestore || !currentUserStaffProfile?.name) return null;
-        return query(collection(firestore, 'job_packs'), where('clientName', '==', currentUserStaffProfile.name));
-    }, [firestore, currentUserStaffProfile?.name]);
+        if (!firestore || !currentClient?.id) return null;
+        return query(collection(firestore, 'job_packs'), where('clientId', '==', currentClient.id));
+    }, [firestore, currentClient?.id]);
     
     const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsQuery);
     
-    const isLoading = isUserLoading || isStaffLoading || isJobsLoading;
+    const isLoading = isUserLoading || isClientLoading || isJobsLoading;
 
     return (
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Welcome, {currentUserStaffProfile?.name || 'Client'}!</CardTitle>
+                    <CardTitle>Welcome, {currentClient?.name || 'Client'}!</CardTitle>
                     <CardDescription>This is your client portal. Here's an overview of your current and upcoming jobs.</CardDescription>
                 </CardHeader>
             </Card>

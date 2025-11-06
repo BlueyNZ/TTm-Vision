@@ -7,7 +7,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebas
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { LoaderCircle } from "lucide-react";
-import { Staff } from "@/lib/data";
+import { Staff, Client } from "@/lib/data";
 import { collection, query, where } from "firebase/firestore";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useToast } from "@/hooks/use-toast";

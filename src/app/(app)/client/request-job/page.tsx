@@ -1,7 +1,7 @@
 
 'use client';
 import { useRouter } from 'next/navigation';
-import { Job, Staff } from '@/lib/data';
+import { Job, Staff, Client } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const newJobDescriptionTemplate = `Job Name / Client Ref: 
 Location (Full Address): 
 On-Site Time (Site Setup):
+Site Setup Time:
 
 Traffic Control Plan Ref: 
 Required TTM Type:
@@ -43,17 +44,17 @@ export default function RequestJobPage() {
   const [otherSetupType, setOtherSetupType] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const staffQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.email) return null;
-    return query(collection(firestore, 'staff'), where('email', '==', user.email));
-  }, [firestore, user?.email]);
+  const clientQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return query(collection(firestore, 'clients'), where('userId', '==', user.uid));
+  }, [firestore, user?.uid]);
 
-  const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
-  const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
+  const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
+  const currentClient = useMemo(() => clientData?.[0], [clientData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firestore || !requestedDate || !currentUserStaffProfile) {
+    if (!firestore || !requestedDate || !currentClient) {
       toast({
         title: 'Missing Information',
         description: 'Please complete all required fields.',
@@ -70,8 +71,8 @@ export default function RequestJobPage() {
       name: `Job request for ${location}`,
       location,
       description,
-      clientName: currentUserStaffProfile.name,
-      clientId: currentUserStaffProfile.id,
+      clientName: currentClient.name,
+      clientId: currentClient.id,
       startDate: Timestamp.fromDate(requestedDate),
       startTime: '', // Not collected in client form
       siteSetupTime: '', // Not collected in client form
@@ -94,7 +95,7 @@ export default function RequestJobPage() {
     setIsSubmitting(false);
   };
 
-  const isLoading = isUserLoading || isStaffLoading;
+  const isLoading = isUserLoading || isClientLoading;
 
   if (isLoading) {
     return (
