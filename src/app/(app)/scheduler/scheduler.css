@@ -72,7 +72,7 @@
     border-top: none !important;
 }
 
-/* Ensure the main time content area still has a top border */
+/* Ensure the main time content area still has a top border to align with header */
 .rbc-time-content > * + * > * {
     border-top: 1px solid hsl(var(--border));
 }
