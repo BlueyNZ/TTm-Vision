@@ -12,6 +12,7 @@ import { collection, Timestamp } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { DateGrid } from '@/components/scheduler/date-grid';
 
 const locales = {
   'en-US': enUS,
@@ -61,7 +62,7 @@ export default function SchedulerPage() {
           title: `${job.jobNumber}: ${job.location}`,
           start: startDate,
           end: endDate,
-          allDay: false, // Make sure events are not treated as all-day for agenda view times
+          allDay: false, 
           resource: { id: job.id },
         };
       });
@@ -82,22 +83,25 @@ export default function SchedulerPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)]">
-       <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-        style={{ height: '100%' }}
-        onSelectEvent={handleSelectEvent}
-        views={calendarViews}
-        defaultView={Views.AGENDA}
-        eventPropGetter={(event) => {
-          return {
-            className: 'bg-primary/80 hover:bg-primary cursor-pointer border-0 text-primary-foreground p-2 rounded-md',
-          };
-        }}
-      />
+    <div className='flex flex-col gap-6 h-full'>
+      <DateGrid />
+      <div className="flex-grow h-[calc(100vh-16rem)]">
+         <Calendar
+          localizer={localizer}
+          events={events}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: '100%' }}
+          onSelectEvent={handleSelectEvent}
+          views={calendarViews}
+          defaultView={Views.AGENDA}
+          eventPropGetter={(event) => {
+            return {
+              className: 'bg-primary/80 hover:bg-primary cursor-pointer border-0 text-primary-foreground p-2 rounded-md',
+            };
+          }}
+        />
+      </div>
     </div>
   );
 }
