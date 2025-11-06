@@ -27,6 +27,7 @@ import {
   UserPlus,
   Building,
   GitPullRequest,
+  Calendar,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -73,6 +74,19 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
           </SidebarMenuItem>
           {isAdmin && (
             <>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Scheduler"
+                  isActive={pathname === "/scheduler"}
+                >
+                  <Link href="/scheduler">
+                    <Calendar />
+                    <span>Scheduler</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               <Collapsible asChild defaultOpen={isRequestsPagesActive}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>

@@ -57,6 +57,7 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
     const id = parts[1];
     const action = parts[2];
     
+    if (page === 'scheduler') return 'Scheduler';
     if (page === 'requests' && id) return 'Review Request';
     if (page === 'requests') return 'Job Requests';
 
@@ -104,7 +105,7 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
       backPath = '/requests';
     }
     // Always show back button for settings and support
-    else if (page === 'settings' || page === 'support' || (page === 'client' && pathParts[1] === 'request-job')) {
+    else if (page === 'scheduler' || page === 'settings' || page === 'support' || (page === 'client' && pathParts[1] === 'request-job')) {
       showBackButton = true;
       backPath = page === 'client' ? '/client/dashboard' : '/dashboard';
     } 
