@@ -55,20 +55,17 @@ export default function RequestJobPage() {
     setIsSubmitting(true);
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
-    const jobSnapshot = await getDocs(jobsCollectionRef);
-    const jobCount = jobSnapshot.size;
-    const newJobNumber = `TF-${String(jobCount + 1).padStart(4, '0')}`;
-
-    const newJobRequest: Omit<Job, 'id'> = {
-      jobNumber: newJobNumber,
-      name: description, // Using description as name for now
+    
+    const newJobRequest: Omit<Job, 'id' | 'jobNumber'> & { jobNumber: string | null } = {
+      jobNumber: null, // Job number will be assigned upon approval
+      name: `Job request for ${location}`,
       location,
       clientName: currentUserStaffProfile.name,
       clientId: currentUserStaffProfile.id,
       startDate: Timestamp.fromDate(requestedDate),
       startTime: '', // Not collected in client form
       siteSetupTime: '', // Not collected in client form
-      status: 'Pending',
+      status: 'Pending', // This is the crucial part for separating requests
       stms: null,
       stmsId: null,
       tcs: [],

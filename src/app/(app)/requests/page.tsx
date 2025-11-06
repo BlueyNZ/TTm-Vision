@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,6 +30,7 @@ export default function RequestsPage() {
 
     const jobRequestsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
+        // This query specifically targets documents where status is 'Pending'
         return query(collection(firestore, 'job_packs'), where('status', '==', 'Pending'));
     }, [firestore]);
 

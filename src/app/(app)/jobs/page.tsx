@@ -41,7 +41,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
   } from "@/components/ui/alert-dialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -108,7 +108,12 @@ export default function JobsPage() {
         return collection(firestore, 'job_packs');
     }, [firestore]);
 
-    const { data: jobData, isLoading } = useCollection<Job>(jobsCollection);
+    const { data: allJobsData, isLoading } = useCollection<Job>(jobsCollection);
+
+    // Filter out pending jobs on the client-side
+    const jobData = useMemo(() => {
+        return allJobsData ? allJobsData.filter(job => job.status !== 'Pending') : [];
+    }, [allJobsData]);
 
     const handleDeleteJob = () => {
         if (!firestore || !jobToDelete) return;
