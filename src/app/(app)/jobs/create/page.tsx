@@ -175,7 +175,7 @@ export default function JobCreatePage() {
             </div>
              <div className="space-y-2">
                 <Label htmlFor="startTime">Job Start Time</Label>
-                <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.g.value)} placeholder="e.g. 20:00"/>
+                <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.target.value)} placeholder="e.g. 20:00"/>
             </div>
           </div>
            <div className="space-y-2">
