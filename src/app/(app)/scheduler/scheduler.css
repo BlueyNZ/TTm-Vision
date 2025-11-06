@@ -53,21 +53,30 @@
 
 .rbc-day-bg,
 .rbc-month-row,
-.rbc-time-content,
 .rbc-time-header-content {
     border-color: hsl(var(--border));
 }
 
-/* Hide the time grid part of the calendar */
-.rbc-time-view .rbc-time-content,
-.rbc-time-view .rbc-time-header {
+/* Hide the time gutter (e.g., 8:00 AM, 9:00 AM) */
+.rbc-time-gutter {
     display: none;
 }
 
-.rbc-time-view .rbc-time-gutter {
-    border-color: hsl(var(--border));
-    color: hsl(var(--muted-foreground));
+/* Make the time content take up the full width since the gutter is gone */
+.rbc-time-content {
+    border-left: none;
 }
+
+/* Remove the horizontal lines for the time slots */
+.rbc-time-slot {
+    border-top: none !important;
+}
+
+/* Ensure the main time content area still has a top border */
+.rbc-time-content > * + * > * {
+    border-top: 1px solid hsl(var(--border));
+}
+
 
 .rbc-today {
     background-color: hsl(var(--secondary));

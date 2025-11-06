@@ -49,11 +49,18 @@ export default function SchedulerPage() {
       .filter(job => job.status !== 'Cancelled' && job.status !== 'Pending') // Filter out cancelled or pending jobs
       .map(job => {
         const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+        
+        // Use a default start time if not provided, to ensure it shows up in the day view
+        const jobStartTime = job.startTime?.match(/(\d{2}):(\d{2})/) ? job.startTime.split(':') : ['08', '00'];
+        startDate.setHours(parseInt(jobStartTime[0], 10), parseInt(jobStartTime[1], 10));
+
+        const endDate = new Date(startDate);
+        endDate.setHours(startDate.getHours() + 2); // Assume a 2-hour duration for visual representation
+
         return {
           title: `${job.jobNumber}: ${job.location}`,
           start: startDate,
-          end: startDate, // Assuming jobs are single-day events
-          allDay: true, // This makes the event appear at the top, not in the time grid
+          end: endDate, 
           resource: { id: job.id },
         };
       });
@@ -86,7 +93,7 @@ export default function SchedulerPage() {
         defaultView={Views.WEEK}
         eventPropGetter={(event) => {
           return {
-            className: 'bg-primary/80 hover:bg-primary cursor-pointer border-0',
+            className: 'bg-primary/80 hover:bg-primary cursor-pointer border-0 text-primary-foreground p-1',
           };
         }}
       />
