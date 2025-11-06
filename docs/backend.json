@@ -90,6 +90,11 @@
             "format": "date-time",
             "description": "The start date and time of the job."
         },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The end date and time of the job."
+        },
         "startTime": {
             "type": "string",
             "description": "The start time of the job (HH:mm)."

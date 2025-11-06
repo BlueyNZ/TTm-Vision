@@ -63,13 +63,15 @@ export default function JobDetailPage() {
 
   useEffect(() => {
     if (job?.startDate) {
-        let date: Date;
-        if (job.startDate instanceof Timestamp) {
-            date = job.startDate.toDate();
-        } else {
-            date = new Date(job.startDate);
+        let dateStr = '';
+        const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+        dateStr = format(startDate, 'eeee, dd MMMM yyyy');
+
+        if (job.endDate) {
+            const endDate = job.endDate instanceof Timestamp ? job.endDate.toDate() : new Date(job.endDate);
+            dateStr += ` - ${format(endDate, 'eeee, dd MMMM yyyy')}`;
         }
-        setFormattedDate(format(date, 'eeee, dd MMMM yyyy'));
+        setFormattedDate(dateStr);
     }
   }, [job]);
 

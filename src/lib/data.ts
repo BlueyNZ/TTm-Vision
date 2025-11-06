@@ -60,6 +60,7 @@ export type Job = {
   clientName: string;
   clientId?: string;
   startDate: Timestamp | Date | string;
+  endDate?: Timestamp | Date | string;
   startTime: string;
   siteSetupTime: string;
   setupType?: 'Stop-Go' | 'Lane Shift' | 'Shoulder' | 'Mobiles' | 'Other';

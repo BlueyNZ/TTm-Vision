@@ -34,6 +34,7 @@ export default function JobEditPage() {
   const [jobLocation, setJobLocation] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState('');
   const [siteSetupTime, setSiteSetupTime] = useState('');
   const [jobStatus, setJobStatus] = useState<Job['status'] | undefined>();
@@ -70,6 +71,9 @@ export default function JobEditPage() {
       }
       if (job.startDate) {
         setStartDate(job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate));
+      }
+      if (job.endDate) {
+        setEndDate(job.endDate instanceof Timestamp ? job.endDate.toDate() : new Date(job.endDate));
       }
       setStartTime(job.startTime || '');
       setSiteSetupTime(job.siteSetupTime || '');
@@ -130,6 +134,7 @@ export default function JobEditPage() {
         clientName: selectedClient?.name || '',
         clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
+        endDate: endDate ? Timestamp.fromDate(endDate) : undefined,
         startTime,
         siteSetupTime,
         status: jobStatus,
@@ -182,7 +187,7 @@ export default function JobEditPage() {
             <Label htmlFor="name">Job Description</Label>
             <Textarea id="name" name="name" value={jobName} onChange={(e) => setJobName(e.target.value)} />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="startDate">Start Date</Label>
                 <Popover>
@@ -209,12 +214,39 @@ export default function JobEditPage() {
                 </Popover>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="startTime">Job Start Time</Label>
-                <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.target.value)} placeholder="e.g. 20:00" />
+                <Label htmlFor="endDate">End Date (Optional)</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
             </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="siteSetupTime">On Site</Label>
                 <Input id="siteSetupTime" type="text" value={siteSetupTime} onChange={e => setSiteSetupTime(e.target.value)} placeholder="e.g. 19:00" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="startTime">Job Start Time</Label>
+                <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.target.value)} placeholder="e.g. 20:00" />
             </div>
           </div>
            <div className="space-y-2">
