@@ -1,4 +1,3 @@
-
 .rbc-calendar {
     background-color: hsl(var(--card));
     border-radius: var(--radius);
@@ -83,6 +82,9 @@
 /* Make the event content take up the remaining space */
 .rbc-agenda-table .rbc-agenda-event-cell {
     width: 70%;
+    color: hsl(var(--primary));
+    font-weight: 600;
+    cursor: pointer;
 }
 
 
