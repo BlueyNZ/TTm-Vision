@@ -208,12 +208,12 @@ export default function JobEditPage() {
                 </Popover>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="siteSetupTime">Site Setup Time</Label>
-                <Input id="siteSetupTime" type="text" value={siteSetupTime} onChange={e => setSiteSetupTime(e.target.value)} placeholder="e.g. 19:00" />
-            </div>
-             <div className="space-y-2">
                 <Label htmlFor="startTime">Job Start Time</Label>
                 <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.target.value)} placeholder="e.g. 20:00" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="siteSetupTime">On Site</Label>
+                <Input id="siteSetupTime" type="text" value={siteSetupTime} onChange={e => setSiteSetupTime(e.target.value)} placeholder="e.g. 19:00" />
             </div>
           </div>
            <div className="space-y-2">
