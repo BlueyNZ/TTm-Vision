@@ -165,8 +165,9 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                       </SidebarMenuItem>
                       <SidebarMenuItem>
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/map")}>
-                           <Link href="/map">
-                            Map
+                           <Link href="/map" className="flex justify-between items-center w-full">
+                            <span>Map</span>
+                            <Badge variant="outline" className="text-xs !bg-sidebar-accent !text-sidebar-accent-foreground">Soon</Badge>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
