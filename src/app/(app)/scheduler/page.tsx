@@ -50,7 +50,7 @@ export default function SchedulerPage() {
       .map(job => {
         const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
         
-        // Use a default start time if not provided, to ensure it shows up in the day view
+        // Use a default start time if not provided, to ensure it shows up correctly
         const jobStartTime = job.startTime?.match(/(\d{2}):(\d{2})/) ? job.startTime.split(':') : ['08', '00'];
         startDate.setHours(parseInt(jobStartTime[0], 10), parseInt(jobStartTime[1], 10));
 
@@ -60,7 +60,8 @@ export default function SchedulerPage() {
         return {
           title: `${job.jobNumber}: ${job.location}`,
           start: startDate,
-          end: endDate, 
+          end: endDate,
+          allDay: false, // Make sure events are not treated as all-day for agenda view times
           resource: { id: job.id },
         };
       });
@@ -70,7 +71,7 @@ export default function SchedulerPage() {
     router.push(`/jobs/${event.resource.id}`);
   };
   
-  const calendarViews = useMemo(() => [Views.WEEK, Views.AGENDA], []);
+  const calendarViews = useMemo(() => [Views.AGENDA], []);
 
   if (isLoading) {
     return (
@@ -90,10 +91,10 @@ export default function SchedulerPage() {
         style={{ height: '100%' }}
         onSelectEvent={handleSelectEvent}
         views={calendarViews}
-        defaultView={Views.WEEK}
+        defaultView={Views.AGENDA}
         eventPropGetter={(event) => {
           return {
-            className: 'bg-primary/80 hover:bg-primary cursor-pointer border-0 text-primary-foreground p-1',
+            className: 'bg-primary/80 hover:bg-primary cursor-pointer border-0 text-primary-foreground p-2 rounded-md',
           };
         }}
       />

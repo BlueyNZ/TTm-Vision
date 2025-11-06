@@ -43,68 +43,51 @@
     font-weight: 600;
 }
 
-.rbc-header {
-    border-color: hsl(var(--border));
-    padding: 0.5rem 0;
-    font-weight: 500;
-    color: hsl(var(--muted-foreground));
-}
-
-.rbc-day-bg,
-.rbc-month-row,
-.rbc-time-header-content {
-    border-color: hsl(var(--border));
-}
-
-/* Hide the time gutter and its corresponding header space */
-.rbc-time-gutter,
-.rbc-time-header-gutter {
-    flex: none !important;
-    width: 0 !important;
-    min-width: 0 !important;
-    max-width: 0 !important;
-    overflow: hidden;
-    border: none;
-}
-
-/* Remove the horizontal lines for the time slots */
-.rbc-time-slot {
-    border-top: none !important;
-}
-
-/* Ensure the main time content area still has a top border to align with header */
-.rbc-time-content > * + * > * {
-    border-top: 1px solid hsl(var(--border));
-}
-
-.rbc-today {
-    background-color: hsl(var(--secondary));
-}
-
-.rbc-event {
-    border-radius: var(--radius);
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-}
-
-.rbc-event.rbc-selected {
-    background-color: hsl(var(--primary)) !important;
-}
-
-.rbc-show-more {
-    color: hsl(var(--primary));
-    background-color: transparent;
-}
-.rbc-show-more:hover {
-    color: hsl(var(--primary));
-    text-decoration: underline;
+/* Agenda View Specific Styles */
+.rbc-agenda-view {
+    overflow: auto;
 }
 
 .rbc-agenda-table {
-    border-color: hsl(var(--border));
+    border: none;
+    width: 100%;
 }
 
-.rbc-agenda-table th,
-.rbc-agenda-table td {
-    border-color: hsl(var(--border));
+.rbc-agenda-table thead th {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid hsl(var(--border));
+}
+
+.rbc-agenda-table tbody tr {
+    border-bottom: 1px solid hsl(var(--border));
+}
+
+.rbc-agenda-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.rbc-agenda-table .rbc-agenda-date-cell,
+.rbc-agenda-table .rbc-agenda-time-cell {
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.rbc-agenda-table .rbc-agenda-time-cell {
+    color: hsl(var(--primary));
+}
+
+.rbc-agenda-table .rbc-agenda-content {
+    padding: 0.75rem;
+}
+
+.rbc-agenda-empty {
+    text-align: center;
+    padding: 2rem;
+    color: hsl(var(--muted-foreground));
 }
