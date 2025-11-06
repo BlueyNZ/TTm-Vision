@@ -10,12 +10,13 @@ import { useUser, useFirestore, useMemoFirebase, useAuth } from "@/firebase";
 import { doc, collection, query, where } from "firebase/firestore";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { Staff } from "@/lib/data";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Info } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 export default function SettingsPage() {
@@ -129,7 +130,19 @@ export default function SettingsPage() {
             <Input id="name" value={name} onChange={e => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="email">Email</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Your email cannot be changed. Please contact an administrator if an update is required.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Input id="email" type="email" value={user?.email || ''} disabled />
           </div>
            <div className="space-y-2">
