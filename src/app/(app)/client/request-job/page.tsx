@@ -56,8 +56,8 @@ export default function RequestJobPage() {
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
     
-    const newJobRequest: Omit<Job, 'id' | 'jobNumber'> & { jobNumber: string | null } = {
-      jobNumber: null, // Job number will be assigned upon approval
+    // The job number is explicitly not set here. It will be assigned upon approval.
+    const newJobRequest: Omit<Job, 'id' | 'jobNumber'> = {
       name: `Job request for ${location}`,
       location,
       clientName: currentUserStaffProfile.name,
@@ -71,6 +71,7 @@ export default function RequestJobPage() {
       tcs: [],
       setupType: setupType,
       otherSetupType: setupType === 'Other' ? otherSetupType : '',
+      jobNumber: '', // Explicitly set to empty string for requests
     };
 
     addDocumentNonBlocking(jobsCollectionRef, newJobRequest);
