@@ -72,11 +72,12 @@ export default function ClientSignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const user = userCredential.user;
 
-      // 2. Create client company document
+      // 2. Create client company document with "Pending" status
       const clientCollectionRef = collection(firestore, 'clients');
       const clientDocRef = await addDoc(clientCollectionRef, {
         name: data.companyName,
         userId: user.uid,
+        status: 'Pending', // New companies start as pending
       });
 
       // 3. Create staff profile with 'Client' access level
@@ -96,8 +97,9 @@ export default function ClientSignupPage() {
       });
       
       toast({
-        title: 'Registration Successful!',
-        description: 'Your account has been created. You can now log in.',
+        title: 'Registration Submitted!',
+        description: 'Your account is pending approval by an administrator. You will be notified once it is active.',
+        duration: 8000,
       });
 
       router.push('/client-login');

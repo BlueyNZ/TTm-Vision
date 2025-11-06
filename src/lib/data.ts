@@ -5,6 +5,7 @@ export type Client = {
   id: string;
   name: string;
   userId?: string; // The Firebase Auth UID of the user associated with this client account.
+  status: 'Pending' | 'Active';
 };
 
 export type Certification = {

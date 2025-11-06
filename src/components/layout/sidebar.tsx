@@ -175,6 +175,13 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/admin/company-approval")}>
+                          <Link href="/admin/company-approval">
+                            Company Approval
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuItem>
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>
