@@ -36,6 +36,7 @@ const signupSchema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
   companyName: z.string().min(2, 'Company name is required'),
   email: z.string().email('Please enter a valid email'),
+  phone: z.string().min(8, 'A valid phone number is required.'),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
 });
 
@@ -52,6 +53,7 @@ export default function ClientSignupPage() {
       fullName: '',
       companyName: '',
       email: '',
+      phone: '',
       password: '',
     },
   });
@@ -85,7 +87,7 @@ export default function ClientSignupPage() {
       await addDoc(staffCollectionRef, {
         name: data.fullName,
         email: data.email,
-        phone: '', // Can be updated by user later
+        phone: data.phone,
         role: 'Operator', // Default role, clients don't have a staff role
         certifications: [],
         licenses: [],
@@ -167,6 +169,19 @@ export default function ClientSignupPage() {
                       <FormLabel>Email Address</FormLabel>
                       <FormControl>
                         <Input type="email" placeholder="you@company.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input type="tel" placeholder="021 123 4567" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
