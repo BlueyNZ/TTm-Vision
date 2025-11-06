@@ -1,0 +1,95 @@
+
+.rbc-calendar {
+    background-color: hsl(var(--card));
+    border-radius: var(--radius);
+    border-color: hsl(var(--border));
+    color: hsl(var(--card-foreground));
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.rbc-toolbar {
+    border-bottom: 1px solid hsl(var(--border));
+    padding: 0.75rem 1rem;
+    margin-bottom: 0;
+}
+
+.rbc-toolbar button {
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--input));
+    transition: background-color 0.2s;
+}
+
+.rbc-toolbar button:hover,
+.rbc-toolbar button:focus {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    border-color: hsl(var(--ring));
+}
+
+.rbc-toolbar button.rbc-active,
+.rbc-toolbar button.rbc-active:hover,
+.rbc-toolbar button.rbc-active:focus {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+    box-shadow: none;
+}
+
+.rbc-toolbar .rbc-toolbar-label {
+    color: hsl(var(--foreground));
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.rbc-header {
+    border-color: hsl(var(--border));
+    padding: 0.5rem 0;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+}
+
+.rbc-day-bg,
+.rbc-month-row,
+.rbc-time-content,
+.rbc-time-header-content {
+    border-color: hsl(var(--border));
+}
+
+.rbc-time-view .rbc-time-gutter {
+    border-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+}
+
+.rbc-today {
+    background-color: hsl(var(--secondary));
+}
+
+.rbc-event {
+    border-radius: var(--radius);
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+}
+
+.rbc-event.rbc-selected {
+    background-color: hsl(var(--primary)) !important;
+}
+
+.rbc-show-more {
+    color: hsl(var(--primary));
+    background-color: transparent;
+}
+.rbc-show-more:hover {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+}
+
+.rbc-agenda-table {
+    border-color: hsl(var(--border));
+}
+
+.rbc-agenda-table th,
+.rbc-agenda-table td {
+    border-color: hsl(var(--border));
+}

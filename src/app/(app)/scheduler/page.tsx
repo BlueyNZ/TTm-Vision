@@ -2,7 +2,8 @@
 'use client';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Calendar, dateFnsLocalizer, Event } from 'react-big-calendar';
+import './scheduler.css';
+import { Calendar, dateFnsLocalizer, Event as BigCalendarEvent, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -24,7 +25,7 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-interface JobEvent extends Event {
+interface JobEvent extends BigCalendarEvent {
   resource: {
     id: string;
   };
@@ -60,6 +61,8 @@ export default function SchedulerPage() {
   const handleSelectEvent = (event: JobEvent) => {
     router.push(`/jobs/${event.resource.id}`);
   };
+  
+  const calendarViews = useMemo(() => [Views.WEEK, Views.WORK_WEEK, Views.AGENDA], []);
 
   if (isLoading) {
     return (
@@ -70,7 +73,7 @@ export default function SchedulerPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] bg-card p-4 rounded-lg shadow">
+    <div className="h-[calc(100vh-8rem)]">
        <Calendar
         localizer={localizer}
         events={events}
@@ -78,9 +81,11 @@ export default function SchedulerPage() {
         endAccessor="end"
         style={{ height: '100%' }}
         onSelectEvent={handleSelectEvent}
+        views={calendarViews}
+        defaultView={Views.WEEK}
         eventPropGetter={(event) => {
           return {
-            className: 'bg-primary/80 hover:bg-primary cursor-pointer',
+            className: 'bg-primary/80 hover:bg-primary cursor-pointer border-0',
           };
         }}
       />
