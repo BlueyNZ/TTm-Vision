@@ -138,6 +138,7 @@ export default function JobCreatePage() {
               onSelectClient={setSelectedClient}
               placeholder="Search or select a client..."
             />
+            <p className="text-sm text-muted-foreground px-1">Type to search and press Enter to select a client.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">Job Description</Label>
