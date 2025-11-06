@@ -1,15 +1,20 @@
-
 'use client';
 import { Job } from "@/lib/data";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, where, Timestamp } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import Image from "next/image";
 import { isPast } from "date-fns";
 import { LoaderCircle, MapPin, UserSquare } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
+import dynamic from 'next/dynamic';
+import './map.css';
+
+const MapComponent = dynamic(() => import('@/components/map/map-component'), {
+  ssr: false,
+});
+
 
 const getDisplayedStatus = (job: Job) => {
     const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -38,17 +43,10 @@ export default function RealTimeMapPage() {
         <div className="h-full flex flex-col gap-4">
             <div className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
                 <div className="lg:col-span-2 h-full relative rounded-lg overflow-hidden border">
-                    <Image
-                        src="https://picsum.photos/seed/map/1200/800"
-                        alt="Map of operations"
-                        fill
-                        className="object-cover"
-                        data-ai-hint="satellite map"
-                    />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                     <div className="absolute bottom-4 left-4">
-                        <h2 className="text-2xl font-bold text-white shadow-lg">Live Operations Map</h2>
-                        <p className="text-white/90 shadow-sm">Showing {activeJobs.length} active job sites</p>
+                    <MapComponent />
+                     <div className="absolute bottom-4 left-4 z-[1000]">
+                        <h2 className="text-2xl font-bold text-white shadow-lg [text-shadow:_0_2px_4px_rgb(0_0_0_/_50%)]">Live Operations Map</h2>
+                        <p className="text-white/90 shadow-sm [text-shadow:_0_1px_3px_rgb(0_0_0_/_40%)]">Showing {activeJobs.length} active job sites</p>
                     </div>
                 </div>
                 <Card className="flex flex-col">
