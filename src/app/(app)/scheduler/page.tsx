@@ -4,15 +4,16 @@
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './scheduler.css';
 import { Calendar, dateFnsLocalizer, Event as BigCalendarEvent, Views } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { format, parse, startOfWeek, getDay, addDays, subDays } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Job } from '@/lib/data';
 import { collection, Timestamp } from 'firebase/firestore';
-import { useMemo } from 'react';
-import { LoaderCircle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { LoaderCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DateGrid } from '@/components/scheduler/date-grid';
+import { Button } from '@/components/ui/button';
 
 const locales = {
   'en-US': enUS,
@@ -32,9 +33,12 @@ interface JobEvent extends BigCalendarEvent {
   };
 }
 
+const CustomToolbar = () => null; // Empty component to hide the toolbar
+
 export default function SchedulerPage() {
   const firestore = useFirestore();
   const router = useRouter();
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   const jobsCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -47,16 +51,15 @@ export default function SchedulerPage() {
     if (!jobData) return [];
     
     return jobData
-      .filter(job => job.status !== 'Cancelled' && job.status !== 'Pending') // Filter out cancelled or pending jobs
+      .filter(job => job.status !== 'Cancelled' && job.status !== 'Pending')
       .map(job => {
         const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
         
-        // Use a default start time if not provided, to ensure it shows up correctly
         const jobStartTime = job.startTime?.match(/(\d{2}):(\d{2})/) ? job.startTime.split(':') : ['08', '00'];
         startDate.setHours(parseInt(jobStartTime[0], 10), parseInt(jobStartTime[1], 10));
 
         const endDate = new Date(startDate);
-        endDate.setHours(startDate.getHours() + 2); // Assume a 2-hour duration for visual representation
+        endDate.setHours(startDate.getHours() + 2);
 
         return {
           title: `${job.jobNumber}: ${job.location}`,
@@ -72,7 +75,13 @@ export default function SchedulerPage() {
     router.push(`/jobs/${event.resource.id}`);
   };
   
-  const calendarViews = useMemo(() => [Views.AGENDA], []);
+  const handlePrevWeek = () => {
+    setCurrentDate(prevDate => subDays(prevDate, 7));
+  };
+  
+  const handleNextWeek = () => {
+    setCurrentDate(prevDate => addDays(prevDate, 7));
+  };
 
   if (isLoading) {
     return (
@@ -84,17 +93,32 @@ export default function SchedulerPage() {
 
   return (
     <div className='flex flex-col gap-6 h-full'>
-      <DateGrid />
+      <div className="flex items-center justify-center gap-4">
+        <Button variant="outline" size="icon" onClick={handlePrevWeek} aria-label="Previous week">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <div className='flex-grow'>
+          <DateGrid currentDate={currentDate} />
+        </div>
+        <Button variant="outline" size="icon" onClick={handleNextWeek} aria-label="Next week">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
       <div className="flex-grow h-[calc(100vh-16rem)]">
          <Calendar
           localizer={localizer}
           events={events}
           startAccessor="start"
           endAccessor="end"
+          date={currentDate}
+          onNavigate={() => {}} // We handle navigation ourselves
           style={{ height: '100%' }}
           onSelectEvent={handleSelectEvent}
-          views={calendarViews}
+          views={[Views.AGENDA]}
           defaultView={Views.AGENDA}
+          components={{
+            toolbar: CustomToolbar // Hide the default toolbar
+          }}
           eventPropGetter={(event) => {
             return {
               className: 'bg-primary/80 hover:bg-primary cursor-pointer border-0 text-primary-foreground p-2 rounded-md',

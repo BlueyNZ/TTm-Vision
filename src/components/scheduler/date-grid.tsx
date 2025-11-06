@@ -5,16 +5,19 @@ import { startOfWeek, addDays, format, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 
-export function DateGrid() {
+interface DateGridProps {
+  currentDate: Date;
+}
+
+export function DateGrid({ currentDate }: DateGridProps) {
   const [weekDates, setWeekDates] = useState<Date[]>([]);
 
   useEffect(() => {
-    const today = new Date();
     // Setting Sunday as the start of the week
-    const start = startOfWeek(today, { weekStartsOn: 0 }); 
+    const start = startOfWeek(currentDate, { weekStartsOn: 0 }); 
     const dates = Array.from({ length: 7 }).map((_, i) => addDays(start, i));
     setWeekDates(dates);
-  }, []);
+  }, [currentDate]);
 
   return (
     <div className="grid grid-cols-7 gap-2">
