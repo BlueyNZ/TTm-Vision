@@ -67,23 +67,22 @@
 }
 
 
-/* FIX: Change time cell color for readability */
-.rbc-agenda-table .rbc-agenda-time-cell {
-    color: hsl(var(--card-foreground)); /* Changed from --primary to a neutral color */
+/* Change all cell text to primary color (orange) */
+.rbc-agenda-table .rbc-agenda-time-cell,
+.rbc-agenda-table .rbc-agenda-date-cell,
+.rbc-agenda-table .rbc-agenda-event-cell {
+    color: hsl(var(--primary));
     font-weight: 600;
-    width: 15%; /* Give it a consistent width */
 }
 
+.rbc-agenda-table .rbc-agenda-time-cell,
 .rbc-agenda-table .rbc-agenda-date-cell {
     width: 15%;
 }
 
-
 /* Make the event content take up the remaining space */
 .rbc-agenda-table .rbc-agenda-event-cell {
     width: 70%;
-    color: hsl(var(--primary));
-    font-weight: 600;
     cursor: pointer;
 }
 
