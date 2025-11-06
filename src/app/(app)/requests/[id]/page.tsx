@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc, Timestamp, getDocs } from 'firebase/firestore';
+import { collection, doc, Timestamp, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { LoaderCircle, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -39,11 +39,23 @@ export default function ReviewRequestPage() {
     }
     setIsApproving(true);
 
-    // Automatically generate the next job number
     const jobsCollectionRef = collection(firestore, 'job_packs');
-    const jobSnapshot = await getDocs(jobsCollectionRef);
-    const jobCount = jobSnapshot.size;
-    const newJobNumber = `TF-${String(jobCount + 1).padStart(4, '0')}`;
+    
+    // Query for the latest job number to prevent race conditions
+    const latestJobQuery = query(jobsCollectionRef, orderBy('jobNumber', 'desc'), limit(1));
+    const jobSnapshot = await getDocs(latestJobQuery);
+
+    let newJobNumber;
+    if (jobSnapshot.empty) {
+        // If there are no jobs, start with the first number
+        newJobNumber = 'TF-0001';
+    } else {
+        // Get the latest job number and increment it
+        const latestJob = jobSnapshot.docs[0].data() as Job;
+        const latestJobNumStr = latestJob.jobNumber.replace('TF-', '');
+        const latestJobNum = parseInt(latestJobNumStr, 10);
+        newJobNumber = `TF-${String(latestJobNum + 1).padStart(4, '0')}`;
+    }
 
     const updatedJob = {
       ...jobRequest,
