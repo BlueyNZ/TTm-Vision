@@ -29,6 +29,7 @@ import {
   GitPullRequest,
   Calendar,
   Map,
+  Scan,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -47,7 +48,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isAdmin }: AppSidebarProps) {
   const pathname = usePathname();
-  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin", "/map"].some(path => pathname.startsWith(path));
+  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin", "/map", "/equipment-tracking"].some(path => pathname.startsWith(path));
   const isRequestsPagesActive = pathname.startsWith("/requests");
   const isAdminPagesActive = pathname.startsWith("/admin");
 
@@ -167,7 +168,15 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/map")}>
                            <Link href="/map" className="flex justify-between items-center w-full">
                             <span>Map</span>
-                            <Badge variant="outline" className="text-xs bg-warning/20 text-yellow-500 font-semibold border-warning">Coming Soon</Badge>
+                            <Badge variant="outline" className="text-xs bg-yellow-400/20 text-yellow-400 font-semibold border-yellow-500">Coming Soon</Badge>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/equipment-tracking")}>
+                           <Link href="/equipment-tracking" className="flex justify-between items-center w-full">
+                            <span>Equipment</span>
+                            <Badge variant="outline" className="text-xs bg-yellow-400/20 text-yellow-400 font-semibold border-yellow-500">Coming Soon</Badge>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
