@@ -58,6 +58,7 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
     const action = parts[2];
     
     if (page === 'scheduler') return 'Scheduler';
+    if (page === 'map') return 'Real-Time Map';
     if (page === 'requests' && id) return 'Review Request';
     if (page === 'requests') return 'Job Requests';
 
@@ -110,7 +111,7 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
       backPath = page === 'client' ? '/client/dashboard' : '/dashboard';
     } 
     // Handle top-level management pages
-    else if (['jobs', 'staff', 'fleet', 'clients'].includes(page) && pathParts.length === 1) {
+    else if (['jobs', 'staff', 'fleet', 'clients', 'map'].includes(page) && pathParts.length === 1) {
       showBackButton = true;
       backPath = '/admin';
     }

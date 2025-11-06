@@ -28,6 +28,7 @@ import {
   Building,
   GitPullRequest,
   Calendar,
+  Map,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -46,7 +47,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isAdmin }: AppSidebarProps) {
   const pathname = usePathname();
-  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin"].some(path => pathname.startsWith(path));
+  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin", "/map"].some(path => pathname.startsWith(path));
   const isRequestsPagesActive = pathname.startsWith("/requests");
   const isAdminPagesActive = pathname.startsWith("/admin");
 
@@ -159,6 +160,13 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/staff")}>
                           <Link href="/staff">
                             Staff
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/map")}>
+                          <Link href="/map">
+                            Real-Time Map
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
