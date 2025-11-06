@@ -30,7 +30,7 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
   const { toast } = useToast();
   
   const pathParts = pathname.split("/").filter(Boolean);
-  let title = pathParts[0] || "Dashboard";
+  let title = "Dashboard";
   let showBackButton = false;
   let backPath = "";
 
@@ -59,6 +59,7 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
 
     if (page === 'settings') return 'Settings';
     if (page === 'support') return 'Support';
+    if (page === 'client' && parts.length > 1 && parts[1] === 'request-job') return 'Request Job';
 
     if (action === 'edit') {
       if(page === 'jobs') return 'Edit Job';
@@ -96,9 +97,9 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
     const page = pathParts[0];
 
     // Always show back button for settings and support
-    if (page === 'settings' || page === 'support') {
+    if (page === 'settings' || page === 'support' || (page === 'client' && pathParts[1] === 'request-job')) {
       showBackButton = true;
-      backPath = '/dashboard';
+      backPath = page === 'client' ? '/client/dashboard' : '/dashboard';
     } 
     // Handle top-level management pages
     else if (['jobs', 'staff', 'fleet', 'clients'].includes(page) && pathParts.length === 1) {

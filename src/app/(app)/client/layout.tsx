@@ -1,9 +1,10 @@
+
 'use client';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ClientSidebar } from "@/components/layout/client-sidebar";
 import { ClientHeader } from "@/components/layout/client-header";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Staff } from "@/lib/data";
@@ -11,11 +12,7 @@ import { collection, query, where } from "firebase/firestore";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useToast } from "@/hooks/use-toast";
 
-export default function ClientLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function AppContent({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
@@ -57,23 +54,36 @@ export default function ClientLayout({
   }
 
   return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <ClientSidebar />
+        <div className="flex flex-1 flex-col">
+          <ClientHeader isAdmin={isAdmin} />
+          <main className="flex-1 p-4 sm:p-6 bg-background">
+            {children}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
+
+export default function ClientLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+
+  // The ThemeProvider should wrap everything, including the loading state.
+  return (
     <ThemeProvider
       attribute="class"
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
     >
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <ClientSidebar />
-          <div className="flex flex-1 flex-col">
-            <ClientHeader isAdmin={isAdmin} />
-            <main className="flex-1 p-4 sm:p-6 bg-background">
-              {children}
-            </main>
-          </div>
-        </div>
-      </SidebarProvider>
+      <AppContent>{children}</AppContent>
     </ThemeProvider>
   );
 }
