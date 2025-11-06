@@ -8,10 +8,20 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc, Timestamp, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { LoaderCircle, CheckCircle } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function ReviewRequestPage() {
   const params = useParams();
@@ -21,6 +31,7 @@ export default function ReviewRequestPage() {
   const firestore = useFirestore();
 
   const [isApproving, setIsApproving] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
 
   const jobRequestRef = useMemoFirebase(() => {
     if (!firestore || !requestId) return null;
@@ -73,6 +84,22 @@ export default function ReviewRequestPage() {
     router.push('/jobs');
   };
 
+  const handleReject = () => {
+    if (!firestore || !jobRequest) return;
+
+    deleteDocumentNonBlocking(doc(firestore, 'job_packs', jobRequest.id));
+
+    toast({
+        title: "Job Request Rejected",
+        description: `The request from ${jobRequest.clientName} has been removed.`,
+        variant: "destructive",
+    });
+
+    router.push('/requests');
+    setShowRejectDialog(false);
+  };
+
+
   if (isLoadingRequest || !jobRequest) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -84,52 +111,78 @@ export default function ReviewRequestPage() {
   const startDate = jobRequest.startDate instanceof Timestamp ? jobRequest.startDate.toDate() : new Date(jobRequest.startDate);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Review Job Request</CardTitle>
-        <CardDescription>Review the details below and approve this request to convert it into a job.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
-          <h3 className="font-semibold text-lg">Client Submitted Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="font-medium text-muted-foreground">Client</p>
-              <p>{jobRequest.clientName}</p>
-            </div>
-            <div>
-              <p className="font-medium text-muted-foreground">Location</p>
-              <p>{jobRequest.location}</p>
-            </div>
-            <div>
-              <p className="font-medium text-muted-foreground">Requested Start Date</p>
-              <p>{format(startDate, 'PPP')}</p>
-            </div>
-            <div>
-              <p className="font-medium text-muted-foreground">Setup Type</p>
-              <p>{jobRequest.setupType === 'Other' ? jobRequest.otherSetupType : jobRequest.setupType}</p>
-            </div>
-            <div className="col-span-full">
-              <p className="font-medium text-muted-foreground">Job Description</p>
-              <p className="whitespace-pre-wrap">{jobRequest.description}</p>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Review Job Request</CardTitle>
+          <CardDescription>Review the details below and approve this request to convert it into a job.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+            <h3 className="font-semibold text-lg">Client Submitted Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="font-medium text-muted-foreground">Client</p>
+                <p>{jobRequest.clientName}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">Location</p>
+                <p>{jobRequest.location}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">Requested Start Date</p>
+                <p>{format(startDate, 'PPP')}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">Setup Type</p>
+                <p>{jobRequest.setupType === 'Other' ? jobRequest.otherSetupType : jobRequest.setupType}</p>
+              </div>
+              <div className="col-span-full">
+                <p className="font-medium text-muted-foreground">Job Description</p>
+                <p className="whitespace-pre-wrap">{jobRequest.description}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <Label>Job Number</Label>
-          <div className="flex h-10 w-full items-center rounded-md border border-dashed bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-            Will be automatically generated upon approval...
+          <div className="space-y-2">
+            <Label>Job Number</Label>
+            <div className="flex h-10 w-full items-center rounded-md border border-dashed bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+              Will be automatically generated upon approval...
+            </div>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter className="justify-end gap-2">
-        <Button type="button" variant="outline" onClick={() => router.push('/requests')}>Cancel</Button>
-        <Button onClick={handleApprove} disabled={isApproving}>
-          {isApproving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-          Approve and Create Job
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardContent>
+        <CardFooter className="justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={() => router.push('/requests')} disabled={isApproving}>Cancel</Button>
+          <Button type="button" variant="destructive" onClick={() => setShowRejectDialog(true)} disabled={isApproving}>
+            <XCircle className="mr-2 h-4 w-4" />
+            Reject
+          </Button>
+          <Button onClick={handleApprove} disabled={isApproving}>
+            {isApproving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+            Approve and Create Job
+          </Button>
+        </CardFooter>
+      </Card>
+      
+      <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to reject this request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the job request from <span className="font-semibold">{jobRequest?.clientName}</span> for the location <span className="font-semibold">{jobRequest?.location}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReject}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Reject Request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
