@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { Client } from "@/lib/data";
-import { collection, query, where, doc } from "firebase/firestore";
-import { LoaderCircle, Building, CheckCircle } from "lucide-react";
+import { collection, query, where, doc, getDocs, writeBatch } from "firebase/firestore";
+import { LoaderCircle, Building, CheckCircle, XCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +25,7 @@ export default function CompanyApprovalPage() {
     const firestore = useFirestore();
     const { toast } = useToast();
     const [approvingClient, setApprovingClient] = useState<Client | null>(null);
+    const [decliningClient, setDecliningClient] = useState<Client | null>(null);
 
     const pendingClientsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -45,6 +46,45 @@ export default function CompanyApprovalPage() {
         });
         setApprovingClient(null);
     };
+    
+    const handleDeclineClient = async () => {
+        if (!firestore || !decliningClient) return;
+
+        try {
+            const batch = writeBatch(firestore);
+
+            // 1. Delete the client document
+            const clientDocRef = doc(firestore, 'clients', decliningClient.id);
+            batch.delete(clientDocRef);
+
+            // 2. Find and delete the associated staff document
+            if (decliningClient.userId) {
+                const staffQuery = query(collection(firestore, 'staff'), where('email', '==', decliningClient.userId)); // Assuming client's userId is their email used in staff collection
+                const staffSnapshot = await getDocs(staffQuery);
+                staffSnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+            }
+
+            await batch.commit();
+
+            toast({
+                variant: "destructive",
+                title: "Company Declined",
+                description: `The registration for ${decliningClient.name} has been declined and removed.`,
+            });
+        } catch (error) {
+            console.error("Error declining client:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not decline the company. Please try again.",
+            });
+        } finally {
+            setDecliningClient(null);
+        }
+    };
+
 
     return (
         <>
@@ -70,7 +110,11 @@ export default function CompanyApprovalPage() {
                                 {pendingClients.map(client => (
                                     <TableRow key={client.id}>
                                         <TableCell className="font-medium">{client.name}</TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell className="text-right space-x-2">
+                                            <Button onClick={() => setDecliningClient(client)} size="sm" variant="destructive">
+                                                <XCircle className="mr-2 h-4 w-4" />
+                                                Decline
+                                            </Button>
                                             <Button onClick={() => setApprovingClient(client)} size="sm">
                                                 <CheckCircle className="mr-2 h-4 w-4" />
                                                 Approve
@@ -101,6 +145,23 @@ export default function CompanyApprovalPage() {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleApproveClient}>
                             Approve
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            
+            <AlertDialog open={!!decliningClient} onOpenChange={(open) => !open && setDecliningClient(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Decline Company?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the registration for <span className="font-semibold">{decliningClient?.name}</span>. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeclineClient} className="bg-destructive hover:bg-destructive/90">
+                            Decline
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
