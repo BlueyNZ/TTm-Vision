@@ -12,9 +12,9 @@ import { useMemo } from "react";
 import dynamic from 'next/dynamic';
 import './map.css';
 
-const MapComponent = useMemo(() => dynamic(() => import('@/components/map/map-component'), {
+const MapComponent = dynamic(() => import('@/components/map/map-component'), {
     ssr: false,
-}), []);
+});
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -39,12 +39,16 @@ export default function RealTimeMapPage() {
         if (!jobData) return [];
         return jobData.filter(job => getDisplayedStatus(job) === 'In Progress');
     }, [jobData]);
+    
+    const MemoizedMapComponent = useMemo(() => {
+        return <MapComponent />;
+    }, []);
 
     return (
         <div className="h-full flex flex-col gap-4">
             <div className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
                 <div className="lg:col-span-2 h-full relative rounded-lg overflow-hidden border">
-                    <MapComponent />
+                    {MemoizedMapComponent}
                      <div className="absolute bottom-4 left-4 z-[1000]">
                         <h2 className="text-2xl font-bold text-white shadow-lg [text-shadow:_0_2px_4px_rgb(0_0_0_/_50%)]">Live Operations Map</h2>
                         <p className="text-white/90 shadow-sm [text-shadow:_0_1px_3px_rgb(0_0_0_/_40%)]">Showing {activeJobs.length} active job sites</p>
