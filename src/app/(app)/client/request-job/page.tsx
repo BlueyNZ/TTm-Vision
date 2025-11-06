@@ -19,6 +19,15 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon, LoaderCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+const newJobDescriptionTemplate = `Job Name / Client Ref: 
+Location (Full Address): 
+On-Site Time (Site Setup):
+
+Traffic Control Plan Ref: 
+Required TTM Type:
+
+Required Staff: Key Risk: `;
+
 export default function RequestJobPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -26,7 +35,7 @@ export default function RequestJobPage() {
   const { user, isUserLoading } = useUser();
 
   const [location, setLocation] = useState('');
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState(newJobDescriptionTemplate);
   const [requestedDate, setRequestedDate] = useState<Date | undefined>();
   const [contactPerson, setContactPerson] = useState('');
   const [contactNumber, setContactNumber] = useState('');
@@ -60,6 +69,7 @@ export default function RequestJobPage() {
     const newJobRequest: Omit<Job, 'id' | 'jobNumber'> = {
       name: `Job request for ${location}`,
       location,
+      description,
       clientName: currentUserStaffProfile.name,
       clientId: currentUserStaffProfile.id,
       startDate: Timestamp.fromDate(requestedDate),
@@ -108,7 +118,7 @@ export default function RequestJobPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Job Description</Label>
-            <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the work required, including any specific requirements." required />
+            <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the work required, including any specific requirements." required  className="min-h-[250px]"/>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">

@@ -55,6 +55,7 @@ export type Job = {
   jobNumber: string;
   name: string;
   location: string;
+  description?: string;
   clientName: string;
   clientId?: string;
   startDate: Timestamp | Date | string;
