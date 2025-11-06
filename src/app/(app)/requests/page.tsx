@@ -83,7 +83,7 @@ export default function RequestsPage() {
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => router.push(`/jobs/${job.id}/edit`)}>
                                                         <Edit className="mr-2 h-4 w-4" />
-                                                        Review & Approve
+                                                        Review
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem className="text-destructive">
                                                         <Trash2 className="mr-2 h-4 w-4" />
