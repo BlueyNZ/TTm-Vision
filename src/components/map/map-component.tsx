@@ -26,7 +26,9 @@ export default function MapComponent() {
       zoom={6}
       scrollWheelZoom={true}
       className="h-full w-full"
-      ref={mapRef}
+      whenCreated={(mapInstance) => {
+        mapRef.current = mapInstance;
+      }}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
