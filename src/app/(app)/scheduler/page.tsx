@@ -75,12 +75,12 @@ export default function SchedulerPage() {
     router.push(`/jobs/${event.resource.id}`);
   };
   
-  const handlePrevWeek = () => {
-    setCurrentDate(prevDate => subDays(prevDate, 7));
+  const handlePrevDay = () => {
+    setCurrentDate(prevDate => subDays(prevDate, 1));
   };
   
-  const handleNextWeek = () => {
-    setCurrentDate(prevDate => addDays(prevDate, 7));
+  const handleNextDay = () => {
+    setCurrentDate(prevDate => addDays(prevDate, 1));
   };
 
   if (isLoading) {
@@ -94,13 +94,13 @@ export default function SchedulerPage() {
   return (
     <div className='flex flex-col gap-6 h-full'>
       <div className="flex items-center justify-center gap-4">
-        <Button variant="outline" size="icon" onClick={handlePrevWeek} aria-label="Previous week">
+        <Button variant="outline" size="icon" onClick={handlePrevDay} aria-label="Previous day">
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className='flex-grow'>
-          <DateGrid currentDate={currentDate} />
+          <DateGrid currentDate={currentDate} onDateSelect={setCurrentDate} />
         </div>
-        <Button variant="outline" size="icon" onClick={handleNextWeek} aria-label="Next week">
+        <Button variant="outline" size="icon" onClick={handleNextDay} aria-label="Next day">
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

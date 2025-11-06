@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { startOfWeek, addDays, format, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '../ui/button';
 
 interface DateGridProps {
   currentDate: Date;
+  onDateSelect: (date: Date) => void;
 }
 
-export function DateGrid({ currentDate }: DateGridProps) {
+export function DateGrid({ currentDate, onDateSelect }: DateGridProps) {
   const [weekDates, setWeekDates] = useState<Date[]>([]);
 
   useEffect(() => {
@@ -24,14 +26,15 @@ export function DateGrid({ currentDate }: DateGridProps) {
       {weekDates.map((date) => {
         const isCurrentDay = isToday(date);
         return (
-          <Card 
+          <Button 
             key={date.toString()}
+            variant="outline"
             className={cn(
-              "text-center p-2",
+              "text-center p-2 h-auto flex-col",
               isCurrentDay && "bg-primary text-primary-foreground"
             )}
+            onClick={() => onDateSelect(date)}
           >
-            <CardContent className="p-0 flex flex-col items-center justify-center">
               <p className={cn(
                 "text-xs font-medium uppercase",
                 isCurrentDay ? "text-primary-foreground/80" : "text-muted-foreground"
@@ -41,8 +44,7 @@ export function DateGrid({ currentDate }: DateGridProps) {
               <p className="text-2xl font-bold">
                 {format(date, 'd')}
               </p>
-            </CardContent>
-          </Card>
+          </Button>
         );
       })}
     </div>
