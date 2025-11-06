@@ -38,6 +38,7 @@ import {
 import { Staff } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
+import { Badge } from "../ui/badge";
 
 interface AppSidebarProps {
   isAdmin?: boolean;
@@ -223,6 +224,9 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
               </Link>
             </CardContent>
           </Card>
+        </div>
+        <div className="flex justify-center p-2 group-data-[collapsible=icon]:hidden">
+          <Badge variant="secondary">v0.1 Beta</Badge>
         </div>
         <SidebarMenu>
           <SidebarMenuItem>

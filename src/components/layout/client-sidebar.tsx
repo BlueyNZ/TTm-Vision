@@ -21,6 +21,7 @@ import {
 import { usePathname } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
+import { Badge } from "../ui/badge";
 
 export function ClientSidebar() {
   const pathname = usePathname();
@@ -80,6 +81,9 @@ export function ClientSidebar() {
               </Link>
             </CardContent>
           </Card>
+        </div>
+        <div className="flex justify-center p-2 group-data-[collapsible=icon]:hidden">
+          <Badge variant="secondary">v0.1 Beta</Badge>
         </div>
         <SidebarMenu>
           <SidebarMenuItem>
