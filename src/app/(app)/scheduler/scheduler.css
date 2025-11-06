@@ -4,55 +4,99 @@
     border-radius: var(--radius);
     border-color: hsl(var(--border));
     color: hsl(var(--card-foreground));
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    /* Removed box-shadow for a flatter look consistent with other cards */
 }
 
 .rbc-agenda-view {
-    overflow: auto;
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
+    border: none; /* Remove the outer border of the agenda view */
 }
 
 .rbc-agenda-table {
     border: none;
     width: 100%;
+    border-spacing: 0 0.5rem; /* Add vertical spacing between rows */
+    border-collapse: separate; /* Required for border-spacing */
 }
 
+/* Style the header row (Date, Time, Event) */
 .rbc-agenda-table thead th {
-    background-color: hsl(var(--muted));
+    background-color: transparent;
     color: hsl(var(--muted-foreground));
-    padding: 0.75rem 1rem;
+    padding: 0 1rem 0.5rem; /* Adjust padding */
     text-align: left;
-    font-weight: 600;
-    border-bottom: 2px solid hsl(var(--border));
+    font-weight: 500; /* Make it slightly less bold */
+    border-bottom: 1px solid hsl(var(--border)); /* A subtle line under the header */
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
 }
 
+/* Remove the header row border as we are styling rows individually */
+.rbc-agenda-table thead {
+    border: none;
+}
+
+
+/* Each row in the agenda */
 .rbc-agenda-table tbody tr {
-    border-bottom: 1px solid hsl(var(--border));
+    background-color: hsl(var(--muted) / 0.5);
+    border-radius: var(--radius);
+    transition: background-color 0.2s;
 }
 
-.rbc-agenda-table tbody tr:last-child {
-    border-bottom: none;
+.rbc-agenda-table tbody tr:hover {
+    background-color: hsl(var(--muted));
 }
 
+/* General styling for cells within the row */
 .rbc-agenda-table .rbc-agenda-date-cell,
+.rbc-agenda-table .rbc-agenda-time-cell,
+.rbc-agenda-table .rbc-agenda-event-cell {
+    padding: 1rem;
+    border: none; /* Remove all cell borders */
+    vertical-align: middle;
+}
+
+/* Round corners for the first and last cells of each row */
+.rbc-agenda-table tbody tr td:first-child {
+    border-top-left-radius: var(--radius);
+    border-bottom-left-radius: var(--radius);
+}
+.rbc-agenda-table tbody tr td:last-child {
+    border-top-right-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
+}
+
+
+/* FIX: Change time cell color for readability */
 .rbc-agenda-table .rbc-agenda-time-cell {
-    padding: 0.75rem 1rem;
-    font-weight: 500;
-    vertical-align: top;
-    white-space: nowrap;
+    color: hsl(var(--card-foreground)); /* Changed from --primary to a neutral color */
+    font-weight: 600;
+    width: 15%; /* Give it a consistent width */
 }
 
-.rbc-agenda-table .rbc-agenda-time-cell {
-    color: hsl(var(--primary));
+.rbc-agenda-table .rbc-agenda-date-cell {
+    width: 15%;
 }
 
-.rbc-agenda-table .rbc-agenda-content {
-    padding: 0.75rem;
+
+/* Make the event content take up the remaining space */
+.rbc-agenda-table .rbc-agenda-event-cell {
+    width: 70%;
 }
 
+
+/* Message when there are no events for the day */
 .rbc-agenda-empty {
     text-align: center;
     padding: 2rem;
     color: hsl(var(--muted-foreground));
+    background-color: hsl(var(--muted) / 0.3);
+    border-radius: var(--radius);
+    margin-top: 0.5rem;
+}
+
+/* Hide the time-gutter and its header as they are not needed in agenda view */
+.rbc-time-gutter, .rbc-time-header-gutter {
+    display: none;
 }
