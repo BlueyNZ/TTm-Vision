@@ -109,7 +109,7 @@ export default function ClientLoginPage() {
           <CardFooter className="flex-col items-center justify-center gap-4">
             <div className="text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link href="/signup" className="font-semibold text-primary hover:underline">
+              <Link href="/client-signup" className="font-semibold text-primary hover:underline">
                 Register
               </Link>
             </div>
