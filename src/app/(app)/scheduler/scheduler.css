@@ -56,8 +56,9 @@
     border-color: hsl(var(--border));
 }
 
-/* Hide the time gutter but keep its space to not break alignment */
-.rbc-time-gutter {
+/* Hide the time gutter and its corresponding header space */
+.rbc-time-gutter,
+.rbc-time-header-gutter {
     flex: none !important;
     width: 0 !important;
     min-width: 0 !important;
@@ -65,17 +66,6 @@
     overflow: hidden;
     border: none;
 }
-
-/* Ensure the header content aligns correctly now that the gutter is gone */
-.rbc-time-header-gutter {
-     flex: none !important;
-    width: 0 !important;
-    min-width: 0 !important;
-    max-width: 0 !important;
-    overflow: hidden;
-    border: none;
-}
-
 
 /* Remove the horizontal lines for the time slots */
 .rbc-time-slot {
@@ -86,7 +76,6 @@
 .rbc-time-content > * + * > * {
     border-top: 1px solid hsl(var(--border));
 }
-
 
 .rbc-today {
     background-color: hsl(var(--secondary));
