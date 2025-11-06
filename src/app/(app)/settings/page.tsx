@@ -137,7 +137,7 @@ export default function SettingsPage() {
                   <TooltipTrigger asChild>
                     <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="bg-muted text-muted-foreground border-border" side="top" align="center">
                     <p>Your email cannot be changed. Please contact an administrator if an update is required.</p>
                   </TooltipContent>
                 </Tooltip>
