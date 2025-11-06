@@ -1,5 +1,4 @@
 
-
 .rbc-calendar {
     background-color: hsl(var(--card));
     border-radius: var(--radius);
@@ -57,15 +56,26 @@
     border-color: hsl(var(--border));
 }
 
-/* Hide the time gutter (e.g., 8:00 AM, 9:00 AM) */
+/* Hide the time gutter but keep its space to not break alignment */
 .rbc-time-gutter {
-    display: none;
+    flex: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden;
+    border: none;
 }
 
-/* Make the time content take up the full width since the gutter is gone */
-.rbc-time-content {
-    border-left: none;
+/* Ensure the header content aligns correctly now that the gutter is gone */
+.rbc-time-header-gutter {
+     flex: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden;
+    border: none;
 }
+
 
 /* Remove the horizontal lines for the time slots */
 .rbc-time-slot {
