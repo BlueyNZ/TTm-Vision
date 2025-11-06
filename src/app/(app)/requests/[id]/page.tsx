@@ -1,16 +1,13 @@
 
 'use client';
 import { useParams, useRouter } from 'next/navigation';
-import { Job, Staff, Client } from '@/lib/data';
+import { Job } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
-import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useState } from 'react';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc, Timestamp, getDocs } from 'firebase/firestore';
 import { LoaderCircle, CheckCircle } from 'lucide-react';
@@ -23,7 +20,6 @@ export default function ReviewRequestPage() {
   const requestId = params.id as string;
   const firestore = useFirestore();
 
-  const [jobNumber, setJobNumber] = useState('');
   const [isApproving, setIsApproving] = useState(false);
 
   const jobRequestRef = useMemoFirebase(() => {
@@ -32,37 +28,27 @@ export default function ReviewRequestPage() {
   }, [firestore, requestId]);
   const { data: jobRequest, isLoading: isLoadingRequest } = useDoc<Job>(jobRequestRef);
 
-  useEffect(() => {
-    // Pre-fill job number when the request data loads
-    const generateJobNumber = async () => {
-      if (firestore && !jobRequest?.jobNumber) {
-        const jobsCollectionRef = collection(firestore, 'job_packs');
-        const jobSnapshot = await getDocs(jobsCollectionRef);
-        const jobCount = jobSnapshot.size;
-        const newJobNumber = `TF-${String(jobCount + 1).padStart(4, '0')}`;
-        setJobNumber(newJobNumber);
-      } else if (jobRequest?.jobNumber) {
-        setJobNumber(jobRequest.jobNumber);
-      }
-    };
-    generateJobNumber();
-  }, [firestore, jobRequest]);
-
   const handleApprove = async () => {
-    if (!firestore || !jobRequest || !jobNumber) {
+    if (!firestore || !jobRequest) {
       toast({
-        title: 'Missing Information',
-        description: 'A job number is required to approve the request.',
+        title: 'Error',
+        description: 'Job request data is not available.',
         variant: 'destructive',
       });
       return;
     }
     setIsApproving(true);
 
+    // Automatically generate the next job number
+    const jobsCollectionRef = collection(firestore, 'job_packs');
+    const jobSnapshot = await getDocs(jobsCollectionRef);
+    const jobCount = jobSnapshot.size;
+    const newJobNumber = `TF-${String(jobCount + 1).padStart(4, '0')}`;
+
     const updatedJob = {
       ...jobRequest,
-      status: 'Upcoming' as Job['status'], // Explicitly cast the status
-      jobNumber: jobNumber,
+      status: 'Upcoming' as Job['status'],
+      jobNumber: newJobNumber,
     };
 
     const jobDocRef = doc(firestore, 'job_packs', jobRequest.id);
@@ -70,7 +56,7 @@ export default function ReviewRequestPage() {
 
     toast({
       title: 'Job Approved',
-      description: `Job ${jobNumber} has been created and moved to the main jobs list.`,
+      description: `Job ${newJobNumber} has been created and moved to the main jobs list.`,
     });
     router.push('/jobs');
   };
@@ -89,7 +75,7 @@ export default function ReviewRequestPage() {
     <Card>
       <CardHeader>
         <CardTitle>Review Job Request</CardTitle>
-        <CardDescription>Review the details below and assign a job number to approve this request.</CardDescription>
+        <CardDescription>Review the details below and approve this request to convert it into a job.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
@@ -119,13 +105,10 @@ export default function ReviewRequestPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="jobNumber">Job Number</Label>
-          <Input 
-            id="jobNumber" 
-            value={jobNumber} 
-            onChange={(e) => setJobNumber(e.target.value)} 
-            placeholder="e.g. TF-0001" 
-          />
+          <Label>Job Number</Label>
+          <div className="flex h-10 w-full items-center rounded-md border border-dashed bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+            Will be automatically generated upon approval...
+          </div>
         </div>
       </CardContent>
       <CardFooter className="justify-end gap-2">
