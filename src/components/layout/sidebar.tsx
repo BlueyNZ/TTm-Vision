@@ -26,6 +26,7 @@ import {
   Briefcase,
   UserPlus,
   Building,
+  GitPullRequest,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -44,6 +45,7 @@ interface AppSidebarProps {
 export function AppSidebar({ isAdmin }: AppSidebarProps) {
   const pathname = usePathname();
   const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin"].some(path => pathname.startsWith(path));
+  const isRequestsPagesActive = pathname.startsWith("/requests");
   const isAdminPagesActive = pathname.startsWith("/admin");
 
 
@@ -71,6 +73,35 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
           </SidebarMenuItem>
           {isAdmin && (
             <>
+              <Collapsible asChild defaultOpen={isRequestsPagesActive}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      tooltip="Requests"
+                      isActive={isRequestsPagesActive}
+                      className="justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <GitPullRequest />
+                        <span>Requests</span>
+                      </div>
+                      <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/requests")}>
+                           <Link href="/requests">
+                            Job Requests
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
                <Collapsible asChild defaultOpen={isManagementPagesActive}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
