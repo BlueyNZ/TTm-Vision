@@ -59,6 +59,9 @@ export default function PaperworkMenuPage() {
         );
     }
 
+    // Placeholder for timesheet completion count
+    const completedTimesheets = 0;
+
     return (
         <Card>
             <CardHeader>
@@ -76,7 +79,12 @@ export default function PaperworkMenuPage() {
                                     <FileText className="h-5 w-5 text-primary"/>
                                     <span className="font-medium">{link.title}</span>
                                 </div>
-                                {link.title !== 'Timesheets' && (
+                                {link.title === 'Timesheets' ? (
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Circle className="h-2 w-2 fill-muted-foreground"/>
+                                        <span>{completedTimesheets} timesheets completed</span>
+                                    </div>
+                                ) : (
                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                         <Circle className="h-2 w-2 fill-muted-foreground"/>
                                         <span>Not yet completed</span>
