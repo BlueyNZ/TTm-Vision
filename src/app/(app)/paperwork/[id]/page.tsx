@@ -18,7 +18,7 @@ const paperworkLinks = [
     { title: 'Hazard ID', href: 'hazard-id' },
     { title: 'Site Induction Signatures', href: 'site-induction-signatures' },
     { title: 'Pre-Installation Process', href: 'pre-installation-process' },
-    { title: 'NEW On-Site Record', href: 'new-on-site-record' },
+    { title: 'On-Site Record', href: 'new-on-site-record' },
     { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record' },
     { title: 'Job Note', href: 'job-note' },
     { title: 'Site Audit (COPTTM SCR)', href: 'site-audit-copttm-scr' },
