@@ -123,76 +123,47 @@ export default function DashboardPage() {
                             const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
 
                             return (
-                                <div key={job.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex justify-between items-start">
-                                    <Link href={`/jobs/${job.id}`} className="flex-grow">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1 space-y-2">
-                                                <p className="font-semibold text-lg flex items-center gap-2">
-                                                    <MapPin className="h-5 w-5 text-primary"/>
-                                                    {job.location}
-                                                </p>
-                                                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                                    <Calendar className="h-4 w-4"/>
-                                                    {format(startDate, 'eeee, dd MMM yyyy')}
-                                                </p>
-                                            </div>
-                                            <Badge 
-                                                variant={getStatusVariant(displayedStatus)}
-                                                className={cn(
-                                                    "flex items-center gap-2 w-fit", 
-                                                    displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
-                                                )}
-                                            >
-                                                <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
-                                                {displayedStatus}
-                                            </Badge>
+                                <Link href={`/jobs/${job.id}`} key={job.id} className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1 space-y-2">
+                                            <p className="font-semibold text-lg flex items-center gap-2">
+                                                <MapPin className="h-5 w-5 text-primary"/>
+                                                {job.location}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                                <Calendar className="h-4 w-4"/>
+                                                {format(startDate, 'eeee, dd MMM yyyy')}
+                                            </p>
                                         </div>
-                                        <div className="border-t my-4"></div>
-                                        <div className="flex items-center gap-6 text-sm">
-                                            {job.stms && (
-                                                <div className="flex items-center gap-2">
-                                                    <UserSquare className="h-4 w-4 text-muted-foreground" />
-                                                    <p className="font-medium">STMS:</p>
-                                                    <span className="text-muted-foreground">{job.stms}</span>
-                                                </div>
+                                        <Badge 
+                                            variant={getStatusVariant(displayedStatus)}
+                                            className={cn(
+                                                "flex items-center gap-2 w-fit", 
+                                                displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
                                             )}
-                                            {job.tcs && job.tcs.length > 0 && (
-                                                <div className="flex items-center gap-2">
-                                                    <Users className="h-4 w-4 text-muted-foreground" />
-                                                    <p className="font-medium">TCs:</p>
-                                                    <span className="text-muted-foreground">{job.tcs.length} assigned</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Link>
-                                     <div className="pl-4 flex items-center">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline" onClick={(e) => e.stopPropagation()}>
-                                                    Paperwork
-                                                    <ChevronDown className="h-5 w-5 ml-2" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/single-crew-timesheet`}>Single Crew Timesheet</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/truck-inspection`}>Truck Inspection</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/estop-inspection`}>ESTOP Inspection</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/stop-go-briefing`}>Stop/Go Briefing</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/tsl-decision-matrix`}>TSL Decision Matrix</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/hazard-id-nzgttm`}>Hazard ID (NZGTTM)</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/hazard-id`}>Hazard ID</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/site-induction-signatures`}>Site Induction Signatures</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/pre-installation-process`}>Pre-Installation Process</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/new-on-site-record`}>NEW On-Site Record</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/mobile-ops-on-site-record`}>Mobile Ops On-Site Record</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/job-note`}>Job Note</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/incident-or-event-report`}>Incident or Event Report</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/site-audit-copttm-scr`}>Site Audit (COPTTM SCR)</Link></DropdownMenuItem>
-                                                <DropdownMenuItem asChild className="border my-1"><Link href={`/jobs/${job.id}/paperwork/client-feedback`}>Client Feedback</Link></DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        >
+                                            <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
+                                            {displayedStatus}
+                                        </Badge>
                                     </div>
-                                </div>
+                                    <div className="border-t my-4"></div>
+                                    <div className="flex items-center gap-6 text-sm">
+                                        {job.stms && (
+                                            <div className="flex items-center gap-2">
+                                                <UserSquare className="h-4 w-4 text-muted-foreground" />
+                                                <p className="font-medium">STMS:</p>
+                                                <span className="text-muted-foreground">{job.stms}</span>
+                                            </div>
+                                        )}
+                                        {job.tcs && job.tcs.length > 0 && (
+                                            <div className="flex items-center gap-2">
+                                                <Users className="h-4 w-4 text-muted-foreground" />
+                                                <p className="font-medium">TCs:</p>
+                                                <span className="text-muted-foreground">{job.tcs.length} assigned</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </Link>
                             )
                         })}
                     </div>
