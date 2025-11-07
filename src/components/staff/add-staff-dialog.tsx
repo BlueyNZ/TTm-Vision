@@ -51,7 +51,7 @@ import { Separator } from "../ui/separator";
 
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().min(1, "Email is required."),
   phone: z.string().min(1, "Phone number is required."),
   role: z.enum(["TC", "STMS", "Operator", "Owner"]),
   certifications: z.array(z.object({
