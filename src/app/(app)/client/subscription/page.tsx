@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 const tiers = [
   {
     name: 'Basic',
-    price: '$49',
+    price: '$99',
     priceSuffix: '/ user / month',
     description: 'For small teams getting started.',
     features: [
@@ -31,7 +31,7 @@ const tiers = [
   },
   {
     name: 'Pro',
-    price: '$79',
+    price: '$149',
     priceSuffix: '/ user / month',
     description: 'For growing businesses that need more power.',
     features: [
