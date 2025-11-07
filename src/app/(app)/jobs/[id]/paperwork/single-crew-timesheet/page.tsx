@@ -20,6 +20,7 @@ import { useMemo, useRef, useState } from "react";
 import { format } from 'date-fns';
 import { SignaturePad, type SignaturePadRef } from "@/components/ui/signature-pad";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import Image from "next/image";
 
 const timesheetSchema = z.object({
   jobDate: z.string().min(1, "Date is required"),
@@ -250,39 +251,46 @@ export default function SingleCrewTimesheetPage() {
                     <FormItem>
                          <FormLabel>Sign Off</FormLabel>
                          <FormControl>
-                           <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
-                              <DialogTrigger asChild>
-                                  <Button variant="outline" className="w-full">
-                                      {signatureDataUrlValue ? (
-                                          <><CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Timesheet Signed</>
-                                      ) : (
-                                          "Sign Off Timesheet"
-                                      )}
-                                  </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                  <DialogHeader>
-                                      <DialogTitle>Sign Timesheet</DialogTitle>
-                                      <DialogDescription>
-                                          By signing, you confirm that the hours and allowances claimed are true and correct.
-                                      </DialogDescription>
-                                  </DialogHeader>
-                                  <div className="py-4">
-                                      <SignaturePad 
-                                          ref={signaturePadRef}
-                                      />
-                                  </div>
-                                  <DialogFooter>
-                                      <Button type="button" variant="ghost" onClick={handleClearSignature}>
-                                          <Trash className="mr-2 h-4 w-4" />
-                                          Clear
-                                      </Button>
-                                      <Button type="button" onClick={handleConfirmSignature}>
-                                          Confirm Signature
-                                      </Button>
-                                  </DialogFooter>
-                              </DialogContent>
-                           </Dialog>
+                           <div className="space-y-4">
+                             <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" className="w-full">
+                                        {signatureDataUrlValue ? (
+                                            <><CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Timesheet Signed (Click to re-sign)</>
+                                        ) : (
+                                            "Sign Off Timesheet"
+                                        )}
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Sign Timesheet</DialogTitle>
+                                        <DialogDescription>
+                                            By signing, you confirm that the hours and allowances claimed are true and correct.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="py-4">
+                                        <SignaturePad 
+                                            ref={signaturePadRef}
+                                        />
+                                    </div>
+                                    <DialogFooter>
+                                        <Button type="button" variant="ghost" onClick={handleClearSignature}>
+                                            <Trash className="mr-2 h-4 w-4" />
+                                            Clear
+                                        </Button>
+                                        <Button type="button" onClick={handleConfirmSignature}>
+                                            Confirm Signature
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                             </Dialog>
+                              {signatureDataUrlValue && (
+                                <div className="p-4 border-dashed border-2 rounded-md flex justify-center items-center bg-muted/50">
+                                    <Image src={signatureDataUrlValue} alt="Staff signature" width={300} height={100} className="bg-white shadow-sm"/>
+                                </div>
+                              )}
+                           </div>
                          </FormControl>
                         <FormMessage />
                     </FormItem>
