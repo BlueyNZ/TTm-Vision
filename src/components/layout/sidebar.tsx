@@ -50,7 +50,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isAdmin }: AppSidebarProps) {
   const pathname = usePathname();
-  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin", "/map", "/equipment-tracking"].some(path => pathname.startsWith(path));
+  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin", "/map", "/equipment-tracking", "/paperwork"].some(path => pathname.startsWith(path));
   const isRequestsPagesActive = pathname.startsWith("/requests");
   const isAdminPagesActive = pathname.startsWith("/admin");
 
@@ -163,6 +163,13 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/staff")}>
                           <Link href="/staff">
                             Staff
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/paperwork")}>
+                          <Link href="/paperwork">
+                            Paperwork
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
