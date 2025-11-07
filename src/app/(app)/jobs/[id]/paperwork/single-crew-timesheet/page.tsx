@@ -212,7 +212,7 @@ export default function SingleCrewTimesheetPage() {
                         <FormItem>
                           <FormLabel>Breaks</FormLabel>
                           <FormControl>
-                            <Input type="text" inputMode="numeric" {...field} />
+                            <Input type="text" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -359,5 +359,3 @@ export default function SingleCrewTimesheetPage() {
     </Card>
   );
 }
-
-    
