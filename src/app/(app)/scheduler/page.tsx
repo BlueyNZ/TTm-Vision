@@ -4,7 +4,7 @@
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './scheduler.css';
 import { Calendar, dateFnsLocalizer, Event as BigCalendarEvent } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, addDays, subDays, isSameDay } from 'date-fns';
+import { format, parse, startOfWeek, getDay, addDays, subDays, isSameDay, eachDayOfInterval } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Job } from '@/lib/data';
@@ -47,30 +47,42 @@ export default function SchedulerPage() {
 
   const events: JobEvent[] = useMemo(() => {
     if (!jobData) return [];
+
+    const dailyEvents: JobEvent[] = [];
     
-    // Filter jobs to only include those for the currently selected date
-    const filteredJobs = jobData.filter(job => {
-        const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
-        return isSameDay(startDate, currentDate) && job.status !== 'Cancelled' && job.status !== 'Pending';
+    const validJobs = jobData.filter(job => job.status !== 'Cancelled' && job.status !== 'Pending');
+
+    validJobs.forEach(job => {
+      const jobStart = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+      const jobEnd = job.endDate ? (job.endDate instanceof Timestamp ? job.endDate.toDate() : new Date(job.endDate)) : jobStart;
+
+      const interval = eachDayOfInterval({
+        start: jobStart,
+        end: jobEnd,
+      });
+
+      interval.forEach(day => {
+        if (isSameDay(day, currentDate)) {
+            const startDateTime = new Date(day);
+            const jobStartTime = job.startTime?.match(/(\d{2}):(\d{2})/) ? job.startTime.split(':') : ['08', '00'];
+            startDateTime.setHours(parseInt(jobStartTime[0], 10), parseInt(jobStartTime[1], 10), 0, 0);
+
+            const endDateTime = new Date(startDateTime);
+            endDateTime.setHours(startDateTime.getHours() + 2); // Default 2 hour duration
+
+            dailyEvents.push({
+              title: `${job.jobNumber}: ${job.location}`,
+              start: startDateTime,
+              end: endDateTime,
+              resource: { id: job.id },
+            });
+        }
+      });
     });
 
-    return filteredJobs.map(job => {
-        const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
-        
-        const jobStartTime = job.startTime?.match(/(\d{2}):(\d{2})/) ? job.startTime.split(':') : ['08', '00'];
-        startDate.setHours(parseInt(jobStartTime[0], 10), parseInt(jobStartTime[1], 10));
+    return dailyEvents.filter(event => isSameDay(event.start!, currentDate));
 
-        const endDate = new Date(startDate);
-        endDate.setHours(startDate.getHours() + 2);
-
-        return {
-          title: `${job.jobNumber}: ${job.location}`,
-          start: startDate,
-          end: endDate,
-          resource: { id: job.id },
-        };
-      });
-  }, [jobData, currentDate]); // Rerun this logic when the currentDate changes
+  }, [jobData, currentDate]);
 
   const handleSelectEvent = (event: JobEvent) => {
     router.push(`/jobs/${event.resource.id}`);
