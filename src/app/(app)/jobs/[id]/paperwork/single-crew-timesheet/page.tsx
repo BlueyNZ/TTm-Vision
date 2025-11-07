@@ -5,7 +5,7 @@ import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from "@
 import { Job, Staff } from "@/lib/data";
 import { doc, query, collection, where, Timestamp } from "firebase/firestore";
 import { useParams } from "next/navigation";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +15,9 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { format } from 'date-fns';
+import { SignaturePad, type SignaturePadRef } from "@/components/ui/signature-pad";
 
 const timesheetSchema = z.object({
   jobDate: z.string().min(1, "Date is required"),
@@ -27,9 +28,7 @@ const timesheetSchema = z.object({
   isNightShift: z.boolean(),
   isMealAllowance: z.boolean(),
   isToolAllowance: z.boolean(),
-  signature: z.boolean().refine(val => val === true, {
-    message: "You must confirm the hours are correct.",
-  }),
+  signatureDataUrl: z.string().min(1, "A signature is required to submit the timesheet."),
 });
 
 
@@ -38,6 +37,8 @@ export default function SingleCrewTimesheetPage() {
   const jobId = params.id as string;
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const signaturePadRef = useRef<SignaturePadRef>(null);
+  const [signatureError, setSignatureError] = useState<string | null>(null);
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -64,11 +65,35 @@ export default function SingleCrewTimesheetPage() {
       isNightShift: false,
       isMealAllowance: false,
       isToolAllowance: false,
-      signature: false,
+      signatureDataUrl: "",
     },
   });
   
   const isLoading = isJobLoading || isUserLoading || isStaffLoading;
+
+  const handleClearSignature = () => {
+    signaturePadRef.current?.clear();
+    form.setValue("signatureDataUrl", "");
+    setSignatureError("A signature is required to submit the timesheet.");
+  };
+
+  const handleSignatureEnd = () => {
+    if (signaturePadRef.current) {
+        const dataUrl = signaturePadRef.current.toDataURL();
+        form.setValue("signatureDataUrl", dataUrl, { shouldValidate: true });
+        setSignatureError(null);
+    }
+  };
+
+  function onSubmit(data: z.infer<typeof timesheetSchema>) {
+    if (signaturePadRef.current?.isEmpty()) {
+        setSignatureError("A signature is required to submit the timesheet.");
+        form.setError("signatureDataUrl", { type: "manual", message: "A signature is required." });
+        return;
+    }
+    console.log(data);
+    // Here you would submit the data to Firestore
+  }
 
   if (isLoading) {
     return (
@@ -76,11 +101,6 @@ export default function SingleCrewTimesheetPage() {
         <LoaderCircle className="h-8 w-8 animate-spin" />
       </div>
     );
-  }
-
-  function onSubmit(data: z.infer<typeof timesheetSchema>) {
-    console.log(data);
-    // Here you would submit the data to Firestore
   }
 
   return (
@@ -147,7 +167,7 @@ export default function SingleCrewTimesheetPage() {
                 name="breaks"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Breaks</FormLabel>
+                    <FormLabel>Breaks (mins)</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -222,26 +242,31 @@ export default function SingleCrewTimesheetPage() {
             </div>
 
             <Separator />
-
-            <FormField
-              control={form.control}
-              name="signature"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      Signature
-                    </FormLabel>
-                    <p className="text-sm text-muted-foreground">
-                      By checking this box, I confirm that the hours and allowances claimed are true and correct.
-                    </p>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
+            
+             <FormField
+                control={form.control}
+                name="signatureDataUrl"
+                render={({ field }) => (
+                    <FormItem>
+                         <div className="flex justify-between items-center">
+                            <FormLabel>Signature</FormLabel>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleClearSignature}>
+                                <Trash className="mr-2 h-4 w-4" />
+                                Clear
+                            </Button>
+                        </div>
+                        <FormControl>
+                            <SignaturePad 
+                                ref={signaturePadRef}
+                                onSignatureEnd={handleSignatureEnd}
+                            />
+                        </FormControl>
+                         <p className="text-sm text-muted-foreground px-1">
+                          By signing, I confirm that the hours and allowances claimed are true and correct.
+                        </p>
+                        <FormMessage />
+                    </FormItem>
+                )}
             />
 
           </CardContent>
