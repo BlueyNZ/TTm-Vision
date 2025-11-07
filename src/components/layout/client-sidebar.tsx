@@ -18,6 +18,7 @@ import {
   TrafficCone,
   Briefcase,
   Info,
+  Star,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -95,6 +96,14 @@ export function ClientSidebar() {
               <Link href="/client/about">
                 <Info />
                 <span>About Us</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Subscription" isActive={pathname === "/client/subscription"}>
+              <Link href="/client/subscription">
+                <Star />
+                <span>Subscription</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

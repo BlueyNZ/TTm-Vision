@@ -31,6 +31,7 @@ import {
   Map,
   Scan,
   Info,
+  Star,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -256,6 +257,14 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
               <Link href="/about">
                 <Info />
                 <span>About Us</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Subscription" isActive={pathname === "/subscription"}>
+              <Link href="/subscription">
+                <Star />
+                <span>Subscription</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
