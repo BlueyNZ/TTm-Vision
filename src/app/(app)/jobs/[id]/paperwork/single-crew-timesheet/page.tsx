@@ -38,7 +38,6 @@ export default function SingleCrewTimesheetPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const signaturePadRef = useRef<SignaturePadRef>(null);
-  const [signatureError, setSignatureError] = useState<string | null>(null);
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -73,21 +72,18 @@ export default function SingleCrewTimesheetPage() {
 
   const handleClearSignature = () => {
     signaturePadRef.current?.clear();
-    form.setValue("signatureDataUrl", "");
-    setSignatureError("A signature is required to submit the timesheet.");
+    form.setValue("signatureDataUrl", "", { shouldValidate: true });
   };
 
   const handleSignatureEnd = () => {
     if (signaturePadRef.current) {
         const dataUrl = signaturePadRef.current.toDataURL();
         form.setValue("signatureDataUrl", dataUrl, { shouldValidate: true });
-        setSignatureError(null);
     }
   };
 
   function onSubmit(data: z.infer<typeof timesheetSchema>) {
     if (signaturePadRef.current?.isEmpty()) {
-        setSignatureError("A signature is required to submit the timesheet.");
         form.setError("signatureDataUrl", { type: "manual", message: "A signature is required." });
         return;
     }
