@@ -3,9 +3,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from "@/firebase";
-import { Job, Staff } from "@/lib/data";
-import { doc, query, collection, where, Timestamp } from "firebase/firestore";
-import { useParams } from "next/navigation";
+import { Job, Staff, Timesheet } from "@/lib/data";
+import { doc, query, collection, where, Timestamp, addDoc } from "firebase/firestore";
+import { useParams, useRouter } from "next/navigation";
 import { LoaderCircle, Trash, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 
 
 const timesheetSchema = z.object({
@@ -41,13 +42,15 @@ const timesheetSchema = z.object({
 
 export default function SingleCrewTimesheetPage() {
   const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
   const jobId = params.id as string;
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const signaturePadRef = useRef<SignaturePadRef>(null);
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
   const [totalHours, setTotalHours] = useState<string | null>(null);
-  const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -101,10 +104,8 @@ export default function SingleCrewTimesheetPage() {
 
   useEffect(() => {
     if (currentStaffMember && jobCrew.some(member => member.id === currentStaffMember.id)) {
-        setSelectedStaffId(currentStaffMember.id);
         form.setValue("staffId", currentStaffMember.id);
     } else if (jobCrew.length > 0) {
-        setSelectedStaffId(jobCrew[0].id);
         form.setValue("staffId", jobCrew[0].id);
     }
   }, [currentStaffMember, jobCrew, form]);
@@ -169,10 +170,52 @@ export default function SingleCrewTimesheetPage() {
     }
   };
 
-  function onSubmit(data: z.infer<typeof timesheetSchema>) {
-    console.log(data);
-    // Here you would submit the data to Firestore
-  }
+  async function onSubmit(data: z.infer<typeof timesheetSchema>) {
+    if (!firestore || !jobId) return;
+
+    const selectedStaffMember = allStaff?.find(s => s.id === data.staffId);
+    if (!selectedStaffMember) {
+        toast({ title: "Error", description: "Selected staff member not found.", variant: 'destructive' });
+        return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+        const timesheetPayload: Omit<Timesheet, 'id'> = {
+            jobId: jobId,
+            staffId: data.staffId,
+            staffName: selectedStaffMember.name,
+            jobDate: Timestamp.fromDate(new Date(data.jobDate)),
+            startTime: data.startTime,
+            finishTime: data.finishTime,
+            breaks: parseInt(data.breaks, 10) || 0,
+            totalHours: totalHours || '0h 0m',
+            isStms: data.isStms,
+            isNightShift: data.isNightShift,
+            isMealAllowance: data.isMealAllowance,
+            isToolAllowance: data.isToolAllowance,
+            signatureDataUrl: data.signatureDataUrl,
+            createdAt: Timestamp.now(),
+        };
+
+        const timesheetsCollectionRef = collection(firestore, 'job_packs', jobId, 'timesheets');
+        await addDoc(timesheetsCollectionRef, timesheetPayload);
+
+        toast({
+            title: "Timesheet Submitted",
+            description: `Timesheet for ${selectedStaffMember.name} has been successfully submitted.`,
+        });
+
+        router.push(`/paperwork/${jobId}`);
+
+    } catch (error) {
+        console.error("Error submitting timesheet:", error);
+        toast({ title: "Submission Failed", description: "Could not submit timesheet. Please try again.", variant: 'destructive' });
+    } finally {
+        setIsSubmitting(false);
+    }
+}
 
   const signatureDataUrlValue = form.watch("signatureDataUrl");
 
@@ -417,7 +460,10 @@ export default function SingleCrewTimesheetPage() {
 
           </CardContent>
           <CardFooter>
-            <Button type="submit">Submit Timesheet</Button>
+            <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                Submit Timesheet
+            </Button>
           </CardFooter>
         </form>
       </Form>

@@ -70,3 +70,21 @@ export type Job = {
   stmsId: Staff['id'] | null;
   tcs: { id: Staff['id'], name: Staff['name']}[];
 };
+
+export type Timesheet = {
+  id: string;
+  jobId: string;
+  staffId: string;
+  staffName: string;
+  jobDate: Timestamp | Date | string;
+  startTime: string;
+  finishTime: string;
+  breaks: number;
+  totalHours: string;
+  isStms: boolean;
+  isNightShift: boolean;
+  isMealAllowance: boolean;
+  isToolAllowance: boolean;
+  signatureDataUrl: string;
+  createdAt: Timestamp;
+};

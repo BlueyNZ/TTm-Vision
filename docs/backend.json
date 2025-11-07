@@ -466,6 +466,41 @@
         "volume",
         "cost"
       ]
+    },
+    "Timesheet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Timesheet",
+      "type": "object",
+      "description": "Represents a single timesheet entry for a staff member on a specific job.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the timesheet." },
+        "jobId": { "type": "string", "description": "The ID of the job this timesheet belongs to." },
+        "staffId": { "type": "string", "description": "The ID of the staff member." },
+        "staffName": { "type": "string", "description": "The name of the staff member (denormalized)." },
+        "jobDate": { "type": "string", "format": "date-time", "description": "The date the work was performed." },
+        "startTime": { "type": "string", "description": "The start time of the shift (e.g., 08:00 AM)." },
+        "finishTime": { "type": "string", "description": "The finish time of the shift (e.g., 04:00 PM)." },
+        "breaks": { "type": "number", "description": "Total break time in minutes." },
+        "totalHours": { "type": "string", "description": "Calculated total work hours (e.g., '8h 30m')." },
+        "isStms": { "type": "boolean", "description": "If STMS allowance is claimed." },
+        "isNightShift": { "type": "boolean", "description": "If night shift allowance is claimed." },
+        "isMealAllowance": { "type": "boolean", "description": "If meal allowance is claimed." },
+        "isToolAllowance": { "type": "boolean", "description": "If tool allowance is claimed." },
+        "signatureDataUrl": { "type": "string", "description": "Base64 encoded PNG of the signature." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp when the timesheet was submitted." }
+      },
+      "required": [
+        "jobId",
+        "staffId",
+        "staffName",
+        "jobDate",
+        "startTime",
+        "finishTime",
+        "breaks",
+        "totalHours",
+        "signatureDataUrl",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -589,6 +624,20 @@
               "name": "jobPackId",
               "description": "The unique identifier for the JobPack."
             }
+          ]
+        }
+      },
+      {
+        "path": "/job_packs/{jobPackId}/timesheets/{timesheetId}",
+        "definition": {
+          "entityName": "Timesheet",
+          "schema": {
+            "$ref": "#/entities/Timesheet"
+          },
+          "description": "A collection of all timesheet submissions for a specific job. Inherits authorization from the parent JobPack.",
+          "params": [
+            { "name": "jobPackId", "description": "The unique identifier for the JobPack." },
+            { "name": "timesheetId", "description": "The unique identifier for the Timesheet." }
           ]
         }
       },

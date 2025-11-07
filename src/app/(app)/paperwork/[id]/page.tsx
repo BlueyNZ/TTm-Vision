@@ -1,10 +1,10 @@
 
 'use client';
 import { useParams, useRouter } from 'next/navigation';
-import { Job } from '@/lib/data';
+import { Job, Timesheet } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
 import { LoaderCircle, FileText, Circle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -36,7 +36,15 @@ export default function PaperworkMenuPage() {
         return doc(firestore, 'job_packs', jobId);
     }, [firestore, jobId]);
 
-    const { data: job, isLoading } = useDoc<Job>(jobRef);
+    const timesheetsRef = useMemoFirebase(() => {
+        if (!firestore || !jobId) return null;
+        return collection(firestore, 'job_packs', jobId, 'timesheets');
+    }, [firestore, jobId]);
+
+    const { data: job, isLoading: isJobLoading } = useDoc<Job>(jobRef);
+    const { data: timesheets, isLoading: areTimesheetsLoading } = useCollection<Timesheet>(timesheetsRef);
+
+    const isLoading = isJobLoading || areTimesheetsLoading;
 
     if (isLoading) {
         return (
@@ -59,8 +67,7 @@ export default function PaperworkMenuPage() {
         );
     }
 
-    // Placeholder for timesheet completion count
-    const completedTimesheets = 0;
+    const completedTimesheets = timesheets?.length || 0;
 
     return (
         <Card>
