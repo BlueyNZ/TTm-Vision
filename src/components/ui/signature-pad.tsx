@@ -57,7 +57,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       <div
         ref={containerRef}
         className={cn(
-          "relative w-full h-48 rounded-md border border-input bg-background",
+          "relative w-full h-48 rounded-md border border-input bg-white",
           className
         )}
       >
@@ -70,7 +70,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
             height: 192,
             className: "w-full h-full",
           }}
-          penColor="hsl(var(--foreground))"
+          penColor="black"
           onEnd={onSignatureEnd}
           {...props}
         />
