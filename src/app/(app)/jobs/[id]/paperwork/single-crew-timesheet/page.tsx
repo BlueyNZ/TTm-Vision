@@ -177,54 +177,54 @@ export default function SingleCrewTimesheetPage() {
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-              <div className="grid grid-cols-3 gap-6">
-                <FormField
-                  control={form.control}
-                  name="startTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Time</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="finishTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Finish Time</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="breaks"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Breaks</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-               <div className="space-y-2">
-                  <Label>Total Hours</Label>
-                  <div className="flex h-10 w-full items-center justify-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm font-medium">
-                    {totalHours ? totalHours : '...'}
-                  </div>
-              </div>
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="startTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Start Time</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="finishTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Finish Time</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="breaks"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Breaks (mins)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                </div>
+                <div className="space-y-2 md:w-1/3">
+                      <Label>Total Hours</Label>
+                      <div className="flex h-10 w-full items-center justify-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm font-medium">
+                        {totalHours ? totalHours : '...'}
+                      </div>
+                </div>
             </div>
 
             <Separator />
