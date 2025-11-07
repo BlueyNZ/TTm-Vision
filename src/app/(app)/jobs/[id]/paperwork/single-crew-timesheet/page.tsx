@@ -78,36 +78,38 @@ export default function SingleCrewTimesheetPage() {
   const breaks = form.watch("breaks");
 
   useEffect(() => {
-    if (startTime && finishTime) {
-      const [startH, startM] = startTime.split(':').map(Number);
-      const [finishH, finishM] = finishTime.split(':').map(Number);
-      
-      if (!isNaN(startH) && !isNaN(startM) && !isNaN(finishH) && !isNaN(finishM)) {
-        let startDate = new Date();
-        startDate.setHours(startH, startM, 0, 0);
-
-        let finishDate = new Date();
-        finishDate.setHours(finishH, finishM, 0, 0);
-
-        if (finishDate < startDate) {
-          // Handle overnight shift by adding a day to finish date
-          finishDate.setDate(finishDate.getDate() + 1);
-        }
-
-        const totalMinutes = differenceInMinutes(finishDate, startDate);
-        const breakMinutes = parseInt(breaks, 10) || 0;
-        const workMinutes = totalMinutes - breakMinutes;
-
-        if (workMinutes >= 0) {
-            const hours = Math.floor(workMinutes / 60);
-            const minutes = workMinutes % 60;
-            setTotalHours(`${hours}h ${minutes}m`);
-        } else {
-            setTotalHours(null);
-        }
-      } else {
-        setTotalHours(null);
+    const parseTime = (timeStr: string) => {
+      let date = parse(timeStr, 'HH:mm', new Date());
+      if (!isValid(date)) {
+        date = parse(timeStr.toUpperCase(), 'h:mm a', new Date());
       }
+      return date;
+    };
+
+    if (startTime && finishTime) {
+        const startDate = parseTime(startTime);
+        let finishDate = parseTime(finishTime);
+
+        if (isValid(startDate) && isValid(finishDate)) {
+            if (finishDate < startDate) {
+                // Handle overnight shift by adding a day to finish date
+                finishDate.setDate(finishDate.getDate() + 1);
+            }
+
+            const totalMinutes = differenceInMinutes(finishDate, startDate);
+            const breakMinutes = parseInt(breaks, 10) || 0;
+            const workMinutes = totalMinutes - breakMinutes;
+
+            if (workMinutes >= 0) {
+                const hours = Math.floor(workMinutes / 60);
+                const minutes = workMinutes % 60;
+                setTotalHours(`${hours}h ${minutes}m`);
+            } else {
+                setTotalHours(null);
+            }
+        } else {
+           setTotalHours(null);
+        }
     } else {
       setTotalHours(null);
     }
@@ -186,7 +188,7 @@ export default function SingleCrewTimesheetPage() {
                         <FormItem>
                           <FormLabel>Start Time</FormLabel>
                           <FormControl>
-                            <Input type="text" placeholder="HH:mm" {...field} />
+                            <Input type="text" placeholder="e.g. 8:00 AM" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -199,7 +201,7 @@ export default function SingleCrewTimesheetPage() {
                         <FormItem>
                           <FormLabel>Finish Time</FormLabel>
                           <FormControl>
-                            <Input type="text" placeholder="HH:mm" {...field} />
+                            <Input type="text" placeholder="e.g. 4:00 PM" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
