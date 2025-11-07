@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useMemo, useRef, useState, useEffect } from "react";
-import { format, differenceInMinutes, parse } from 'date-fns';
+import { format, differenceInMinutes, parse, isValid } from 'date-fns';
 import { SignaturePad, type SignaturePadRef } from "@/components/ui/signature-pad";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
@@ -212,7 +212,7 @@ export default function SingleCrewTimesheetPage() {
                       name="breaks"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Breaks</FormLabel>
+                          <FormLabel>Breaks (mins)</FormLabel>
                           <FormControl>
                             <Input type="text" {...field} />
                           </FormControl>
