@@ -9,7 +9,7 @@ import { LoaderCircle, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 const paperworkLinks = [
-    { title: 'Single Crew Timesheet', href: 'single-crew-timesheet' },
+    { title: 'Timesheets', href: 'single-crew-timesheet' },
     { title: 'Truck Inspection', href: 'truck-inspection' },
     { title: 'ESTOP Inspection', href: 'estop-inspection' },
     { title: 'Stop/Go Briefing', href: 'stop-go-briefing' },
