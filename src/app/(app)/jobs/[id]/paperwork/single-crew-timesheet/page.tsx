@@ -21,8 +21,12 @@ import { format, differenceInMinutes, parse, isValid } from 'date-fns';
 import { SignaturePad, type SignaturePadRef } from "@/components/ui/signature-pad";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 
 const timesheetSchema = z.object({
+  staffId: z.string().min(1, "A staff member must be selected."),
   jobDate: z.string().min(1, "Date is required"),
   startTime: z.string().min(1, "Start time is required"),
   finishTime: z.string().min(1, "Finish time is required"),
@@ -43,6 +47,7 @@ export default function SingleCrewTimesheetPage() {
   const signaturePadRef = useRef<SignaturePadRef>(null);
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
   const [totalHours, setTotalHours] = useState<string | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>();
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -58,9 +63,30 @@ export default function SingleCrewTimesheetPage() {
   const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
   const currentStaffMember = useMemo(() => staffData?.[0], [staffData]);
   
+  const allStaffCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'staff');
+  }, [firestore]);
+  const { data: allStaff, isLoading: isAllStaffLoading } = useCollection<Staff>(allStaffCollection);
+
+  const jobCrew = useMemo(() => {
+    if (!job || !allStaff) return [];
+    const crew: Staff[] = [];
+    if (job.stmsId) {
+        const stms = allStaff.find(s => s.id === job.stmsId);
+        if (stms) crew.push(stms);
+    }
+    job.tcs.forEach(tc => {
+        const tcStaff = allStaff.find(s => s.id === tc.id);
+        if (tcStaff) crew.push(tcStaff);
+    });
+    return crew;
+  }, [job, allStaff]);
+  
   const form = useForm<z.infer<typeof timesheetSchema>>({
     resolver: zodResolver(timesheetSchema),
     defaultValues: {
+      staffId: "",
       jobDate: job?.startDate instanceof Timestamp ? format(job.startDate.toDate(), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
       startTime: '',
       finishTime: '',
@@ -72,6 +98,17 @@ export default function SingleCrewTimesheetPage() {
       signatureDataUrl: "",
     },
   });
+
+  useEffect(() => {
+    if (currentStaffMember && jobCrew.some(member => member.id === currentStaffMember.id)) {
+        setSelectedStaffId(currentStaffMember.id);
+        form.setValue("staffId", currentStaffMember.id);
+    } else if (jobCrew.length > 0) {
+        setSelectedStaffId(jobCrew[0].id);
+        form.setValue("staffId", jobCrew[0].id);
+    }
+  }, [currentStaffMember, jobCrew, form]);
+  
 
   const startTime = form.watch("startTime");
   const finishTime = form.watch("finishTime");
@@ -115,7 +152,7 @@ export default function SingleCrewTimesheetPage() {
     }
   }, [startTime, finishTime, breaks]);
   
-  const isLoading = isJobLoading || isUserLoading || isStaffLoading;
+  const isLoading = isJobLoading || isUserLoading || isStaffLoading || isAllStaffLoading;
 
   const handleClearSignature = () => {
     signaturePadRef.current?.clear();
@@ -158,10 +195,36 @@ export default function SingleCrewTimesheetPage() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Staff Member</Label>
-                <Input value={currentStaffMember?.name} disabled />
-              </div>
+              <FormField
+                control={form.control}
+                name="staffId"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Staff Member</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a staff member" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {jobCrew.map(staff => (
+                                    <SelectItem key={staff.id} value={staff.id}>
+                                        <div className="flex items-center gap-2">
+                                            <Avatar className="h-6 w-6">
+                                                <AvatarImage src={`https://picsum.photos/seed/${staff.id}/200/200`} />
+                                                <AvatarFallback>{staff.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <span>{staff.name}</span>
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
