@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
-import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'TTM Vision',
@@ -23,17 +22,6 @@ export default function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
-        />
-        {/* 
-          Once you have your Google AdSense account, you will get a script tag.
-          You can paste it here. It will look something like this, but with your unique publisher ID.
-          Make sure to replace "YOUR_PUBLISHER_ID" with the ID Google gives you.
-        */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
       </head>
       <body className="font-body antialiased">

@@ -42,7 +42,6 @@ import { Staff } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { Badge } from "../ui/badge";
-import { AdBox } from "./ad-box";
 
 interface AppSidebarProps {
   isAdmin?: boolean;
@@ -226,7 +225,28 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <AdBox />
+        <div className="p-2 group-data-[collapsible=icon]:hidden">
+          <Card className="bg-sidebar-accent border-sidebar-border">
+            <CardContent className="p-2">
+              <Link
+                href="#"
+                className="flex flex-col items-center gap-2 text-center"
+              >
+                <Image
+                  src="https://picsum.photos/seed/3/200/100"
+                  alt="ad"
+                  width={200}
+                  height={100}
+                  className="rounded-md"
+                  data-ai-hint="advertisement banner"
+                />
+                <p className="text-xs text-sidebar-foreground/70">
+                  Sponsored Content
+                </p>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
         <div className="flex justify-center p-2 group-data-[collapsible=icon]:hidden">
           <Badge variant="secondary">v0.1 Beta</Badge>
         </div>
