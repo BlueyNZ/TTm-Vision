@@ -22,7 +22,7 @@ const timesheetSchema = z.object({
   jobDate: z.string().min(1, "Date is required"),
   startTime: z.string().min(1, "Start time is required"),
   finishTime: z.string().min(1, "Finish time is required"),
-  unpaidBreak: z.string(),
+  breaks: z.string(),
   isStms: z.boolean(),
   isNightShift: z.boolean(),
   isMealAllowance: z.boolean(),
@@ -59,7 +59,7 @@ export default function SingleCrewTimesheetPage() {
       jobDate: job?.startDate instanceof Timestamp ? format(job.startDate.toDate(), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
       startTime: '',
       finishTime: '',
-      unpaidBreak: '30',
+      breaks: '30',
       isStms: false,
       isNightShift: false,
       isMealAllowance: false,
@@ -144,10 +144,10 @@ export default function SingleCrewTimesheetPage() {
               />
                <FormField
                 control={form.control}
-                name="unpaidBreak"
+                name="breaks"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unpaid Break (mins)</FormLabel>
+                    <FormLabel>Breaks</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
