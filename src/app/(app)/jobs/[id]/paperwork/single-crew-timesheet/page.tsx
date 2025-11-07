@@ -16,8 +16,8 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useMemo, useRef, useState } from "react";
-import { format } from 'date-fns';
+import { useMemo, useRef, useState, useEffect } from "react";
+import { format, differenceInMinutes, parse } from 'date-fns';
 import { SignaturePad, type SignaturePadRef } from "@/components/ui/signature-pad";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
@@ -42,6 +42,7 @@ export default function SingleCrewTimesheetPage() {
   const firestore = useFirestore();
   const signaturePadRef = useRef<SignaturePadRef>(null);
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
+  const [totalHours, setTotalHours] = useState<string | null>(null);
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -71,6 +72,46 @@ export default function SingleCrewTimesheetPage() {
       signatureDataUrl: "",
     },
   });
+
+  const startTime = form.watch("startTime");
+  const finishTime = form.watch("finishTime");
+  const breaks = form.watch("breaks");
+
+  useEffect(() => {
+    if (startTime && finishTime) {
+      const [startH, startM] = startTime.split(':').map(Number);
+      const [finishH, finishM] = finishTime.split(':').map(Number);
+      
+      if (!isNaN(startH) && !isNaN(startM) && !isNaN(finishH) && !isNaN(finishM)) {
+        let startDate = new Date();
+        startDate.setHours(startH, startM, 0, 0);
+
+        let finishDate = new Date();
+        finishDate.setHours(finishH, finishM, 0, 0);
+
+        if (finishDate < startDate) {
+          // Handle overnight shift by adding a day to finish date
+          finishDate.setDate(finishDate.getDate() + 1);
+        }
+
+        const totalMinutes = differenceInMinutes(finishDate, startDate);
+        const breakMinutes = parseInt(breaks, 10) || 0;
+        const workMinutes = totalMinutes - breakMinutes;
+
+        if (workMinutes >= 0) {
+            const hours = Math.floor(workMinutes / 60);
+            const minutes = workMinutes % 60;
+            setTotalHours(`${hours}h ${minutes}m`);
+        } else {
+            setTotalHours(null);
+        }
+      } else {
+        setTotalHours(null);
+      }
+    } else {
+      setTotalHours(null);
+    }
+  }, [startTime, finishTime, breaks]);
   
   const isLoading = isJobLoading || isUserLoading || isStaffLoading;
 
@@ -136,46 +177,54 @@ export default function SingleCrewTimesheetPage() {
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <FormField
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="finishTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Finish Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="breaks"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Breaks (mins)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+              <div className="grid grid-cols-3 gap-6">
+                <FormField
+                  control={form.control}
+                  name="startTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Time</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="finishTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Finish Time</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="breaks"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Breaks</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+               <div className="space-y-2">
+                  <Label>Total Hours</Label>
+                  <div className="flex h-10 w-full items-center justify-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm font-medium">
+                    {totalHours ? totalHours : '...'}
+                  </div>
+              </div>
             </div>
 
             <Separator />
