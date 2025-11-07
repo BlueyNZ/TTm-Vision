@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -60,6 +61,9 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
     if (page === 'requests' && id) return 'Review Request';
     if (page === 'requests') return 'Job Requests';
 
+    if (page === 'paperwork' && id) return 'Paperwork Menu';
+    if (page === 'paperwork') return 'Paperwork';
+
     if (page === 'settings') return 'Settings';
     if (page === 'support') return 'Support';
     if (page === 'client' && parts.length > 1 && parts[1] === 'request-job') return 'Request Job';
@@ -72,6 +76,7 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
     }
 
     if (id && id !== 'create') {
+      if(page === 'jobs' && parts.length > 2) return `Job ${parts[2]}`; // For paperwork subpages
       if(page === 'jobs') return 'Job Details';
       if(page === 'staff') return 'Staff Profile';
       if(page === 'fleet') return 'Truck Profile';
@@ -99,9 +104,9 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
   if (pathParts.length > 0) {
     const page = pathParts[0];
 
-    if (page === 'requests' && pathParts.length > 1) {
+    if ((page === 'requests' || page === 'paperwork') && pathParts.length > 1) {
       showBackButton = true;
-      backPath = '/requests';
+      backPath = `/${page}`;
     }
     // Always show back button for settings and support
     else if (page === 'scheduler' || page === 'settings' || page === 'support' || (page === 'client' && pathParts[1] === 'request-job')) {
