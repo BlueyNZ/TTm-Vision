@@ -26,7 +26,7 @@ const timesheetSchema = z.object({
   isStms: z.boolean(),
   isNightShift: z.boolean(),
   isMealAllowance: z.boolean(),
-  isToolAllowance: z-boolean(),
+  isToolAllowance: z.boolean(),
   signature: z.boolean().refine(val => val === true, {
     message: "You must confirm the hours are correct.",
   }),
