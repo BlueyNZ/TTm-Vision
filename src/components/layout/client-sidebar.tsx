@@ -101,9 +101,12 @@ export function ClientSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Subscription" isActive={pathname === "/client/subscription"}>
-              <Link href="/client/subscription">
-                <Star />
-                <span>Subscription</span>
+              <Link href="/client/subscription" className="flex justify-between items-center w-full">
+                 <div className="flex items-center gap-2">
+                  <Star />
+                  <span>Subscription</span>
+                </div>
+                <Badge variant="outline" className="text-xs bg-yellow-400/20 text-yellow-400 font-semibold border-yellow-500">Coming Soon</Badge>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
