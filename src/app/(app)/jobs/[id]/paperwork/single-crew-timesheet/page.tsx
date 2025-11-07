@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from "@
 import { Job, Staff } from "@/lib/data";
 import { doc, query, collection, where, Timestamp } from "firebase/firestore";
 import { useParams } from "next/navigation";
-import { LoaderCircle, Trash } from "lucide-react";
+import { LoaderCircle, Trash, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useMemo, useRef, useState } from "react";
 import { format } from 'date-fns';
 import { SignaturePad, type SignaturePadRef } from "@/components/ui/signature-pad";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 
 const timesheetSchema = z.object({
   jobDate: z.string().min(1, "Date is required"),
@@ -38,6 +40,7 @@ export default function SingleCrewTimesheetPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const signaturePadRef = useRef<SignaturePadRef>(null);
+  const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -75,21 +78,22 @@ export default function SingleCrewTimesheetPage() {
     form.setValue("signatureDataUrl", "", { shouldValidate: true });
   };
 
-  const handleSignatureEnd = () => {
-    if (signaturePadRef.current) {
+  const handleConfirmSignature = () => {
+    if (signaturePadRef.current && !signaturePadRef.current.isEmpty()) {
         const dataUrl = signaturePadRef.current.toDataURL();
         form.setValue("signatureDataUrl", dataUrl, { shouldValidate: true });
+        setIsSignatureDialogOpen(false);
+    } else {
+        form.setError("signatureDataUrl", { type: "manual", message: "Please provide a signature before confirming." });
     }
   };
 
   function onSubmit(data: z.infer<typeof timesheetSchema>) {
-    if (signaturePadRef.current?.isEmpty()) {
-        form.setError("signatureDataUrl", { type: "manual", message: "A signature is required." });
-        return;
-    }
     console.log(data);
     // Here you would submit the data to Firestore
   }
+
+  const signatureDataUrlValue = form.watch("signatureDataUrl");
 
   if (isLoading) {
     return (
@@ -244,22 +248,42 @@ export default function SingleCrewTimesheetPage() {
                 name="signatureDataUrl"
                 render={({ field }) => (
                     <FormItem>
-                         <div className="flex justify-between items-center">
-                            <FormLabel>Signature</FormLabel>
-                            <Button type="button" variant="ghost" size="sm" onClick={handleClearSignature}>
-                                <Trash className="mr-2 h-4 w-4" />
-                                Clear
-                            </Button>
-                        </div>
-                        <FormControl>
-                            <SignaturePad 
-                                ref={signaturePadRef}
-                                onSignatureEnd={handleSignatureEnd}
-                            />
-                        </FormControl>
-                         <p className="text-sm text-muted-foreground px-1">
-                          By signing, I confirm that the hours and allowances claimed are true and correct.
-                        </p>
+                         <FormLabel>Sign Off</FormLabel>
+                         <FormControl>
+                           <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
+                              <DialogTrigger asChild>
+                                  <Button variant="outline" className="w-full">
+                                      {signatureDataUrlValue ? (
+                                          <><CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Timesheet Signed</>
+                                      ) : (
+                                          "Sign Off Timesheet"
+                                      )}
+                                  </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                  <DialogHeader>
+                                      <DialogTitle>Sign Timesheet</DialogTitle>
+                                      <DialogDescription>
+                                          By signing, you confirm that the hours and allowances claimed are true and correct.
+                                      </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="py-4">
+                                      <SignaturePad 
+                                          ref={signaturePadRef}
+                                      />
+                                  </div>
+                                  <DialogFooter>
+                                      <Button type="button" variant="ghost" onClick={handleClearSignature}>
+                                          <Trash className="mr-2 h-4 w-4" />
+                                          Clear
+                                      </Button>
+                                      <Button type="button" onClick={handleConfirmSignature}>
+                                          Confirm Signature
+                                      </Button>
+                                  </DialogFooter>
+                              </DialogContent>
+                           </Dialog>
+                         </FormControl>
                         <FormMessage />
                     </FormItem>
                 )}
