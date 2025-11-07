@@ -210,20 +210,24 @@ export default function SingleCrewTimesheetPage() {
                       name="breaks"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Breaks (mins)</FormLabel>
+                          <FormLabel>Breaks</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} />
+                            <Input type="text" inputMode="numeric" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                 </div>
-                <div className="space-y-2 md:w-1/3">
-                      <Label>Total Hours</Label>
-                      <div className="flex h-10 w-full items-center justify-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm font-medium">
-                        {totalHours ? totalHours : '...'}
-                      </div>
+                 <div className="md:grid md:grid-cols-3 md:gap-6">
+                    <div></div>
+                    <div></div>
+                    <div className="space-y-2">
+                          <Label>Total Hours</Label>
+                          <div className="flex h-10 w-full items-center justify-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm font-medium">
+                            {totalHours ? totalHours : '...'}
+                          </div>
+                    </div>
                 </div>
             </div>
 
@@ -355,3 +359,5 @@ export default function SingleCrewTimesheetPage() {
     </Card>
   );
 }
+
+    
