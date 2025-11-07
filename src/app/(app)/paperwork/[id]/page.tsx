@@ -5,24 +5,24 @@ import { Job } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { LoaderCircle, FileText } from 'lucide-react';
+import { LoaderCircle, FileText, Circle } from 'lucide-react';
 import Link from 'next/link';
 
 const paperworkLinks = [
-    { title: 'Timesheets', href: 'single-crew-timesheet' },
-    { title: 'Truck Inspection', href: 'truck-inspection' },
-    { title: 'ESTOP Inspection', href: 'estop-inspection' },
-    { title: 'Stop/Go Briefing', href: 'stop-go-briefing' },
-    { title: 'TSL Decision Matrix', href: 'tsl-decision-matrix' },
-    { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm' },
-    { title: 'Hazard ID', href: 'hazard-id' },
-    { title: 'Site Induction Signatures', href: 'site-induction-signatures' },
-    { title: 'Pre-Installation Process', href: 'pre-installation-process' },
-    { title: 'On-Site Record', href: 'new-on-site-record' },
-    { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record' },
-    { title: 'Job Note', href: 'job-note' },
-    { title: 'Site Audit (COPTTM SCR)', href: 'site-audit-copttm-scr' },
-    { title: 'Client Feedback', href: 'client-feedback' },
+    { title: 'Timesheets', href: 'single-crew-timesheet', status: 'pending' },
+    { title: 'Truck Inspection', href: 'truck-inspection', status: 'incomplete' },
+    { title: 'ESTOP Inspection', href: 'estop-inspection', status: 'incomplete' },
+    { title: 'Stop/Go Briefing', href: 'stop-go-briefing', status: 'incomplete' },
+    { title: 'TSL Decision Matrix', href: 'tsl-decision-matrix', status: 'incomplete' },
+    { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm', status: 'incomplete' },
+    { title: 'Hazard ID', href: 'hazard-id', status: 'incomplete' },
+    { title: 'Site Induction Signatures', href: 'site-induction-signatures', status: 'incomplete' },
+    { title: 'Pre-Installation Process', href: 'pre-installation-process', status: 'incomplete' },
+    { title: 'On-Site Record', href: 'new-on-site-record', status: 'incomplete' },
+    { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record', status: 'incomplete' },
+    { title: 'Job Note', href: 'job-note', status: 'incomplete' },
+    { title: 'Site Audit (COPTTM SCR)', href: 'site-audit-copttm-scr', status: 'incomplete' },
+    { title: 'Client Feedback', href: 'client-feedback', status: 'incomplete' },
 ];
 
 export default function PaperworkMenuPage() {
@@ -71,9 +71,17 @@ export default function PaperworkMenuPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {paperworkLinks.map((link) => (
                         <Link href={`/jobs/${jobId}/paperwork/${link.href}`} key={link.href} className="block">
-                            <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex items-center gap-3 h-full">
-                                <FileText className="h-5 w-5 text-primary"/>
-                                <span className="font-medium">{link.title}</span>
+                            <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col justify-between gap-3 h-full">
+                                <div className="flex items-center gap-3">
+                                    <FileText className="h-5 w-5 text-primary"/>
+                                    <span className="font-medium">{link.title}</span>
+                                </div>
+                                {link.title !== 'Timesheets' && (
+                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Circle className="h-2 w-2 fill-muted-foreground"/>
+                                        <span>Not yet completed</span>
+                                     </div>
+                                )}
                             </div>
                         </Link>
                     ))}
