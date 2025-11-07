@@ -17,6 +17,7 @@ import {
   LifeBuoy,
   TrafficCone,
   Briefcase,
+  Info,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -86,6 +87,14 @@ export function ClientSidebar() {
           <Badge variant="secondary">v0.1 Beta</Badge>
         </div>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="About Us" isActive={pathname === "/client/about"}>
+              <Link href="/client/about">
+                <Info />
+                <span>About Us</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Settings" isActive={pathname === "/client/settings"}>
               <Link href="/client/settings">
