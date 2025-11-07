@@ -55,6 +55,28 @@ const getStatusColor = (status: Job['status']) => {
     }
 };
 
+const allPaperworkLinks = [
+    { title: 'Timesheets', href: 'single-crew-timesheet' },
+    { title: 'Truck Inspection', href: 'truck-inspection' },
+    { title: 'ESTOP Inspection', href: 'estop-inspection' },
+    { title: 'Stop/Go Briefing', href: 'stop-go-briefing' },
+    { title: 'TSL Decision Matrix', href: 'tsl-decision-matrix' },
+    { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm' },
+    { title: 'Hazard ID', href: 'hazard-id' },
+    { title: 'Site Induction Signatures', href: 'site-induction-signatures' },
+    { title: 'Pre-Installation Process', href: 'pre-installation-process' },
+    { title: 'On-Site Record', href: 'new-on-site-record' },
+    { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record' },
+    { title: 'Job Note', href: 'job-note' },
+    { title: 'Site Audit (COPTTM SCR)', href: 'site-audit-copttm-scr' },
+    { title: 'Client Feedback', href: 'client-feedback' },
+    { title: 'Incident or Event Report', href: 'incident-or-event-report' },
+];
+
+const tcPaperworkLinks = allPaperworkLinks.filter(link => 
+    ['Timesheets', 'Truck Inspection', 'Incident or Event Report'].includes(link.title)
+);
+
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -90,6 +112,10 @@ export default function DashboardPage() {
   }, [user, jobData, currentStaffMember]);
 
   const isLoading = isUserLoading || isJobsLoading || isStaffLoading;
+  
+  const userRole = currentStaffMember?.role;
+  const paperworkForUser = userRole === 'STMS' ? allPaperworkLinks : tcPaperworkLinks;
+
 
   return (
     <TooltipProvider>
@@ -123,13 +149,15 @@ export default function DashboardPage() {
                             const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
 
                             return (
-                                <Link href={`/jobs/${job.id}`} key={job.id} className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                <div key={job.id} className="p-4 border rounded-lg transition-colors">
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1 space-y-2">
+                                          <Link href={`/jobs/${job.id}`} className="hover:underline">
                                             <p className="font-semibold text-lg flex items-center gap-2">
                                                 <MapPin className="h-5 w-5 text-primary"/>
                                                 {job.location}
                                             </p>
+                                          </Link>
                                             <p className="text-sm text-muted-foreground flex items-center gap-2">
                                                 <Calendar className="h-4 w-4"/>
                                                 {format(startDate, 'eeee, dd MMM yyyy')}
@@ -147,23 +175,41 @@ export default function DashboardPage() {
                                         </Badge>
                                     </div>
                                     <div className="border-t my-4"></div>
-                                    <div className="flex items-center gap-6 text-sm">
-                                        {job.stms && (
-                                            <div className="flex items-center gap-2">
-                                                <UserSquare className="h-4 w-4 text-muted-foreground" />
-                                                <p className="font-medium">STMS:</p>
-                                                <span className="text-muted-foreground">{job.stms}</span>
-                                            </div>
-                                        )}
-                                        {job.tcs && job.tcs.length > 0 && (
-                                            <div className="flex items-center gap-2">
-                                                <Users className="h-4 w-4 text-muted-foreground" />
-                                                <p className="font-medium">TCs:</p>
-                                                <span className="text-muted-foreground">{job.tcs.length} assigned</span>
-                                            </div>
-                                        )}
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-6 text-sm">
+                                            {job.stms && (
+                                                <div className="flex items-center gap-2">
+                                                    <UserSquare className="h-4 w-4 text-muted-foreground" />
+                                                    <p className="font-medium">STMS:</p>
+                                                    <span className="text-muted-foreground">{job.stms}</span>
+                                                </div>
+                                            )}
+                                            {job.tcs && job.tcs.length > 0 && (
+                                                <div className="flex items-center gap-2">
+                                                    <Users className="h-4 w-4 text-muted-foreground" />
+                                                    <p className="font-medium">TCs:</p>
+                                                    <span className="text-muted-foreground">{job.tcs.length} assigned</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                         <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline">
+                                                    Paperwork <ChevronDown className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                {paperworkForUser.map((link) => (
+                                                    <DropdownMenuItem key={link.href} asChild>
+                                                        <Link href={`/jobs/${job.id}/paperwork/${link.href}`}>
+                                                            {link.title}
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
-                                </Link>
+                                </div>
                             )
                         })}
                     </div>
