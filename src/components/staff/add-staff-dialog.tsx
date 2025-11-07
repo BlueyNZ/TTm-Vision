@@ -53,7 +53,7 @@ const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
   phone: z.string().min(1, "Phone number is required."),
-  role: z.enum(["TC", "STMS", "Operator"]),
+  role: z.enum(["TC", "STMS", "Operator", "Owner"]),
   certifications: z.array(z.object({
     name: z.enum(["TTMW", "TMO-NP", "TMO", "STMS-U", "STMS (CAT A)", "STMS (CAT B)", "STMS (CAT C)", "STMS-NP"]),
     expiryDate: z.date({ required_error: "An expiry date is required."}),
@@ -322,6 +322,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
                       <SelectItem value="TC">Traffic Controller (TC)</SelectItem>
                       <SelectItem value="STMS">STMS</SelectItem>
                       <SelectItem value="Operator">Operator</SelectItem>
+                      <SelectItem value="Owner">Owner</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

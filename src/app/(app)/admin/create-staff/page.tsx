@@ -40,7 +40,7 @@ import { useState } from 'react';
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
-  role: z.enum(["TC", "STMS", "Operator"]),
+  role: z.enum(["TC", "STMS", "Operator", "Owner"]),
   accessLevel: z.enum(["Staff Member", "Admin", "Client"]),
 });
 
@@ -174,6 +174,7 @@ export default function CreateStaffPage() {
                                     <SelectItem value="TC">Traffic Controller (TC)</SelectItem>
                                     <SelectItem value="STMS">STMS</SelectItem>
                                     <SelectItem value="Operator">Operator</SelectItem>
+                                    <SelectItem value="Owner">Owner</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />

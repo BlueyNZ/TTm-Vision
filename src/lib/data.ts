@@ -23,7 +23,7 @@ export type Staff = {
   name: string;
   email: string;
   phone: string; // Added for SMS notifications
-  role: 'TC' | 'STMS' | 'Operator';
+  role: 'TC' | 'STMS' | 'Operator' | 'Owner';
   certifications: Certification[];
   licenses?: License[];
   emergencyContact: {
