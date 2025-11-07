@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from "@/firebase";
 import { Job, Staff } from "@/lib/data";
 import { doc, query, collection, where, Timestamp } from "firebase/firestore";
 import { useParams } from "next/navigation";
@@ -50,8 +50,8 @@ export default function SingleCrewTimesheetPage() {
   }, [firestore, user?.email]);
 
   const { data: job, isLoading: isJobLoading } = useDoc<Job>(jobRef);
-  const { data: staffData, isLoading: isStaffLoading } = useDoc<Staff>(staffQuery);
-  const currentStaffMember = useMemo(() => staffData, [staffData]);
+  const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
+  const currentStaffMember = useMemo(() => staffData?.[0], [staffData]);
   
   const form = useForm<z.infer<typeof timesheetSchema>>({
     resolver: zodResolver(timesheetSchema),
