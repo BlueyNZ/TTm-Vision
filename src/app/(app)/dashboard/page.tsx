@@ -56,7 +56,7 @@ const getStatusColor = (status: Job['status']) => {
 };
 
 const allPaperworkLinks = [
-    { title: 'Timesheets', href: 'single-crew-timesheet' },
+    { title: 'Single Crew Timesheet', href: 'single-crew-timesheet' },
     { title: 'Truck Inspection', href: 'truck-inspection' },
     { title: 'ESTOP Inspection', href: 'estop-inspection' },
     { title: 'Stop/Go Briefing', href: 'stop-go-briefing' },
@@ -74,7 +74,7 @@ const allPaperworkLinks = [
 ];
 
 const tcPaperworkLinks = allPaperworkLinks.filter(link => 
-    ['Timesheets', 'Truck Inspection', 'Incident or Event Report'].includes(link.title)
+    ['Single Crew Timesheet', 'Truck Inspection', 'Incident or Event Report'].includes(link.title)
 );
 
 export default function DashboardPage() {
