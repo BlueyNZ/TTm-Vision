@@ -221,7 +221,8 @@
         },
         "role": {
           "type": "string",
-          "description": "The role of the staff member (e.g., TC, STMS)."
+          "description": "The role of the staff member (e.g., TC, STMS).",
+          "enum": ["TC", "STMS", "Operator", "Owner", "Tester"]
         },
         "certifications": {
           "type": "array",
