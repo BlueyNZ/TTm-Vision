@@ -29,7 +29,7 @@ export default function AboutUsPage() {
         </CardHeader>
         <CardContent className="space-y-4 text-muted-foreground">
             <p>
-                TTM Vision began as a personal project, inspired by my own experiences in the TTM industry and guided by a close family friend. The goal has always been simple — to create an easier, more efficient way to manage jobs, staff, paperwork, and everything else needed to run a TTM company.
+                At just 21 years old, I started TTM Vision as a solo project, driven by my experiences in the TTM industry and guided by a close family friend. From the very beginning, my goal has been simple — to create an easier, more efficient way to manage jobs, staff, paperwork, and everything else needed to run a TTM company.
             </p>
             <p>
                 After using other management platforms, I noticed that many were overly complicated and difficult for new users to navigate. That’s why I set out to build something different — a streamlined, user-friendly solution that anyone can pick up and use with confidence.
