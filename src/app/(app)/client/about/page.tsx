@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Info } from 'lucide-react';
+import Image from 'next/image';
 
 export default function ClientAboutUsPage() {
   return (
@@ -39,6 +40,21 @@ export default function ClientAboutUsPage() {
             </p>
         </CardContent>
       </Card>
+
+      <div className="flex flex-col items-center justify-center gap-4 pt-4">
+        <Image
+          src="https://picsum.photos/seed/founder/200/200"
+          alt="Founder/Owner"
+          width={200}
+          height={200}
+          className="rounded-full object-cover"
+          data-ai-hint="person portrait"
+        />
+        <div className="text-center">
+            <p className="text-xl font-semibold">Harrison Price</p>
+            <p className="text-muted-foreground">Founder/Owner</p>
+        </div>
+      </div>
     </div>
   );
 }
