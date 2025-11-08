@@ -25,12 +25,18 @@ export default function ClientAboutUsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Our Mission</CardTitle>
+          <CardTitle>Our Story</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            This page is currently under construction. Check back soon for more information about TTM Vision.
-          </p>
+        <CardContent className="space-y-4 text-muted-foreground">
+            <p>
+                TTM Vision began as a personal project, inspired by my own experiences in the TTM industry and guided by a close family friend. The goal has always been simple — to create an easier, more efficient way to manage jobs, staff, paperwork, and everything else needed to run a TTM company.
+            </p>
+            <p>
+                After using other management platforms, I noticed that many were overly complicated and difficult for new users to navigate. That’s why I set out to build something different — a streamlined, user-friendly solution that anyone can pick up and use with confidence.
+            </p>
+            <p>
+                TTM Vision is built with simplicity and clarity at its core, designed to help TTM companies stay organized, save time, and focus on what really matters — getting the job done safely and efficiently.
+            </p>
         </CardContent>
       </Card>
     </div>
