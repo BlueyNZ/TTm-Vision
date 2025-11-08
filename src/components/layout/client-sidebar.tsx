@@ -88,7 +88,7 @@ export function ClientSidebar() {
           </Card>
         </div>
         <div className="flex justify-center p-2 group-data-[collapsible=icon]:hidden">
-          <Badge variant="secondary">v0.1 Beta</Badge>
+          <Badge variant="secondary">v0.2 Beta</Badge>
         </div>
         <SidebarMenu>
           <SidebarMenuItem>
