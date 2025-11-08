@@ -79,6 +79,7 @@ export function ClientSidebar() {
                   height={100}
                   className="rounded-md"
                   data-ai-hint="advertisement banner"
+                  priority
                 />
                 <p className="text-xs text-sidebar-foreground/70">
                   Sponsored Content
