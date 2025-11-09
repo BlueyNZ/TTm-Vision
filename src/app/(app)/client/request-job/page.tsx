@@ -54,10 +54,10 @@ export default function RequestJobPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firestore || !requestedDate || !currentClient || !contactPerson || !contactNumber) {
+    if (!firestore || !location || !requestedDate || !currentClient || !contactPerson || !contactNumber) {
       toast({
         title: 'Missing Information',
-        description: 'Please complete all required fields, including contact details.',
+        description: 'Please complete all required fields, including location and contact details.',
         variant: 'destructive',
       });
       return;
