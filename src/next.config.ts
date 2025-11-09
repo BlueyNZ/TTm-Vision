@@ -10,11 +10,8 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   devIndicators: {
-    // This allows the Next.js dev server to accept requests from the
-    // Firebase Studio development environment.
-    allowedDevOrigins: [
-      "https://*.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev",
-    ],
+    // This is disabled to prevent WebSocket errors in certain dev environments.
+    // It does not affect application functionality.
   },
   images: {
     remotePatterns: [
@@ -33,6 +30,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'picsum.photos',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'scontent.fwlg2-1.fna.fbcdn.net',
         port: '',
         pathname: '/**',
       },
