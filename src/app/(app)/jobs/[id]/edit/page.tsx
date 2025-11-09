@@ -40,6 +40,8 @@ export default function JobEditPage() {
   const [jobStatus, setJobStatus] = useState<Job['status'] | undefined>();
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
+  const [contactPerson, setContactPerson] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -67,7 +69,7 @@ export default function JobEditPage() {
         setSelectedClient(clientList.find(c => c.id === job.clientId) || null);
       } else if (job.clientName) {
         // Fallback for older data
-        setSelectedClient({ id: '', name: job.clientName });
+        setSelectedClient({ id: '', name: job.clientName, status: 'Active' });
       }
       if (job.startDate) {
         setStartDate(job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate));
@@ -78,6 +80,8 @@ export default function JobEditPage() {
       setStartTime(job.startTime || '');
       setSiteSetupTime(job.siteSetupTime || '');
       setJobStatus(job.status);
+      setContactPerson(job.contactPerson || '');
+      setContactNumber(job.contactNumber || '');
 
       if (staffList) {
         const stms = staffList.find(s => s.id === job.stmsId);
@@ -141,6 +145,8 @@ export default function JobEditPage() {
         stms: selectedStms?.name || null,
         stmsId: selectedStms?.id || null,
         tcs: selectedTcs.map(tc => ({ id: tc.id, name: tc.name })),
+        contactPerson: contactPerson,
+        contactNumber: contactNumber,
     };
 
     const jobDocRef = doc(firestore, 'job_packs', job.id);
@@ -182,6 +188,16 @@ export default function JobEditPage() {
               placeholder="Search or select a client..."
             />
             <p className="text-sm text-muted-foreground px-1">Type to search and press Enter to select a client.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="space-y-2">
+                <Label htmlFor="contactPerson">On-Site Contact Person</Label>
+                <Input id="contactPerson" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="John Smith" />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="contactNumber">On-Site Contact Number</Label>
+                <Input id="contactNumber" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} placeholder="021 123 4567" />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">Job Description</Label>

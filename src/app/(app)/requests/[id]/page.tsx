@@ -137,6 +137,14 @@ export default function ReviewRequestPage() {
                 <p className="font-medium text-muted-foreground">Setup Type</p>
                 <p>{jobRequest.setupType === 'Other' ? jobRequest.otherSetupType : jobRequest.setupType}</p>
               </div>
+               <div>
+                <p className="font-medium text-muted-foreground">Contact Person</p>
+                <p>{jobRequest.contactPerson}</p>
+              </div>
+               <div>
+                <p className="font-medium text-muted-foreground">Contact Number</p>
+                <p>{jobRequest.contactNumber}</p>
+              </div>
               <div className="col-span-full">
                 <p className="font-medium text-muted-foreground">Job Description</p>
                 <p className="whitespace-pre-wrap">{jobRequest.description}</p>

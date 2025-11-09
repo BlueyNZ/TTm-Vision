@@ -69,6 +69,8 @@ export type Job = {
   stms: Staff['name'] | null;
   stmsId: Staff['id'] | null;
   tcs: { id: Staff['id'], name: Staff['name']}[];
+  contactPerson?: string;
+  contactNumber?: string;
 };
 
 export type Timesheet = {

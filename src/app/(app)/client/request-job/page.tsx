@@ -54,10 +54,10 @@ export default function RequestJobPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firestore || !requestedDate || !currentClient) {
+    if (!firestore || !requestedDate || !currentClient || !contactPerson || !contactNumber) {
       toast({
         title: 'Missing Information',
-        description: 'Please complete all required fields.',
+        description: 'Please complete all required fields, including contact details.',
         variant: 'destructive',
       });
       return;
@@ -66,23 +66,24 @@ export default function RequestJobPage() {
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
     
-    // The job number is explicitly not set here. It will be assigned upon approval.
-    const newJobRequest: Omit<Job, 'id' | 'jobNumber'> = {
-      name: `Job request for ${location}`,
+    const newJobRequest: Omit<Job, 'id'> = {
+      name: `Job request from ${currentClient.name}`,
       location,
       description,
       clientName: currentClient.name,
       clientId: currentClient.id,
       startDate: Timestamp.fromDate(requestedDate),
-      startTime: '', // Not collected in client form
-      siteSetupTime: '', // Not collected in client form
-      status: 'Pending', // This is the crucial part for separating requests
+      startTime: '', 
+      siteSetupTime: '',
+      status: 'Pending',
       stms: null,
       stmsId: null,
       tcs: [],
       setupType: setupType,
       otherSetupType: setupType === 'Other' ? otherSetupType : '',
-      jobNumber: '', // Explicitly set to empty string for requests
+      jobNumber: '', 
+      contactPerson: contactPerson,
+      contactNumber: contactNumber,
     };
 
     addDocumentNonBlocking(jobsCollectionRef, newJobRequest);

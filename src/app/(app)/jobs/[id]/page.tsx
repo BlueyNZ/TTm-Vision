@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { Job } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock, ChevronDown, MessageSquare, Building } from 'lucide-react';
+import { Calendar, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock, ChevronDown, MessageSquare, Building, Phone } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -159,6 +159,20 @@ export default function JobDetailPage() {
                 <div>
                     <p className="font-semibold">Client</p>
                     <p className="text-muted-foreground">{job.clientName || 'N/A'}</p>
+                </div>
+            </div>
+             <div className="flex items-start gap-4">
+                <UserSquare className="h-6 w-6 text-primary" />
+                <div>
+                    <p className="font-semibold">Site Contact</p>
+                    <p className="text-muted-foreground">{job.contactPerson || 'Not specified'}</p>
+                </div>
+            </div>
+             <div className="flex items-start gap-4">
+                <Phone className="h-6 w-6 text-primary" />
+                <div>
+                    <p className="font-semibold">Site Contact Number</p>
+                    <p className="text-muted-foreground">{job.contactNumber || 'Not specified'}</p>
                 </div>
             </div>
             <div className="flex items-start gap-4">
