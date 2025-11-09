@@ -39,10 +39,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Staff } from "@/lib/data";
+import { Staff, Job } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { Badge } from "../ui/badge";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
 
 interface AppSidebarProps {
   isAdmin?: boolean;
@@ -50,6 +52,16 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isAdmin }: AppSidebarProps) {
   const pathname = usePathname();
+  const firestore = useFirestore();
+
+  const jobRequestsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'job_packs'), where('status', '==', 'Pending'));
+  }, [firestore]);
+
+  const { data: jobRequests } = useCollection<Job>(jobRequestsQuery);
+  const pendingRequestsCount = jobRequests?.length || 0;
+
   const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin", "/map", "/equipment-tracking", "/paperwork"].some(path => pathname.startsWith(path));
   const isRequestsPagesActive = pathname.startsWith("/requests");
   const isAdminPagesActive = pathname.startsWith("/admin");
@@ -104,15 +116,27 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                         <GitPullRequest />
                         <span>Requests</span>
                       </div>
-                      <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
+                      <div className="flex items-center gap-2">
+                        {pendingRequestsCount > 0 && (
+                           <Badge className="h-5 w-5 p-0 flex items-center justify-center bg-primary text-primary-foreground group-data-[collapsible=icon]:hidden">
+                            {pendingRequestsCount}
+                          </Badge>
+                        )}
+                        <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
+                      </div>
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuItem>
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/requests")}>
-                           <Link href="/requests">
-                            Job Requests
+                           <Link href="/requests" className="flex items-center justify-between w-full">
+                            <span>Job Requests</span>
+                             {pendingRequestsCount > 0 && (
+                              <Badge variant="secondary" className="h-5 p-1 text-xs">
+                                {pendingRequestsCount}
+                              </Badge>
+                            )}
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
