@@ -54,10 +54,19 @@ export default function RequestJobPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firestore || !location || !requestedDate || !currentClient || !contactPerson || !contactNumber) {
+    if (
+      !firestore ||
+      !location ||
+      !requestedDate ||
+      !currentClient ||
+      !contactPerson ||
+      !contactNumber ||
+      !setupType ||
+      (setupType === 'Other' && !otherSetupType)
+    ) {
       toast({
         title: 'Missing Information',
-        description: 'Please complete all required fields, including location and contact details.',
+        description: 'Please complete all required fields, including location, date, setup type, and contact details.',
         variant: 'destructive',
       });
       return;
@@ -150,7 +159,7 @@ export default function RequestJobPage() {
             </div>
             <div className="space-y-2">
               <Label>Setup Type</Label>
-              <Select onValueChange={(value: Job['setupType']) => setSetupType(value)}>
+              <Select onValueChange={(value: Job['setupType']) => setSetupType(value)} value={setupType}>
                   <SelectTrigger>
                       <SelectValue placeholder="Select setup type" />
                   </SelectTrigger>
