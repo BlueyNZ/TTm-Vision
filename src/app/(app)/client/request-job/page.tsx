@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, LoaderCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ClientSelector } from '@/components/clients/client-selector';
 
 const newJobDescriptionTemplate = `Job Name / Client Ref: 
 Location (Full Address): 
@@ -43,6 +44,7 @@ export default function RequestJobPage() {
   const [setupType, setSetupType] = useState<Job['setupType']>();
   const [otherSetupType, setOtherSetupType] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const clientQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -50,12 +52,23 @@ export default function RequestJobPage() {
   }, [firestore, user?.uid]);
 
   const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
-  const currentClient = useMemo(() => clientData?.[0], [clientData]);
+
+  const allClientsCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'clients');
+  }, [firestore]);
+
+  const { data: allClients, isLoading: isAllClientsLoading } = useCollection<Client>(allClientsCollection);
+
+  const associatedClient = useMemo(() => clientData?.[0], [clientData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const clientForJob = associatedClient || selectedClient;
     
     const missingFields = [];
+    if (!clientForJob) missingFields.push('Client');
     if (!location) missingFields.push('Job Location');
     if (!requestedDate) missingFields.push('Requested Start Date');
     if (!setupType) missingFields.push('Setup Type');
@@ -72,7 +85,7 @@ export default function RequestJobPage() {
       return;
     }
 
-    if (!firestore || !currentClient) {
+    if (!firestore || !clientForJob) {
         toast({
             title: 'Error',
             description: 'Could not submit request. Client data not found.',
@@ -86,11 +99,11 @@ export default function RequestJobPage() {
     const jobsCollectionRef = collection(firestore, 'job_packs');
     
     const newJobRequest: Omit<Job, 'id'> = {
-      name: `Job request from ${currentClient.name}`,
+      name: `Job request from ${clientForJob.name}`,
       location,
       description,
-      clientName: currentClient.name,
-      clientId: currentClient.id,
+      clientName: clientForJob.name,
+      clientId: clientForJob.id,
       startDate: Timestamp.fromDate(requestedDate!),
       startTime: '', 
       siteSetupTime: '',
@@ -115,7 +128,7 @@ export default function RequestJobPage() {
     setIsSubmitting(false);
   };
 
-  const isLoading = isUserLoading || isClientLoading;
+  const isLoading = isUserLoading || isClientLoading || isAllClientsLoading;
 
   if (isLoading) {
     return (
@@ -133,6 +146,18 @@ export default function RequestJobPage() {
           <CardDescription>Fill out the form below to submit a new work request. We will review it and get back to you shortly.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {!associatedClient && (
+            <div className="space-y-2">
+              <Label htmlFor="clientName">Client / Company Name</Label>
+              <ClientSelector
+                clientList={allClients || []}
+                selectedClient={selectedClient}
+                onSelectClient={setSelectedClient}
+                placeholder="Search or select a client..."
+              />
+              <p className="text-sm text-muted-foreground px-1">You are submitting as an admin. Please select the client for this job.</p>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="location">Job Location</Label>
             <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., 123 Main St, Auckland" required />
