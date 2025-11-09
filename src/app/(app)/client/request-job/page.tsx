@@ -54,23 +54,33 @@ export default function RequestJobPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      !firestore ||
-      !location ||
-      !requestedDate ||
-      !currentClient ||
-      !contactPerson ||
-      !contactNumber ||
-      !setupType ||
-      (setupType === 'Other' && !otherSetupType)
-    ) {
+    
+    const missingFields = [];
+    if (!location) missingFields.push('Job Location');
+    if (!requestedDate) missingFields.push('Requested Start Date');
+    if (!setupType) missingFields.push('Setup Type');
+    if (setupType === 'Other' && !otherSetupType) missingFields.push('Specify Setup');
+    if (!contactPerson) missingFields.push('On-Site Contact Person');
+    if (!contactNumber) missingFields.push('On-Site Contact Number');
+
+    if (missingFields.length > 0) {
       toast({
         title: 'Missing Information',
-        description: 'Please complete all required fields, including location, date, setup type, and contact details.',
+        description: `Please fill out the following required fields: ${missingFields.join(', ')}.`,
         variant: 'destructive',
       });
       return;
     }
+
+    if (!firestore || !currentClient) {
+        toast({
+            title: 'Error',
+            description: 'Could not submit request. Client data not found.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    
     setIsSubmitting(true);
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
@@ -81,7 +91,7 @@ export default function RequestJobPage() {
       description,
       clientName: currentClient.name,
       clientId: currentClient.id,
-      startDate: Timestamp.fromDate(requestedDate),
+      startDate: Timestamp.fromDate(requestedDate!),
       startTime: '', 
       siteSetupTime: '',
       status: 'Pending',
