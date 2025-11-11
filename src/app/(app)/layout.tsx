@@ -15,6 +15,20 @@ import { useJsApiLoader } from "@react-google-maps/api";
 const googleMapsLibraries = ["geocoding", "maps", "places"] as ("geocoding" | "maps" | "places")[];
 
 function ClientRouteHandler({ children }: { children: React.ReactNode }) {
+  const { isLoaded: isMapsLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries: googleMapsLibraries,
+  });
+
+  if (!isMapsLoaded) {
+     return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <ThemeProvider
       attribute="class"

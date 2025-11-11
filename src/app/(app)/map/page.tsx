@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, MarkerF, InfoWindow } from '@react-google-maps/api';
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { Job } from "@/lib/data";
 import { collection, query, where, Timestamp } from "firebase/firestore";
@@ -32,13 +32,8 @@ const getDisplayedStatus = (job: Job) => {
 
 
 export default function MapPage() {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-  });
-
-  const firestore = useFirestore();
   const [selectedMarker, setSelectedMarker] = useState<any | null>(null);
+  const firestore = useFirestore();
 
   const jobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -63,7 +58,7 @@ export default function MapPage() {
       }));
   }, [jobData]);
 
-  const mapIsLoading = isLoadingJobs || !isLoaded;
+  const mapIsLoading = isLoadingJobs || typeof window === 'undefined' || !window.google?.maps?.places;
 
   return (
     <Card>

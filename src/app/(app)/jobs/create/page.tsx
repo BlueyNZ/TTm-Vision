@@ -19,7 +19,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
-import { useJsApiLoader } from '@react-google-maps/api';
 import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
@@ -42,11 +41,7 @@ export default function JobCreatePage() {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { isLoaded: isMapsLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-  });
-
+  
   const [location, setLocation] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [name, setName] = useState('Start Time:\nOn Site:\nSite Setup Time:\n\nJob Description:');
@@ -104,7 +99,7 @@ export default function JobCreatePage() {
         });
         return;
     }
-     if (!isMapsLoaded) {
+     if (typeof window === 'undefined' || !window.google?.maps?.places) {
       toast({
         title: 'Map service not ready',
         description: 'Please wait a moment for the map service to load and try again.',
@@ -160,15 +155,13 @@ export default function JobCreatePage() {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
-            {isMapsLoaded ? (
+            
               <LocationAutocompleteInput
                 onPlaceSelected={(place) => {
                   setLocation(place.formatted_address || '');
                 }}
               />
-            ) : (
-              <Input id="location" name="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Km 24-28, Northern Mwy" disabled />
-            )}
+            
           </div>
            <div className="space-y-2">
             <Label htmlFor="clientName">Client / Company Name</Label>
@@ -306,7 +299,7 @@ export default function JobCreatePage() {
         </CardContent>
         <CardFooter className="justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting || !isMapsLoaded}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Creating...' : 'Create Job'}
             </Button>

@@ -20,7 +20,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
-import { useJsApiLoader } from '@react-google-maps/api';
 import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
@@ -45,10 +44,6 @@ export default function JobEditPage() {
   const { toast } = useToast();
   const jobId = params.id as string;
   const firestore = useFirestore();
-   const { isLoaded: isMapsLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-  });
 
   const [jobName, setJobName] = useState('');
   const [jobLocation, setJobLocation] = useState('');
@@ -151,7 +146,7 @@ export default function JobEditPage() {
         });
         return;
     }
-    if (!isMapsLoaded) {
+    if (typeof window === 'undefined' || !window.google?.maps?.places) {
       toast({
         title: 'Map service not ready',
         description: 'Please wait a moment for the map service to load and try again.',
@@ -210,16 +205,14 @@ export default function JobEditPage() {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
-            {isMapsLoaded ? (
+            
               <LocationAutocompleteInput
                 initialValue={jobLocation}
                 onPlaceSelected={(place) => {
                   setJobLocation(place.formatted_address || '');
                 }}
               />
-            ) : (
-               <Input id="location" name="location" value={jobLocation} onChange={(e) => setJobLocation(e.target.value)} disabled />
-            )}
+            
           </div>
           <div className="space-y-2">
             <Label htmlFor="clientName">Client / Company Name</Label>
@@ -381,7 +374,7 @@ export default function JobEditPage() {
         </CardContent>
         <CardFooter className="justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting || !isMapsLoaded}>
+            <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
