@@ -9,7 +9,7 @@ import {
   } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Job } from "@/lib/data";
-import { PlusCircle, MoreHorizontal, Circle, Eye, Edit, LoaderCircle, Trash2, History } from "lucide-react";
+import { MoreHorizontal, Circle, Eye, Edit, LoaderCircle, Trash2, Briefcase } from "lucide-react";
 import Link from "next/link";
 import {
   Table,
@@ -97,19 +97,19 @@ const ClientFormattedDate = ({ date }: { date: Date | Timestamp | string }) => {
   }
 
 
-export default function JobsPage() {
+export default function PastJobsPage() {
     const router = useRouter();
     const firestore = useFirestore();
     const { toast } = useToast();
     const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
 
-    const jobsCollection = useMemoFirebase(() => {
+    const pastJobsCollection = useMemoFirebase(() => {
         if (!firestore) return null;
-        // Query for active jobs only
-        return query(collection(firestore, 'job_packs'), where('status', 'in', ['Upcoming', 'In Progress']));
+        // Query for past jobs only
+        return query(collection(firestore, 'job_packs'), where('status', 'in', ['Completed', 'Cancelled']));
     }, [firestore]);
 
-    const { data: jobData, isLoading } = useCollection<Job>(jobsCollection);
+    const { data: jobData, isLoading } = useCollection<Job>(pastJobsCollection);
 
     const handleDeleteJob = () => {
         if (!firestore || !jobToDelete) return;
@@ -123,7 +123,7 @@ export default function JobsPage() {
         variant: "destructive",
         });
 
-        setJobToDelete(null); // Close the dialog
+        setJobToDelete(null);
     };
     
   return (
@@ -131,38 +131,30 @@ export default function JobsPage() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-            <CardTitle>Job Management</CardTitle>
+            <CardTitle>Past Jobs</CardTitle>
             <CardDescription>
-            View, create, and manage all active jobs.
+                An archive of all completed and cancelled jobs.
             </CardDescription>
         </div>
-        <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
-                <Link href="/jobs/past">
-                    <History className="mr-2 h-4 w-4" />
-                    View Past Jobs
-                </Link>
-            </Button>
-            <Button asChild>
-                <Link href="/jobs/create">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create Job
-                </Link>
-            </Button>
-        </div>
+        <Button asChild variant="outline">
+            <Link href="/jobs">
+                <Briefcase className="mr-2 h-4 w-4" />
+                View Active Jobs
+            </Link>
+        </Button>
       </CardHeader>
       <CardContent>
          {isLoading ? (
             <div className="flex justify-center items-center h-64">
                 <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
             </div>
-            ) : (
+            ) : jobData && jobData.length > 0 ? (
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Job No.</TableHead>
                             <TableHead>Location / Client</TableHead>
-                            <TableHead className="hidden lg:table-cell">Start Date</TableHead>
+                            <TableHead className="hidden lg:table-cell">Date</TableHead>
                             <TableHead>STMS</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>
@@ -171,7 +163,7 @@ export default function JobsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {jobData?.map((job) => {
+                        {jobData.map((job) => {
                             const displayedStatus = getDisplayedStatus(job);
                             return (
                             <TableRow key={job.id}>
@@ -187,10 +179,7 @@ export default function JobsPage() {
                             <TableCell>
                                 <Badge 
                                 variant={getStatusVariant(displayedStatus)} 
-                                className={cn(
-                                    "flex items-center gap-2 w-fit", 
-                                    displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
-                                )}
+                                className={cn("flex items-center gap-2 w-fit")}
                                 >
                                 <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
                                 {displayedStatus}
@@ -226,6 +215,12 @@ export default function JobsPage() {
                         )})}
                     </TableBody>
                 </Table>
+            ) : (
+                <div className="text-center py-10 text-muted-foreground">
+                    <History className="mx-auto h-12 w-12" />
+                    <p className="mt-4 font-semibold">No Past Jobs Found</p>
+                    <p>Completed and cancelled jobs will appear here.</p>
+                </div>
             )}
       </CardContent>
     </Card>
