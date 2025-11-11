@@ -281,7 +281,7 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
           </Card>
         </div>
         <div className="flex justify-center p-2 group-data-[collapsible=icon]:hidden">
-          <Badge variant="secondary">v0.2</Badge>
+          <Badge variant="secondary">Beta v0.2</Badge>
         </div>
         <SidebarMenu>
           <SidebarMenuItem>
