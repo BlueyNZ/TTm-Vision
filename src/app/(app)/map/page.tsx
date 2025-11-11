@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -36,7 +35,7 @@ export default function MapPage() {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: ['maps', 'geocoding'],
+    libraries: ['geocoding', 'maps', 'places'],
   });
 
   const firestore = useFirestore();
@@ -116,5 +115,3 @@ export default function MapPage() {
     </Card>
   );
 }
-
-

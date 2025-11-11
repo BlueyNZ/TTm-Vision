@@ -1,4 +1,3 @@
-
 'use client';
 import { useParams, useRouter } from 'next/navigation';
 import { Job, Staff, Client } from '@/lib/data';
@@ -22,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
 import { useJsApiLoader } from '@react-google-maps/api';
+import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
   if (typeof window === 'undefined' || !window.google) return null;
@@ -48,7 +48,7 @@ export default function JobEditPage() {
    const { isLoaded: isMapsLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: ['geocoding', 'maps'],
+    libraries: ['geocoding', 'maps', 'places'],
   });
 
   const [jobName, setJobName] = useState('');
@@ -211,7 +211,16 @@ export default function JobEditPage() {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
-            <Input id="location" name="location" value={jobLocation} onChange={(e) => setJobLocation(e.target.value)} />
+            {isMapsLoaded ? (
+              <LocationAutocompleteInput
+                initialValue={jobLocation}
+                onPlaceSelected={(place) => {
+                  setJobLocation(place.formatted_address || '');
+                }}
+              />
+            ) : (
+               <Input id="location" name="location" value={jobLocation} onChange={(e) => setJobLocation(e.target.value)} disabled />
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="clientName">Client / Company Name</Label>
