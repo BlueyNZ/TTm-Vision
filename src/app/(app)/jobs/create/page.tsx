@@ -45,7 +45,6 @@ export default function JobCreatePage() {
   const { isLoaded: isMapsLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: ['geocoding', 'maps', 'places'],
   });
 
   const [location, setLocation] = useState('');
