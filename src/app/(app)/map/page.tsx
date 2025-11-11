@@ -7,9 +7,10 @@ import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { Job } from "@/lib/data";
 import { collection, query, where, Timestamp } from "firebase/firestore";
 import { useMemo, useState } from "react";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, X } from "lucide-react";
 import { isPast } from "date-fns";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const containerStyle = {
   width: '100%',
@@ -94,11 +95,21 @@ export default function MapPage() {
                 <InfoWindow
                     position={selectedMarker.position}
                     onCloseClick={() => setSelectedMarker(null)}
+                    options={{ disableAutoPan: false }}
                 >
-                    <div className="p-2 space-y-1 bg-background text-foreground rounded-lg">
-                        <h4 className="font-bold">{selectedMarker.title}</h4>
+                    <div className="p-4 pr-10 space-y-2 bg-background text-foreground rounded-lg shadow-lg relative">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-1 right-1 h-6 w-6"
+                            onClick={() => setSelectedMarker(null)}
+                        >
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Close</span>
+                        </Button>
+                        <h4 className="font-bold text-base">{selectedMarker.title}</h4>
                         <p className="text-sm text-muted-foreground">{selectedMarker.location}</p>
-                        <Link href={`/jobs/${selectedMarker.id}`} className="text-sm text-primary hover:underline">
+                        <Link href={`/jobs/${selectedMarker.id}`} className="text-sm text-primary hover:underline font-semibold block pt-1">
                             View Details
                         </Link>
                     </div>
