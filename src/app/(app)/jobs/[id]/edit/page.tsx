@@ -21,7 +21,23 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
+import { useJsApiLoader } from '@react-google-maps/api';
 
+async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
+  if (typeof window === 'undefined' || !window.google) return null;
+  
+  const geocoder = new window.google.maps.Geocoder();
+  try {
+    const results = await geocoder.geocode({ address });
+    if (results.results[0]) {
+      const { lat, lng } = results.results[0].geometry.location;
+      return { lat: lat(), lng: lng() };
+    }
+  } catch (error) {
+    console.error(`Geocode was not successful for the following reason: ${error}`);
+  }
+  return null;
+}
 
 export default function JobEditPage() {
   const params = useParams();
@@ -29,6 +45,11 @@ export default function JobEditPage() {
   const { toast } = useToast();
   const jobId = params.id as string;
   const firestore = useFirestore();
+   const { isLoaded: isMapsLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries: ['geocoding'],
+  });
 
   const [jobName, setJobName] = useState('');
   const [jobLocation, setJobLocation] = useState('');
@@ -42,6 +63,7 @@ export default function JobEditPage() {
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
   const [contactPerson, setContactPerson] = useState('');
   const [contactNumber, setContactNumber] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -120,7 +142,7 @@ export default function JobEditPage() {
   }
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firestore || !job || !startDate) {
         toast({
@@ -130,11 +152,22 @@ export default function JobEditPage() {
         });
         return;
     }
+    if (!isMapsLoaded) {
+      toast({
+        title: 'Map service not ready',
+        description: 'Please wait a moment for the map service to load and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsSubmitting(true);
 
+    const coordinates = await getCoordinates(jobLocation);
 
     const updatedJob = {
         name: jobName,
         location: jobLocation,
+        coordinates: coordinates,
         clientName: selectedClient?.name || '',
         clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
@@ -157,6 +190,7 @@ export default function JobEditPage() {
       description: `The details for ${jobLocation} have been saved.`,
     });
     router.push(`/jobs/${jobId}`);
+    setIsSubmitting(false);
   };
 
   if (isLoadingJob || !job) {
@@ -338,8 +372,11 @@ export default function JobEditPage() {
           </div>
         </CardContent>
         <CardFooter className="justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting || !isMapsLoaded}>
+                {isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
         </CardFooter>
       </Card>
     </form>

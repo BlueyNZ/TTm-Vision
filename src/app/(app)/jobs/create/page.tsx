@@ -20,12 +20,33 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
+import { useJsApiLoader } from '@react-google-maps/api';
 
+async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
+  if (typeof window === 'undefined' || !window.google) return null;
+  
+  const geocoder = new window.google.maps.Geocoder();
+  try {
+    const results = await geocoder.geocode({ address });
+    if (results.results[0]) {
+      const { lat, lng } = results.results[0].geometry.location;
+      return { lat: lat(), lng: lng() };
+    }
+  } catch (error) {
+    console.error(`Geocode was not successful for the following reason: ${error}`);
+  }
+  return null;
+}
 
 export default function JobCreatePage() {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { isLoaded: isMapsLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries: ['geocoding'],
+  });
 
   const [location, setLocation] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -84,6 +105,14 @@ export default function JobCreatePage() {
         });
         return;
     }
+     if (!isMapsLoaded) {
+      toast({
+        title: 'Map service not ready',
+        description: 'Please wait a moment for the map service to load and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setIsSubmitting(true);
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
@@ -93,11 +122,13 @@ export default function JobCreatePage() {
     const jobCount = jobSnapshot.size;
     const newJobNumber = `TF-${String(jobCount + 1).padStart(4, '0')}`;
 
+    const coordinates = await getCoordinates(location);
 
     const newJob: Omit<Job, 'id'> = {
         jobNumber: newJobNumber,
         name,
         location,
+        coordinates,
         clientName: selectedClient?.name || '',
         clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
@@ -268,9 +299,9 @@ export default function JobCreatePage() {
         </CardContent>
         <CardFooter className="justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !isMapsLoaded}>
               {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-              Create Job
+              {isSubmitting ? 'Creating...' : 'Create Job'}
             </Button>
         </CardFooter>
       </Card>
