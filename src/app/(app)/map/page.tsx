@@ -2,12 +2,14 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindow } from '@react-google-maps/api';
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { Job } from "@/lib/data";
-import { collection, query, where } from "firebase/firestore";
-import { useMemo } from "react";
+import { collection, query, where, Timestamp } from "firebase/firestore";
+import { useMemo, useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { isPast } from "date-fns";
+import Link from "next/link";
 
 const containerStyle = {
   width: '100%',
@@ -21,6 +23,15 @@ const center = {
   lng: 174.885971
 };
 
+const getDisplayedStatus = (job: Job) => {
+  const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+  if (job.status === 'Upcoming' && isPast(startDate)) {
+    return 'In Progress';
+  }
+  return job.status;
+};
+
+
 export default function MapPage() {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -28,10 +39,11 @@ export default function MapPage() {
   });
 
   const firestore = useFirestore();
+  const [selectedMarker, setSelectedMarker] = useState<any | null>(null);
 
   const jobsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "job_packs"), where('status', '!=', 'Pending'));
+    return query(collection(firestore, "job_packs"), where('status', 'in', ['Upcoming', 'In Progress']));
   }, [firestore]);
 
   const { data: jobData, isLoading } = useCollection<Job>(jobsQuery);
@@ -40,14 +52,15 @@ export default function MapPage() {
     if (!jobData) return [];
     
     return jobData
-      .filter(job => job.status !== 'Cancelled' && job.coordinates)
+      .filter(job => job.coordinates && (getDisplayedStatus(job) === 'Upcoming' || getDisplayedStatus(job) === 'In Progress'))
       .map(job => ({
         id: job.id,
         position: {
-          lat: job.coordinates.lat,
-          lng: job.coordinates.lng,
+          lat: job.coordinates!.lat,
+          lng: job.coordinates!.lng,
         },
         title: job.jobNumber,
+        location: job.location,
       }));
   }, [jobData]);
 
@@ -71,18 +84,35 @@ export default function MapPage() {
           <GoogleMap
             mapContainerStyle={containerStyle}
             center={center}
-            zoom={5}
+            zoom={6}
           >
             {markers.map((marker) => (
               <MarkerF
                 key={marker.id}
                 position={marker.position}
                 title={marker.title}
+                onClick={() => setSelectedMarker(marker)}
               />
             ))}
+
+            {selectedMarker && (
+                <InfoWindow
+                    position={selectedMarker.position}
+                    onCloseClick={() => setSelectedMarker(null)}
+                >
+                    <div className="p-1 space-y-1">
+                        <h4 className="font-bold">{selectedMarker.title}</h4>
+                        <p className="text-sm">{selectedMarker.location}</p>
+                        <Link href={`/jobs/${selectedMarker.id}`} className="text-sm text-primary hover:underline">
+                            View Details
+                        </Link>
+                    </div>
+                </InfoWindow>
+            )}
           </GoogleMap>
         )}
       </CardContent>
     </Card>
   );
 }
+
