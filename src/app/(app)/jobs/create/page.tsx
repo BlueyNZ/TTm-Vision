@@ -155,13 +155,12 @@ export default function JobCreatePage() {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
-            
-              <LocationAutocompleteInput
-                onPlaceSelected={(place) => {
-                  setLocation(place.formatted_address || '');
-                }}
-              />
-            
+            <LocationAutocompleteInput
+              onPlaceSelected={(place) => {
+                setLocation(place.formatted_address || '');
+              }}
+            />
+            <p className="text-sm text-muted-foreground px-1">Please select an address from the dropdown to ensure correct map placement.</p>
           </div>
            <div className="space-y-2">
             <Label htmlFor="clientName">Client / Company Name</Label>

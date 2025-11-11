@@ -205,14 +205,13 @@ export default function JobEditPage() {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
-            
-              <LocationAutocompleteInput
-                initialValue={jobLocation}
-                onPlaceSelected={(place) => {
-                  setJobLocation(place.formatted_address || '');
-                }}
-              />
-            
+            <LocationAutocompleteInput
+              initialValue={jobLocation}
+              onPlaceSelected={(place) => {
+                setJobLocation(place.formatted_address || '');
+              }}
+            />
+            <p className="text-sm text-muted-foreground px-1">Please select an address from the dropdown to ensure correct map placement.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="clientName">Client / Company Name</Label>
