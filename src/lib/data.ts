@@ -56,6 +56,10 @@ export type Job = {
   jobNumber: string;
   name: string;
   location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   description?: string;
   clientName: string;
   clientId?: string;

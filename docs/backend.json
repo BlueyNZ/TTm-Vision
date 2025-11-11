@@ -85,6 +85,14 @@
           "type": "string",
           "description": "The location or address of the job site."
         },
+        "coordinates": {
+            "type": "object",
+            "description": "The geographic coordinates of the job site.",
+            "properties": {
+                "lat": { "type": "number" },
+                "lng": { "type": "number" }
+            }
+        },
         "startDate": {
             "type": "string",
             "format": "date-time",
