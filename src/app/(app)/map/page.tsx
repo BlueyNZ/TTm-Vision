@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -94,9 +95,9 @@ export default function MapPage() {
                     position={selectedMarker.position}
                     onCloseClick={() => setSelectedMarker(null)}
                 >
-                    <div className="p-1 space-y-1">
+                    <div className="p-2 space-y-1 bg-background text-foreground rounded-lg">
                         <h4 className="font-bold">{selectedMarker.title}</h4>
-                        <p className="text-sm">{selectedMarker.location}</p>
+                        <p className="text-sm text-muted-foreground">{selectedMarker.location}</p>
                         <Link href={`/jobs/${selectedMarker.id}`} className="text-sm text-primary hover:underline">
                             View Details
                         </Link>
