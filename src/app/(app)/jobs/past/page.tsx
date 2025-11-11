@@ -217,7 +217,7 @@ export default function PastJobsPage() {
                 </Table>
             ) : (
                 <div className="text-center py-10 text-muted-foreground">
-                    <History className="mx-auto h-12 w-12" />
+                    <Briefcase className="mx-auto h-12 w-12" />
                     <p className="mt-4 font-semibold">No Past Jobs Found</p>
                     <p>Completed and cancelled jobs will appear here.</p>
                 </div>
