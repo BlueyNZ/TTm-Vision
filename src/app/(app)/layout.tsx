@@ -1,4 +1,3 @@
-
 'use client';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar";
@@ -10,6 +9,9 @@ import { LoaderCircle } from "lucide-react";
 import { Staff } from "@/lib/data";
 import { collection, query, where } from "firebase/firestore";
 import { ThemeProvider } from "@/components/theme-provider";
+import { useJsApiLoader } from "@react-google-maps/api";
+
+const googleMapsLibraries = ["geocoding", "maps", "places"] as ("geocoding" | "maps" | "places")[];
 
 function ClientRouteHandler({ children }: { children: React.ReactNode }) {
   return (
@@ -29,6 +31,12 @@ function StaffAppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const firestore = useFirestore();
 
+  const { isLoaded: isMapsLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries: googleMapsLibraries,
+  });
+
   const staffQuery = useMemoFirebase(() => {
     if (!firestore || !user?.email) return null;
     return query(collection(firestore, 'staff'), where('email', '==', user.email));
@@ -38,7 +46,7 @@ function StaffAppLayout({ children }: { children: React.ReactNode }) {
   const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
   const accessLevel = currentUserStaffProfile?.accessLevel;
   const isAdmin = accessLevel === 'Admin';
-  const isLoading = isUserLoading || isStaffLoading;
+  const isLoading = isUserLoading || isStaffLoading || !isMapsLoaded;
 
   useEffect(() => {
     if (!isLoading && !user) {

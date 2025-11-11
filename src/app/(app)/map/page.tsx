@@ -46,7 +46,7 @@ export default function MapPage() {
     return query(collection(firestore, "job_packs"), where('status', 'in', ['Upcoming', 'In Progress']));
   }, [firestore]);
 
-  const { data: jobData, isLoading } = useCollection<Job>(jobsQuery);
+  const { data: jobData, isLoading: isLoadingJobs } = useCollection<Job>(jobsQuery);
 
   const markers = useMemo(() => {
     if (!jobData) return [];
@@ -64,7 +64,7 @@ export default function MapPage() {
       }));
   }, [jobData]);
 
-  const mapIsLoading = isLoading || !isLoaded;
+  const mapIsLoading = isLoadingJobs || !isLoaded;
 
   return (
     <Card>
