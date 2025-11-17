@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon, LoaderCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ClientSelector } from '@/components/clients/client-selector';
+import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
 
 const newJobDescriptionTemplate = `Job Name / Client Ref: 
 Location (Full Address): 
@@ -160,7 +161,13 @@ export default function RequestJobPage() {
           )}
           <div className="space-y-2">
             <Label htmlFor="location">Job Location</Label>
-            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., 123 Main St, Auckland" required />
+            <LocationAutocompleteInput
+              initialValue={location}
+              onPlaceSelected={(place) => {
+                setLocation(place.formatted_address || '');
+              }}
+            />
+            <p className="text-sm text-muted-foreground px-1">Please select an address from the dropdown to ensure correct map placement.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Job Description</Label>
