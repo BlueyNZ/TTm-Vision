@@ -26,7 +26,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { Badge } from "../ui/badge";
 
-export function ClientSidebar() {
+interface ClientSidebarProps {
+    isClientAdmin: boolean;
+}
+
+export function ClientSidebar({ isClientAdmin }: ClientSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -51,30 +55,34 @@ export function ClientSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Request Job"
-              isActive={pathname === "/client/request-job"}
-            >
-              <Link href="/client/request-job">
-                <Briefcase />
-                <span>Request Job</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Staff"
-              isActive={pathname === "/client/staff"}
-            >
-              <Link href="/client/staff">
-                <Users />
-                <span>Staff</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {isClientAdmin && (
+            <>
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                    asChild
+                    tooltip="Request Job"
+                    isActive={pathname === "/client/request-job"}
+                    >
+                    <Link href="/client/request-job">
+                        <Briefcase />
+                        <span>Request Job</span>
+                    </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                    asChild
+                    tooltip="Staff"
+                    isActive={pathname === "/client/staff"}
+                    >
+                    <Link href="/client/staff">
+                        <Users />
+                        <span>Staff</span>
+                    </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </>
+          )}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>

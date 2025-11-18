@@ -18,6 +18,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [accessLevel, setAccessLevel] = useState<string | null>(null);
+  const [clientRole, setClientRole] = useState<Staff['clientRole'] | null>(null);
   const [isAuthCheckLoading, setIsAuthCheckLoading] = useState(true);
   
   useEffect(() => {
@@ -36,6 +37,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
           const userProfile = staffSnapshot.docs[0].data() as Staff;
           const userAccessLevel = userProfile.accessLevel;
           setAccessLevel(userAccessLevel);
+          setClientRole(userProfile.clientRole || null);
 
           const isAuthorized = userAccessLevel === 'Admin' || userAccessLevel === 'Client' || userAccessLevel === 'Client Staff';
 
@@ -61,6 +63,8 @@ function AppContent({ children }: { children: React.ReactNode }) {
 
   const isLoading = isUserLoading || isAuthCheckLoading;
   const isAuthorized = accessLevel === 'Admin' || accessLevel === 'Client' || accessLevel === 'Client Staff';
+  const isClientAdmin = clientRole === 'Admin';
+
 
   if (isLoading || !isAuthorized) {
     return (
@@ -73,7 +77,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <ClientSidebar />
+        <ClientSidebar isClientAdmin={isClientAdmin} />
         <div className="flex flex-1 flex-col">
           <ClientHeader isAdmin={accessLevel === 'Admin'} />
           <main className="flex-1 p-4 sm:p-6 bg-background">
@@ -104,5 +108,3 @@ export default function ClientLayout({
     </ThemeProvider>
   );
 }
-
-    

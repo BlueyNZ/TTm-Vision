@@ -36,12 +36,14 @@ import { collection, query, where, doc, getDocs } from 'firebase/firestore';
 import { AddClientStaffDialog } from '@/components/clients/add-client-staff-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Badge } from '@/components/ui/badge';
 
 export default function ClientStaffPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isAddStaffDialogOpen, setIsAddStaffDialogOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
   const [currentClient, setCurrentClient] = useState<Client | null>(null);
   const [isClientLoading, setIsClientLoading] = useState(true);
@@ -112,6 +114,11 @@ export default function ClientStaffPage() {
     setStaffToDelete(null);
   };
 
+  const handleDialogClose = () => {
+    setEditingStaff(null);
+    setIsAddStaffDialogOpen(false);
+  };
+
   const isLoading = isUserLoading || isClientLoading || isStaffLoading;
 
   return (
@@ -138,6 +145,7 @@ export default function ClientStaffPage() {
                     <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -154,7 +162,16 @@ export default function ClientStaffPage() {
                                 </div>
                             </TableCell>
                             <TableCell>{staff.email}</TableCell>
+                            <TableCell>
+                                <Badge variant={staff.clientRole === 'Admin' ? 'default' : 'secondary'}>
+                                    {staff.clientRole || 'Staff'}
+                                </Badge>
+                            </TableCell>
                             <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => setEditingStaff(staff)}>
+                                    <Edit className="h-4 w-4" />
+                                    <span className="sr-only">Edit Role</span>
+                                </Button>
                                 <Button variant="ghost" size="icon" disabled>
                                     <Mail className="h-4 w-4" />
                                     <span className="sr-only">Resend Invite</span>
@@ -182,8 +199,15 @@ export default function ClientStaffPage() {
         <AddClientStaffDialog 
             clientId={currentClient.id}
             clientName={currentClient.name}
-            open={isAddStaffDialogOpen}
-            onOpenChange={setIsAddStaffDialogOpen}
+            open={isAddStaffDialogOpen || !!editingStaff}
+            onOpenChange={(open) => {
+                if (!open) {
+                    setIsAddStaffDialogOpen(false);
+                    setEditingStaff(null);
+                }
+            }}
+            staffToEdit={editingStaff}
+            onDialogClose={handleDialogClose}
         />
       )}
 
@@ -209,5 +233,3 @@ export default function ClientStaffPage() {
     </>
   );
 }
-
-    
