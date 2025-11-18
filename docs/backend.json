@@ -266,7 +266,8 @@
           "enum": [
             "Staff Member",
             "Admin",
-            "Client"
+            "Client",
+            "Client Staff"
           ]
         },
         "clientRole": {
