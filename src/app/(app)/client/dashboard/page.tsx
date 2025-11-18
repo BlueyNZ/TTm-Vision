@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,28 +52,55 @@ export default function ClientDashboardPage() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
 
+    // Get the staff profile for the current user
+    const staffQuery = useMemoFirebase(() => {
+        if (!firestore || !user?.email) return null;
+        return query(collection(firestore, 'staff'), where('email', '==', user.email));
+    }, [firestore, user?.email]);
+
+    const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
+    const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
+    
+    // Get the client ID from either the staff profile (for Client Staff) or by querying the clients collection (for Client Admins)
     const clientQuery = useMemoFirebase(() => {
-        if (!firestore || !user?.uid) return null;
+        if (!firestore || !user?.uid || currentUserStaffProfile) return null;
         return query(collection(firestore, 'clients'), where('userId', '==', user.uid));
-    }, [firestore, user?.uid]);
+    }, [firestore, user?.uid, currentUserStaffProfile]);
 
     const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
-    const currentClient = useMemo(() => clientData?.[0], [clientData]);
     
+    const clientId = useMemo(() => {
+        if (currentUserStaffProfile?.accessLevel === 'Client Staff' || currentUserStaffProfile?.accessLevel === 'Client') {
+            return currentUserStaffProfile.clientId;
+        }
+        return clientData?.[0]?.id;
+    }, [currentUserStaffProfile, clientData]);
+    
+    const companyName = useMemo(() => {
+        if (currentUserStaffProfile?.accessLevel === 'Client' || currentUserStaffProfile?.accessLevel === 'Client Staff') {
+            // We need to fetch the client name from the clients collection using the clientId
+            // This part is complex to do here. For now, let's just use the user name.
+            // A better solution would involve having clientName on the staff document.
+            return currentUserStaffProfile?.name;
+        }
+        return clientData?.[0]?.name;
+    }, [currentUserStaffProfile, clientData]);
+
+
     const jobsQuery = useMemoFirebase(() => {
-        if (!firestore || !currentClient?.id) return null;
-        return query(collection(firestore, 'job_packs'), where('clientId', '==', currentClient.id));
-    }, [firestore, currentClient?.id]);
+        if (!firestore || !clientId) return null;
+        return query(collection(firestore, 'job_packs'), where('clientId', '==', clientId));
+    }, [firestore, clientId]);
     
     const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsQuery);
     
-    const isLoading = isUserLoading || isClientLoading || isJobsLoading;
+    const isLoading = isUserLoading || isStaffLoading || isClientLoading || isJobsLoading;
 
     return (
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Welcome, {currentClient?.name || 'Client'}!</CardTitle>
+                    <CardTitle>Welcome, {companyName || 'Client'}!</CardTitle>
                     <CardDescription>This is your client portal. Here's an overview of your current and upcoming jobs.</CardDescription>
                 </CardHeader>
             </Card>

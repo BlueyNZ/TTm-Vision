@@ -17,9 +17,9 @@ import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase } from "
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { Client } from "@/lib/data";
-import { collection, query, where } from "firebase/firestore";
-import { useMemo } from "react";
+import { Client, Staff } from "@/lib/data";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { useMemo, useState, useEffect } from "react";
 
 interface ClientHeaderProps {
   isAdmin?: boolean;
@@ -32,17 +32,58 @@ export function ClientHeader({ isAdmin }: ClientHeaderProps) {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [companyName, setCompanyName] = useState("Loading...");
   
   const pathParts = pathname.split("/").filter(Boolean);
   let title = "Dashboard";
 
-  const clientQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.uid) return null;
-    return query(collection(firestore, 'clients'), where('userId', '==', user.uid));
-  }, [firestore, user?.uid]);
-  
-  const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
-  const currentClient = useMemo(() => clientData?.[0], [clientData]);
+  const staffQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.email) return null;
+    return query(collection(firestore, 'staff'), where('email', '==', user.email));
+  }, [firestore, user?.email]);
+  const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
+  const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
+
+
+  useEffect(() => {
+    const fetchCompanyName = async () => {
+      if (!firestore || !currentUserStaffProfile) {
+        setCompanyName("My Account");
+        return;
+      }
+
+      let clientId;
+      if (currentUserStaffProfile.accessLevel === 'Client' || currentUserStaffProfile.accessLevel === 'Client Staff') {
+        clientId = currentUserStaffProfile.clientId;
+      } else if (currentUserStaffProfile.accessLevel === 'Admin') {
+         // Fallback for admin viewing client portal
+         const clientQuery = query(collection(firestore, 'clients'), where('userId', '==', currentUserStaffProfile.id));
+         const clientSnapshot = await getDocs(clientQuery);
+         if (!clientSnapshot.empty) {
+           clientId = clientSnapshot.docs[0].id;
+         }
+      }
+
+      if (clientId) {
+        const clientQuery = query(collection(firestore, 'clients'), where('__name__', '==', clientId));
+        const clientSnapshot = await getDocs(clientQuery);
+        if (!clientSnapshot.empty) {
+            const clientDoc = clientSnapshot.docs[0].data() as Client;
+            setCompanyName(clientDoc.name);
+        } else {
+            setCompanyName("My Company");
+        }
+      } else {
+        setCompanyName(currentUserStaffProfile.name);
+      }
+    };
+    
+    if(!isStaffLoading) {
+      fetchCompanyName();
+    }
+
+  }, [firestore, currentUserStaffProfile, isStaffLoading]);
+
 
   const handleLogout = async () => {
     if (!auth) return;
@@ -99,12 +140,12 @@ export function ClientHeader({ isAdmin }: ClientHeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">
               <Building className="h-4 w-4" />
-              <span>{isClientLoading ? "Loading..." : (currentClient?.name || "My Account")}</span>
+              <span>{companyName}</span>
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{currentClient?.name || 'My Account'}</DropdownMenuLabel>
+            <DropdownMenuLabel>{companyName}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push('/client/settings')}>Settings</DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/client/support')}>Support</DropdownMenuItem>

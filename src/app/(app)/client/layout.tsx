@@ -29,7 +29,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const isLoading = isUserLoading || isStaffLoading;
 
   const isAdmin = accessLevel === 'Admin';
-  const isAuthorized = isAdmin || accessLevel === 'Client';
+  const isAuthorized = isAdmin || accessLevel === 'Client' || accessLevel === 'Client Staff';
 
   useEffect(() => {
     if (!isLoading && !user) {
