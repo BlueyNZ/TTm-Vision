@@ -23,7 +23,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { LoaderCircle } from "lucide-react";
-import { inviteClientStaff } from "@/ai/flows/invite-client-staff-flow";
+import { useAuth, useFirestore } from "@/firebase";
+import { createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { addDoc, collection, FieldValue, serverTimestamp } from "firebase/firestore";
 
 const addStaffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -39,6 +41,8 @@ type AddClientStaffDialogProps = {
 
 export function AddClientStaffDialog({ clientId, clientName, open, onOpenChange }: AddClientStaffDialogProps) {
   const { toast } = useToast();
+  const auth = useAuth();
+  const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof addStaffSchema>>({
@@ -47,37 +51,57 @@ export function AddClientStaffDialog({ clientId, clientName, open, onOpenChange 
   });
 
   async function onSubmit(data: z.infer<typeof addStaffSchema>) {
+    if (!auth || !firestore) {
+        toast({ variant: "destructive", title: "Error", description: "Services not available." });
+        return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      const result = await inviteClientStaff({
-        clientId,
-        newUser: {
-          name: data.name,
-          email: data.email,
+      // 1. Create a user. Note: We create a user with a temporary random password,
+      // as they will set their own via the password reset email.
+      const tempPassword = Math.random().toString(36).slice(-8);
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, tempPassword);
+      const user = userCredential.user;
+
+      // 2. Create the staff document in Firestore.
+      const staffCollectionRef = collection(firestore, 'staff');
+      await addDoc(staffCollectionRef, {
+        id: user.uid,
+        name: data.name,
+        email: data.email,
+        clientId: clientId,
+        accessLevel: 'Client Staff',
+        role: 'Operator', // Default role
+        createdAt: serverTimestamp(),
+        phone: "",
+        certifications: [],
+        licenses: [],
+        emergencyContact: {
+            name: "",
+            phone: "",
         },
-        invitationUrl: `${window.location.origin}/complete-signup`,
       });
 
-      if (result.success) {
-         toast({
-          title: "Invitation Sent",
-          description: `${data.name} has been sent an email to set up their account.`,
-        });
-        form.reset();
-        onOpenChange(false);
-      } else {
-         toast({
-            variant: "destructive",
-            title: "Failed to Send Invite",
-            description: result.error || "An unexpected error occurred. Please try again."
-        });
-      }
+      // 3. Send the password reset email, which acts as the invitation.
+      await sendPasswordResetEmail(auth, data.email, {
+        url: `${window.location.origin}/complete-signup`,
+        handleCodeInApp: true,
+      });
+
+      toast({
+        title: "Invitation Sent",
+        description: `${data.name} has been sent an email to set up their account.`,
+      });
+      form.reset();
+      onOpenChange(false);
+
     } catch(error: any) {
         toast({
             variant: "destructive",
             title: "Failed to Send Invite",
-            description: error.message || "An unexpected error occurred. Please try again."
+            description: error.code === 'auth/email-already-in-use' ? 'A user with this email already exists.' : (error.message || "An unexpected error occurred. Please try again.")
         });
     } finally {
         setIsSubmitting(false);
