@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,8 @@ const getStatusVariant = (status: Job['status']) => {
       return 'destructive';
     case 'Completed':
       return 'outline';
+    case 'Pending':
+      return 'default';
     default:
       return 'secondary';
   }
@@ -52,7 +55,6 @@ export default function ClientDashboardPage() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
 
-    // Get the staff profile for the current user
     const staffQuery = useMemoFirebase(() => {
         if (!firestore || !user?.email) return null;
         return query(collection(firestore, 'staff'), where('email', '==', user.email));
@@ -61,38 +63,25 @@ export default function ClientDashboardPage() {
     const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
     const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
     
-    // Get the client ID from either the staff profile (for Client Staff) or by querying the clients collection (for Client Admins)
+    const clientId = currentUserStaffProfile?.clientId;
+    
     const clientQuery = useMemoFirebase(() => {
-        if (!firestore || !user?.uid || currentUserStaffProfile) return null;
-        return query(collection(firestore, 'clients'), where('userId', '==', user.uid));
-    }, [firestore, user?.uid, currentUserStaffProfile]);
+        if (!firestore || !clientId) return null;
+        return query(collection(firestore, 'clients'), where('__name__', '==', clientId));
+    }, [firestore, clientId]);
 
     const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
     
-    const clientId = useMemo(() => {
-        if (currentUserStaffProfile?.accessLevel === 'Client Staff' || currentUserStaffProfile?.accessLevel === 'Client') {
-            return currentUserStaffProfile.clientId;
-        }
-        return clientData?.[0]?.id;
-    }, [currentUserStaffProfile, clientData]);
-    
     const companyName = useMemo(() => {
-        if (currentUserStaffProfile?.accessLevel === 'Client' || currentUserStaffProfile?.accessLevel === 'Client Staff') {
-            // We need to fetch the client name from the clients collection using the clientId
-            // This part is complex to do here. For now, let's just use the user name.
-            // A better solution would involve having clientName on the staff document.
-            return currentUserStaffProfile?.name;
-        }
         return clientData?.[0]?.name;
-    }, [currentUserStaffProfile, clientData]);
-
+    }, [clientData]);
 
     const jobsQuery = useMemoFirebase(() => {
         if (!firestore || !clientId) return null;
         return query(collection(firestore, 'job_packs'), where('clientId', '==', clientId));
     }, [firestore, clientId]);
     
-    const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsQuery);
+    const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobDataQuery);
     
     const isLoading = isUserLoading || isStaffLoading || isClientLoading || isJobsLoading;
 
@@ -126,7 +115,7 @@ export default function ClientDashboardPage() {
                                         <div className="flex justify-between items-start">
                                             <div className="space-y-2">
                                                  <p className="font-semibold text-base flex items-center gap-2">
-                                                    {job.jobNumber}
+                                                    {job.jobNumber || `Request from ${format(startDate, 'dd/MM/yy')}`}
                                                 </p>
                                                 <p className="text-lg flex items-center gap-2">
                                                      <MapPin className="h-5 w-5 text-primary"/>
