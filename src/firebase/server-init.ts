@@ -1,33 +1,45 @@
 
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, FirebaseApp, cert, App } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { firebaseConfig } from '@/firebase/config';
+import * as admin from 'firebase-admin';
 
-let firestore: ReturnType<typeof getFirestore> | null = null;
+let app: App | null = null;
 
 /**
  * Initializes the Firebase app on the server-side if it hasn't been already.
  * This ensures that server-side flows can access Firebase services.
  * It's designed to be safely called multiple times.
  *
- * @returns The initialized Firestore instance.
+ * @returns The initialized Firebase Admin App instance.
  */
-export function initializeFirebaseOnServer() {
-  if (firestore) {
-    return firestore;
+export function initializeFirebaseOnServer(): App {
+  if (app) {
+    return app;
   }
 
-  let firebaseApp: FirebaseApp;
-  if (!getApps().length) {
-    // When running locally or in a non-Firebase server environment,
-    // we use the explicit config.
-    firebaseApp = initializeApp(firebaseConfig);
+  if (admin.apps.length > 0) {
+      app = admin.app();
+      return app;
+  }
+
+  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
+    ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    : undefined;
+
+  if (serviceAccount) {
+    // Production / Deployed environment
+     app = initializeApp({
+        credential: cert(serviceAccount),
+        projectId: firebaseConfig.projectId
+    });
   } else {
-    // In a Firebase environment (like Cloud Functions or App Hosting),
-    // getApp() can be used if initialized by the environment.
-    firebaseApp = getApp();
+    // Local development - using default application credentials
+    console.log("Initializing Firebase Admin SDK with default credentials for local development.");
+    app = initializeApp({
+      projectId: firebaseConfig.projectId
+    });
   }
 
-  firestore = getFirestore(firebaseApp);
-  return firestore;
+  return app;
 }
