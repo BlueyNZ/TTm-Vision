@@ -5,7 +5,7 @@ import { AppSidebar } from "@/components/layout/sidebar";
 import { AppHeader } from "@/components/layout/header";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Staff } from "@/lib/data";
 import { collection, query, where } from "firebase/firestore";
@@ -46,7 +46,6 @@ function StaffAppLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
-  const [isMobileView, setIsMobileView] = useState(false);
 
   const { isLoaded: isMapsLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -93,14 +92,9 @@ function StaffAppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-screen w-full">
           <AppSidebar isAdmin={isAdmin} />
           <div className="flex flex-1 flex-col">
-            <AppHeader isAdmin={isAdmin} onToggleMobileView={() => setIsMobileView(!isMobileView)} isMobileViewActive={isMobileView} />
-            <main className={cn(
-              "flex-1 p-4 sm:p-6 bg-background transition-all duration-300 ease-in-out",
-              isMobileView && "flex justify-center"
-            )}>
-              <div className={cn("w-full transition-all duration-300 ease-in-out", isMobileView ? 'max-w-sm' : 'max-w-full')}>
+            <AppHeader isAdmin={isAdmin} />
+            <main className="flex-1 p-4 sm:p-6 bg-background">
                 {children}
-              </div>
             </main>
           </div>
         </div>
