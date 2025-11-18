@@ -1,46 +1,174 @@
-
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, LoaderCircle, Users } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { PlusCircle, LoaderCircle, Users, Mail, Trash2, Edit } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useState, useMemo } from 'react';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { Staff, Client } from '@/lib/data';
+import { collection, query, where, doc } from 'firebase/firestore';
+import { AddClientStaffDialog } from '@/components/clients/add-client-staff-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export default function ClientStaffPage() {
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isAddStaffDialogOpen, setIsAddStaffDialogOpen] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
 
-    // Placeholder for loading state
-    const isLoading = false;
-    // Placeholder for staff data
-    const staffData: any[] = [];
+  const clientQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return query(collection(firestore, 'clients'), where('userId', '==', user.uid));
+  }, [firestore, user?.uid]);
 
-    return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Staff Management</CardTitle>
-                    <CardDescription>Add and manage your company's staff members.</CardDescription>
-                </div>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Staff
-                </Button>
-            </CardHeader>
-            <CardContent>
-                {isLoading ? (
-                    <div className="flex justify-center items-center h-40">
-                        <LoaderCircle className="h-8 w-8 animate-spin" />
-                    </div>
-                ) : staffData.length > 0 ? (
-                    <div>
-                        {/* Staff table will go here */}
-                    </div>
-                ) : (
-                    <div className="text-center py-10 text-muted-foreground">
-                        <Users className="mx-auto h-12 w-12" />
-                        <p className="mt-4 font-semibold">No Staff Members Added</p>
-                        <p>Click "Add Staff" to invite your first team member.</p>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+  const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
+  const currentClient = useMemo(() => clientData?.[0], [clientData]);
+
+  const clientStaffQuery = useMemoFirebase(() => {
+    if (!firestore || !currentClient?.id) return null;
+    return query(
+      collection(firestore, 'staff'),
+      where('accessLevel', '==', 'Client Staff'),
+      where('clientId', '==', currentClient.id)
     );
+  }, [firestore, currentClient?.id]);
+
+  const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(clientStaffQuery);
+  
+  const handleDeleteStaff = () => {
+    if (!firestore || !staffToDelete) return;
+
+    deleteDocumentNonBlocking(doc(firestore, 'staff', staffToDelete.id));
+
+    toast({
+        title: "Staff Member Removed",
+        description: `The profile for ${staffToDelete.name} has been deleted.`,
+        variant: "destructive"
+    });
+    setStaffToDelete(null);
+  };
+
+  const isLoading = isUserLoading || isClientLoading || isStaffLoading;
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Staff Management</CardTitle>
+            <CardDescription>Add and manage your company's staff members.</CardDescription>
+          </div>
+          <Button onClick={() => setIsAddStaffDialogOpen(true)} disabled={!currentClient}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Staff
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <LoaderCircle className="h-8 w-8 animate-spin" />
+            </div>
+          ) : staffData && staffData.length > 0 ? (
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {staffData.map(staff => (
+                        <TableRow key={staff.id}>
+                            <TableCell>
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={`https://picsum.photos/seed/${staff.id}/40/40`} />
+                                        <AvatarFallback>{staff.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium">{staff.name}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>{staff.email}</TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" disabled>
+                                    <Mail className="h-4 w-4" />
+                                    <span className="sr-only">Resend Invite</span>
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => setStaffToDelete(staff)}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                    <span className="sr-only">Delete</span>
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-10 text-muted-foreground">
+              <Users className="mx-auto h-12 w-12" />
+              <p className="mt-4 font-semibold">No Staff Members Added</p>
+              <p>Click "Add Staff" to invite your first team member.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      {currentClient && (
+        <AddClientStaffDialog 
+            clientId={currentClient.id}
+            clientName={currentClient.name}
+            open={isAddStaffDialogOpen}
+            onOpenChange={setIsAddStaffDialogOpen}
+        />
+      )}
+
+      <AlertDialog open={!!staffToDelete} onOpenChange={(open) => !open && setStaffToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the staff profile for <span className="font-semibold">{staffToDelete?.name}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteStaff}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 }
