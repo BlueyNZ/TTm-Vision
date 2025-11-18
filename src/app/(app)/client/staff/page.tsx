@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -28,10 +29,10 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Staff, Client } from '@/lib/data';
-import { collection, query, where, doc } from 'firebase/firestore';
+import { collection, query, where, doc, getDocs } from 'firebase/firestore';
 import { AddClientStaffDialog } from '@/components/clients/add-client-staff-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -42,14 +43,50 @@ export default function ClientStaffPage() {
   const { toast } = useToast();
   const [isAddStaffDialogOpen, setIsAddStaffDialogOpen] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
+  const [currentClient, setCurrentClient] = useState<Client | null>(null);
+  const [isClientLoading, setIsClientLoading] = useState(true);
 
-  const clientQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.uid) return null;
-    return query(collection(firestore, 'clients'), where('userId', '==', user.uid));
-  }, [firestore, user?.uid]);
+  // Effect to determine the current client
+  useEffect(() => {
+    if (isUserLoading || !user || !firestore) return;
+    
+    const findClient = async () => {
+      setIsClientLoading(true);
+      // First, find the staff profile of the logged-in user
+      const staffQuery = query(collection(firestore, 'staff'), where('email', '==', user.email));
+      const staffSnapshot = await getDocs(staffQuery);
+      
+      if (!staffSnapshot.empty) {
+        const staffProfile = staffSnapshot.docs[0].data() as Staff;
+        
+        let foundClientId: string | undefined;
+        // If the user is a primary client, find their client doc via userId
+        if (staffProfile.accessLevel === 'Client') {
+           const clientQueryByUserId = query(collection(firestore, 'clients'), where('userId', '==', user.uid));
+           const clientSnapshot = await getDocs(clientQueryByUserId);
+           if (!clientSnapshot.empty) {
+             foundClientId = clientSnapshot.docs[0].id;
+           }
+        } 
+        // If they are client staff, the ID is directly on their profile
+        else if (staffProfile.accessLevel === 'Client Staff') {
+          foundClientId = staffProfile.clientId;
+        }
 
-  const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
-  const currentClient = useMemo(() => clientData?.[0], [clientData]);
+        if (foundClientId) {
+           const clientQueryById = query(collection(firestore, 'clients'), where('__name__', '==', foundClientId));
+           const clientDocSnapshot = await getDocs(clientQueryById);
+           if (!clientDocSnapshot.empty) {
+             setCurrentClient({ id: clientDocSnapshot.docs[0].id, ...clientDocSnapshot.docs[0].data() } as Client);
+           }
+        }
+      }
+      setIsClientLoading(false);
+    };
+    
+    findClient();
+
+  }, [user, isUserLoading, firestore]);
 
   const clientStaffQuery = useMemoFirebase(() => {
     if (!firestore || !currentClient?.id) return null;
@@ -172,3 +209,5 @@ export default function ClientStaffPage() {
     </>
   );
 }
+
+    

@@ -3,9 +3,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { collection, query, where, Timestamp, getDocs } from 'firebase/firestore';
 import { Staff, Job, Client } from '@/lib/data';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { LoaderCircle, MapPin, Calendar, Circle } from 'lucide-react';
 import { format, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,10 @@ import { Badge } from "@/components/ui/badge";
 
 const getDisplayedStatus = (job: Job) => {
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+  // A 'Pending' job is always 'Pending' until approved.
+  if (job.status === 'Pending') {
+      return 'Pending';
+  }
   if (job.status === 'Upcoming' && isPast(startDate)) {
     return 'In Progress';
   }
@@ -31,7 +35,7 @@ const getStatusVariant = (status: Job['status']) => {
     case 'Completed':
       return 'outline';
     case 'Pending':
-      return 'default';
+      return 'default'; // Use default variant but custom color class
     default:
       return 'secondary';
   }
@@ -44,46 +48,76 @@ const getStatusColor = (status: Job['status']) => {
       case 'Cancelled':
         return 'fill-destructive';
       case 'Pending':
-        return 'fill-yellow-500';
+        return 'fill-yellow-500'; // Yellow for pending
       default:
         return 'fill-muted-foreground';
     }
 };
 
-
 export default function ClientDashboardPage() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
 
-    const staffQuery = useMemoFirebase(() => {
-        if (!firestore || !user?.email) return null;
-        return query(collection(firestore, 'staff'), where('email', '==', user.email));
-    }, [firestore, user?.email]);
-
-    const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
-    const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
+    const [clientId, setClientId] = useState<string | null>(null);
+    const [companyName, setCompanyName] = useState<string | null>(null);
+    const [isClientInfoLoading, setIsClientInfoLoading] = useState(true);
     
-    const clientId = currentUserStaffProfile?.clientId;
-    
-    const clientQuery = useMemoFirebase(() => {
-        if (!firestore || !clientId) return null;
-        return query(collection(firestore, 'clients'), where('__name__', '==', clientId));
-    }, [firestore, clientId]);
+    // This effect is the core of the fix. It reliably finds the clientId.
+    useEffect(() => {
+        if (isUserLoading || !user || !firestore) return;
 
-    const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
-    
-    const companyName = useMemo(() => {
-        return clientData?.[0]?.name;
-    }, [clientData]);
+        const findClientInfo = async () => {
+            setIsClientInfoLoading(true);
 
+            // 1. Find the user's staff profile using their email.
+            const staffQuery = query(collection(firestore, 'staff'), where('email', '==', user.email));
+            const staffSnapshot = await getDocs(staffQuery);
+
+            if (staffSnapshot.empty) {
+                setIsClientInfoLoading(false);
+                return;
+            }
+            const staffProfile = staffSnapshot.docs[0].data() as Staff;
+            
+            // 2. Determine the clientId.
+            let foundClientId: string | null = null;
+            if (staffProfile.accessLevel === 'Client Staff' && staffProfile.clientId) {
+                // If they are Client Staff, the clientId is directly on their profile.
+                foundClientId = staffProfile.clientId;
+            } else if (staffProfile.accessLevel === 'Client') {
+                 // If they are a primary Client admin, find the client doc linked by their UID.
+                const clientQuery = query(collection(firestore, 'clients'), where('userId', '==', user.uid));
+                const clientSnapshot = await getDocs(clientQuery);
+                if (!clientSnapshot.empty) {
+                    foundClientId = clientSnapshot.docs[0].id;
+                }
+            }
+            
+            setClientId(foundClientId);
+            
+            // 3. Fetch company name using the found clientId.
+            if (foundClientId) {
+                 const clientQuery = query(collection(firestore, 'clients'), where('__name__', '==', foundClientId));
+                 const clientSnapshot = await getDocs(clientQuery);
+                 if (!clientSnapshot.empty) {
+                    setCompanyName((clientSnapshot.docs[0].data() as Client).name);
+                 }
+            }
+            setIsClientInfoLoading(false);
+        };
+        
+        findClientInfo();
+    }, [user, isUserLoading, firestore]);
+    
     const jobsQuery = useMemoFirebase(() => {
         if (!firestore || !clientId) return null;
+        // Fetch all jobs for this client, including pending ones.
         return query(collection(firestore, 'job_packs'), where('clientId', '==', clientId));
     }, [firestore, clientId]);
     
     const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsQuery);
     
-    const isLoading = isUserLoading || isStaffLoading || isClientLoading || isJobsLoading;
+    const isLoading = isUserLoading || isClientInfoLoading || isJobsLoading;
 
     return (
         <div className="space-y-6">
@@ -151,3 +185,5 @@ export default function ClientDashboardPage() {
         </div>
     );
 }
+
+    
