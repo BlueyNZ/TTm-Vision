@@ -2,7 +2,6 @@
 'use client';
 import { Staff } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { differenceInDays, format, toDate } from "date-fns";
@@ -90,10 +89,6 @@ export function CertificationsExpiry() {
                 const status = getCertificationStatus(certGroup.expiryDate);
                 return (
                   <div key={`${certGroup.staff.id}-${index}`} className="flex items-center space-x-4">
-                    <Avatar>
-                      <AvatarImage src={`https://picsum.photos/seed/${certGroup.staff.id}/200/200`} />
-                      <AvatarFallback>{certGroup.staff.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
                     <div className="flex-1">
                       <p className="font-medium">{certGroup.staff.name}</p>
                       <p className="text-sm text-muted-foreground">{certGroup.certNames.join(', ')}</p>

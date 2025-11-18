@@ -28,7 +28,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState, useMemo, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Staff, Client } from '@/lib/data';
@@ -153,13 +152,7 @@ export default function ClientStaffPage() {
                     {staffData.map(staff => (
                         <TableRow key={staff.id}>
                             <TableCell>
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src={`https://picsum.photos/seed/${staff.id}/40/40`} />
-                                        <AvatarFallback>{staff.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="font-medium">{staff.name}</span>
-                                </div>
+                                <span className="font-medium">{staff.name}</span>
                             </TableCell>
                             <TableCell>{staff.email}</TableCell>
                             <TableCell>

@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, Timestamp } from 'firebase/firestore';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -220,10 +219,6 @@ export default function JobDetailPage() {
                     <p className="font-semibold">Site Traffic Management Supervisor (STMS)</p>
                     {job.stms ? (
                       <div className="flex items-center gap-3 mt-2">
-                          <Avatar className="h-8 w-8">
-                              <AvatarImage src={`https://picsum.photos/seed/${job.stmsId}/200/200`} />
-                              <AvatarFallback>{job.stms.charAt(0)}</AvatarFallback>
-                          </Avatar>
                           <div>
                               <p className="font-medium text-sm">{job.stms}</p>
                               <p className="text-xs text-muted-foreground">STMS</p>
@@ -242,10 +237,6 @@ export default function JobDetailPage() {
                       <div className="mt-2 space-y-3">
                         {job.tcs.map(tc => (
                           <div key={tc.id} className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8">
-                                  <AvatarImage src={`https://picsum.photos/seed/${tc.id}/200/200`} />
-                                  <AvatarFallback>{tc.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
                               <div>
                                   <p className="font-medium text-sm">{tc.name}</p>
                                   <p className="text-xs text-muted-foreground">TC</p>

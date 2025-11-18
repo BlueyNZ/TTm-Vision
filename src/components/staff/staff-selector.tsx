@@ -20,7 +20,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Staff } from "@/lib/data"
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 interface StaffSelectorProps {
     staffList: Staff[];
@@ -69,10 +68,6 @@ export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeho
             </div>
           ) : selectedStaff ? (
             <div className="flex items-center gap-2">
-                 <Avatar className="h-6 w-6">
-                    <AvatarImage src={`https://picsum.photos/seed/${selectedStaff.id}/200/200`} />
-                    <AvatarFallback>{selectedStaff.name.charAt(0)}</AvatarFallback>
-                </Avatar>
                 {selectedStaff.name}
             </div>
           ) : (
@@ -95,10 +90,6 @@ export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeho
                   disabled={disabledIds.includes(staff.id)}
                 >
                   <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                          <AvatarImage src={`https://picsum.photos/seed/${staff.id}/200/200`} />
-                          <AvatarFallback>{staff.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
                       <span>{staff.name}</span>
                   </div>
                   <Check

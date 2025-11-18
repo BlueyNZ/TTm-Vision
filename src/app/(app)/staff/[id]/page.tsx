@@ -3,7 +3,6 @@
 
 import { Staff } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Phone, Shield, User, Award, Edit, LoaderCircle, CreditCard, Mail } from "lucide-react";
@@ -78,10 +77,6 @@ export default function StaffProfilePage() {
         <div className="md:col-span-1 flex flex-col gap-6">
           <Card>
             <CardHeader className="items-center text-center">
-              <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={`https://picsum.photos/seed/${staffMember.id}/200/200`} alt={staffMember.name} />
-                <AvatarFallback>{staffMember.name.charAt(0)}</AvatarFallback>
-              </Avatar>
               <CardTitle>{staffMember.name}</CardTitle>
               <CardDescription>{staffMember.role}</CardDescription>
             </CardHeader>

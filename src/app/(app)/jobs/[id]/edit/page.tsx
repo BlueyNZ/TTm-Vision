@@ -13,7 +13,6 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc, Timestamp } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { X, LoaderCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -310,10 +309,6 @@ export default function JobEditPage() {
             {selectedStms && (
                 <div className="flex items-center justify-between p-2 bg-muted rounded-md mt-2">
                     <div className='flex items-center gap-3'>
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={`https://picsum.photos/seed/${selectedStms.id}/200/200`} />
-                            <AvatarFallback>{selectedStms.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
                         <div>
                             <p className="font-medium text-sm">{selectedStms.name}</p>
                             <p className="text-xs text-muted-foreground">{selectedStms.role}</p>
@@ -337,10 +332,6 @@ export default function JobEditPage() {
                 {selectedTcs.map(tc => (
                     <div key={tc.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
                         <div className='flex items-center gap-3'>
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={`https://picsum.photos/seed/${tc.id}/200/200`} />
-                                <AvatarFallback>{tc.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
                             <div>
                                 <p className="font-medium text-sm">{tc.name}</p>
                                 <p className="text-xs text-muted-foreground">{tc.role}</p>

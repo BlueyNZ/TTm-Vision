@@ -22,7 +22,6 @@ import { SignaturePad, type SignaturePadRef } from "@/components/ui/signature-pa
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -254,10 +253,6 @@ export default function SingleCrewTimesheetPage() {
                                 {jobCrew.map(staff => (
                                     <SelectItem key={staff.id} value={staff.id}>
                                         <div className="flex items-center gap-2">
-                                            <Avatar className="h-6 w-6">
-                                                <AvatarImage src={`https://picsum.photos/seed/${staff.id}/200/200`} />
-                                                <AvatarFallback>{staff.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
                                             <span>{staff.name}</span>
                                         </div>
                                     </SelectItem>

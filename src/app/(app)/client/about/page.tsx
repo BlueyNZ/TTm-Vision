@@ -42,14 +42,6 @@ export default function ClientAboutUsPage() {
       </Card>
 
       <div className="flex flex-col items-center justify-center gap-4 pt-4">
-        <Image
-          src="https://scontent.fwlg2-1.fna.fbcdn.net/v/t39.30808-1/492362339_1569692353704684_2352141573221895990_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=101&ccb=1-7&_nc_sid=e99d92&_nc_ohc=oe0DvMV-nXAQ7kNvwHrNocD&_nc_oc=AdlN9WVe8iD_2F9Cik1baEKr50_yeAw0k6Q6AQhPIswCUNFSXtPo356N8z9XMZMBFg__aMZvePizLtnq0kxu3kHV&_nc_zt=24&_nc_ht=scontent.fwlg2-1.fna&_nc_gid=DM5PUlIozFaHU-5Brd-N1Q&oh=00_AfjwkxyCWZf0IxpA9juACQ9PKrhVN7lgmMO0PTkcXaUZHg&oe=69146AC5"
-          alt="Founder/Owner"
-          width={150}
-          height={150}
-          className="rounded-full object-cover"
-          data-ai-hint="person portrait"
-        />
         <div className="text-center">
             <p className="text-xl font-semibold">Harrison Price</p>
             <p className="text-muted-foreground">Founder/Owner</p>
