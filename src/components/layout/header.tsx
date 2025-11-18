@@ -12,17 +12,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, LogOut, ChevronDown, Repeat } from "lucide-react";
+import { ArrowLeft, LogOut, ChevronDown, Repeat, Smartphone } from "lucide-react";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface AppHeaderProps {
   isAdmin?: boolean;
+  onToggleMobileView: () => void;
+  isMobileViewActive: boolean;
 }
 
-export function AppHeader({ isAdmin }: AppHeaderProps) {
+export function AppHeader({ isAdmin, onToggleMobileView, isMobileViewActive }: AppHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useUser();
@@ -162,12 +165,18 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
       </div>
       <div className="flex flex-1 items-center gap-4 md:ml-auto md:flex-initial md:justify-end">
         {isAdmin && (
+          <>
             <Button asChild variant="outline" size="sm">
               <Link href="/client/dashboard">
                 <Repeat className="mr-2 h-4 w-4" />
                 Switch to Client View
               </Link>
             </Button>
+             <Button variant={isMobileViewActive ? "default" : "outline"} size="sm" onClick={onToggleMobileView}>
+              <Smartphone className="mr-2 h-4 w-4" />
+              Mobile View
+            </Button>
+          </>
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
