@@ -12,11 +12,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, LogOut, ChevronDown, Repeat } from "lucide-react";
-import { useAuth, useUser } from "@/firebase";
+import { ArrowLeft, LogOut, ChevronDown, Repeat, Building } from "lucide-react";
+import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { Client } from "@/lib/data";
+import { collection, query, where } from "firebase/firestore";
+import { useMemo } from "react";
 
 interface ClientHeaderProps {
   isAdmin?: boolean;
@@ -27,10 +30,19 @@ export function ClientHeader({ isAdmin }: ClientHeaderProps) {
   const router = useRouter();
   const { user } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   
   const pathParts = pathname.split("/").filter(Boolean);
   let title = "Dashboard";
+
+  const clientQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return query(collection(firestore, 'clients'), where('userId', '==', user.uid));
+  }, [firestore, user?.uid]);
+  
+  const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
+  const currentClient = useMemo(() => clientData?.[0], [clientData]);
 
   const handleLogout = async () => {
     if (!auth) return;
@@ -86,12 +98,13 @@ export function ClientHeader({ isAdmin }: ClientHeaderProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">
-              <span>{user?.email || 'My Account'}</span>
+              <Building className="h-4 w-4" />
+              <span>{isClientLoading ? "Loading..." : (currentClient?.name || "My Account")}</span>
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{user?.email || 'My Account'}</DropdownMenuLabel>
+            <DropdownMenuLabel>{currentClient?.name || 'My Account'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push('/client/settings')}>Settings</DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/client/support')}>Support</DropdownMenuItem>
