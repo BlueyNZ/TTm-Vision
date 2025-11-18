@@ -110,7 +110,7 @@ export function ClientSidebar({ isClientAdmin }: ClientSidebarProps) {
           </Card>
         </div>
         <div className="flex justify-center p-2 group-data-[collapsible=icon]:hidden">
-          <Badge variant="secondary">v0.2 Beta</Badge>
+          <Badge variant="secondary">v0.3 Beta</Badge>
         </div>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -118,17 +118,6 @@ export function ClientSidebar({ isClientAdmin }: ClientSidebarProps) {
               <Link href="/client/about">
                 <Info />
                 <span>About Us</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Subscription" isActive={pathname === "/client/subscription"}>
-              <Link href="/client/subscription" className="flex justify-between items-center w-full">
-                 <div className="flex items-center gap-2">
-                  <Star />
-                  <span>Subscription</span>
-                </div>
-                <Badge variant="outline" className="text-xs bg-yellow-400/20 text-yellow-400 font-semibold border-yellow-500">Coming Soon</Badge>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
