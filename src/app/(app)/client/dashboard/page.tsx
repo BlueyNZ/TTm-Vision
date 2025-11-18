@@ -81,7 +81,7 @@ export default function ClientDashboardPage() {
         return query(collection(firestore, 'job_packs'), where('clientId', '==', clientId));
     }, [firestore, clientId]);
     
-    const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobDataQuery);
+    const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsQuery);
     
     const isLoading = isUserLoading || isStaffLoading || isClientLoading || isJobsLoading;
 
