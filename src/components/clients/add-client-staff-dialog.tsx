@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LoaderCircle } from "lucide-react";
 import { useAuth, useFirestore } from "@/firebase";
 import { createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { addDoc, collection, FieldValue, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp, setDoc, doc } from "firebase/firestore";
 
 const addStaffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -61,18 +62,18 @@ export function AddClientStaffDialog({ clientId, clientName, open, onOpenChange 
     try {
       // 1. Create a user. Note: We create a user with a temporary random password,
       // as they will set their own via the password reset email.
-      const tempPassword = Math.random().toString(36).slice(-8);
+      const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8).toUpperCase();
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, tempPassword);
       const user = userCredential.user;
 
-      // 2. Create the staff document in Firestore.
-      const staffCollectionRef = collection(firestore, 'staff');
-      await addDoc(staffCollectionRef, {
+      // 2. Create the staff document in Firestore using the UID as the document ID
+      const staffDocRef = doc(firestore, 'staff', user.uid);
+      await setDoc(staffDocRef, {
         id: user.uid,
         name: data.name,
         email: data.email,
-        clientId: clientId,
-        accessLevel: 'Client Staff',
+        clientId: clientId, // Associate staff with the client company
+        accessLevel: 'Client Staff', // Set the specific access level
         role: 'Operator', // Default role
         createdAt: serverTimestamp(),
         phone: "",
