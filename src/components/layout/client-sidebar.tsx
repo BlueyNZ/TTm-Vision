@@ -19,6 +19,7 @@ import {
   Briefcase,
   Info,
   Star,
+  Users,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,6 +60,18 @@ export function ClientSidebar() {
               <Link href="/client/request-job">
                 <Briefcase />
                 <span>Request Job</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Staff"
+              isActive={pathname === "/client/staff"}
+            >
+              <Link href="/client/staff">
+                <Users />
+                <span>Staff</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

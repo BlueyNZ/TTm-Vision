@@ -30,7 +30,8 @@ export type Staff = {
     name: string;
     phone: string;
   };
-  accessLevel: 'Staff Member' | 'Admin' | 'Client';
+  accessLevel: 'Staff Member' | 'Admin' | 'Client' | 'Client Staff';
+  clientId?: string; // ID of the client company if this is a client user
 };
 
 export type Truck = {
