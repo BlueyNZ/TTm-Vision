@@ -43,7 +43,7 @@ export default function AboutUsPage() {
       
       <div className="flex flex-col items-center justify-center gap-4 pt-4">
         <Image
-          src="https://scontent.fwlg2-1.fna.fbcdn.net/v/t39.30808-6/412351838_3645511082381989_472384732353303644_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=6825c5&_nc_ohc=JqZXk9p9qj0Q7kNvgEWz1xP&_nc_ht=scontent.fwlg2-1.fna&oh=00_AYCZTv-B2a8yA4n1zV9w6kHjY-zT7d1F3rDk2oE6YJSL8A&oe=669A4C62"
+          src="https://scontent.fakl1-4.fna.fbcdn.net/v/t39.30808-6/492362339_1569692353704684_2352141573221895990_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=Pq8honNwZoIQ7kNvwE9kExp&_nc_oc=AdlokTogDMgrCdftDLHwJInsx9I4UQE2TJiiqrv0RSnDbNG7YhnjbC0ZSqlNdPOqjORcZcSt1XHccP4xlR3YlZuA&_nc_zt=23&_nc_ht=scontent.fakl1-4.fna&_nc_gid=Xq_0c-bFbm-dS7D-Lt50QA&oh=00_Afi6S-hgDlyBawFdLqdq0JM587VCuxCEUMJAC4D5ND-DZQ&oe=69222207"
           alt="Founder/Owner - Harrison Price"
           width={150}
           height={150}
