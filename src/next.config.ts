@@ -10,8 +10,11 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   devIndicators: {
-    // This is disabled to prevent WebSocket errors in certain dev environments.
-    // It does not affect application functionality.
+    // This allows the Next.js dev server to accept requests from the
+    // Firebase Studio development environment.
+    allowedDevOrigins: [
+      "https://*.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev",
+    ],
   },
   images: {
     remotePatterns: [
