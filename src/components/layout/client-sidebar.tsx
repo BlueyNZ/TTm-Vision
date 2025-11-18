@@ -47,7 +47,7 @@ export function ClientSidebar({ isClientAdmin }: ClientSidebarProps) {
             <SidebarMenuButton
               asChild
               tooltip="Dashboard"
-              isActive={pathname === "/client/dashboard"}
+              isActive={pathname.startsWith("/client/dashboard")}
             >
               <Link href="/client/dashboard">
                 <LayoutDashboard />
