@@ -38,6 +38,12 @@ function AppContent({ children }: { children: React.ReactNode }) {
         const userAccessLevel = userProfile.accessLevel;
         setAccessLevel(userAccessLevel);
 
+        // An Admin can see everything, always.
+        if (userAccessLevel === 'Admin') {
+            setIsAuthCheckLoading(false);
+            return;
+        }
+
         const isAuthorizedForPortal = userAccessLevel === 'Client' || userAccessLevel === 'Client Staff';
 
         if (!isAuthorizedForPortal) {
@@ -50,7 +56,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
           return;
         }
         
-        // **NEW/CORRECTED LOGIC**
         // If the user's access level is "Client Staff", they can only access the dashboard.
         if (userAccessLevel === 'Client Staff' && pathname !== '/client/dashboard') {
            toast({
@@ -74,8 +79,8 @@ function AppContent({ children }: { children: React.ReactNode }) {
   }, [user, isUserLoading, firestore, router, toast, pathname]);
 
   const isLoading = isUserLoading || isAuthCheckLoading;
-  const isAuthorized = accessLevel === 'Client' || accessLevel === 'Client Staff';
-  const isClientAdmin = accessLevel === 'Client'; // A "Client" is the admin of their company account.
+  const isAuthorized = accessLevel === 'Admin' || accessLevel === 'Client' || accessLevel === 'Client Staff';
+  const isClientAdmin = accessLevel === 'Client' || accessLevel === 'Admin';
 
   if (isLoading || !isAuthorized) {
     return (
@@ -90,7 +95,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full">
         <ClientSidebar isClientAdmin={isClientAdmin} />
         <div className="flex flex-1 flex-col">
-          <ClientHeader isAdmin={false} />
+          <ClientHeader isAdmin={accessLevel === 'Admin'} />
           <main className="flex-1 p-4 sm:p-6 bg-background">
             {children}
           </main>
