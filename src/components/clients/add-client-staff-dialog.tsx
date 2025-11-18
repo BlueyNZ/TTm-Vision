@@ -23,7 +23,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore } from "@/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { LoaderCircle } from "lucide-react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { useAuth } from "@/firebase";
@@ -56,8 +56,22 @@ export function AddClientStaffDialog({ clientId, clientName, open, onOpenChange 
     setIsSubmitting(true);
     
     try {
-      // 1. Create the staff document in Firestore
+      // Check if user already exists
       const staffCollectionRef = collection(firestore, 'staff');
+      const existingStaffQuery = query(staffCollectionRef, where("email", "==", data.email));
+      const existingStaffSnapshot = await getDocs(existingStaffQuery);
+
+      if (!existingStaffSnapshot.empty) {
+        toast({
+            variant: "destructive",
+            title: "User Already Exists",
+            description: "A staff member with this email already exists in the system.",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // 1. Create the staff document in Firestore
       await addDoc(staffCollectionRef, {
           name: data.name,
           email: data.email,
