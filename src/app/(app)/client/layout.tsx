@@ -18,8 +18,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [accessLevel, setAccessLevel] = useState<string | null>(null);
-  const [clientRole, setClientRole] = useState<Staff['clientRole'] | null>(null);
+  const [accessLevel, setAccessLevel] = useState<Staff['accessLevel'] | null>(null);
   const [isAuthCheckLoading, setIsAuthCheckLoading] = useState(true);
 
   useEffect(() => {
@@ -37,12 +36,9 @@ function AppContent({ children }: { children: React.ReactNode }) {
       if (!staffSnapshot.empty) {
         const userProfile = staffSnapshot.docs[0].data() as Staff;
         const userAccessLevel = userProfile.accessLevel;
-        const userClientRole = userProfile.clientRole || (userAccessLevel === 'Client' ? 'Admin' : 'Staff');
-
         setAccessLevel(userAccessLevel);
-        setClientRole(userClientRole);
 
-        const isAuthorizedForPortal = userAccessLevel === 'Admin' || userAccessLevel === 'Client' || userAccessLevel === 'Client Staff';
+        const isAuthorizedForPortal = userAccessLevel === 'Client' || userAccessLevel === 'Client Staff';
 
         if (!isAuthorizedForPortal) {
           toast({
@@ -51,23 +47,22 @@ function AppContent({ children }: { children: React.ReactNode }) {
             description: "You are not authorized to view the client portal.",
           });
           router.replace('/dashboard');
-          return; // Early exit
+          return;
         }
         
-        // **NEW**: Role-based page restriction
-        // If the user is just a 'Staff' member, only allow them to see the dashboard.
-        if (userClientRole === 'Staff' && pathname !== '/client/dashboard') {
+        // **NEW/CORRECTED LOGIC**
+        // If the user's access level is "Client Staff", they can only access the dashboard.
+        if (userAccessLevel === 'Client Staff' && pathname !== '/client/dashboard') {
            toast({
             variant: "destructive",
             title: "Access Denied",
             description: "You do not have permission to view this page.",
           });
           router.replace('/client/dashboard');
-          return; // Early exit
+          return;
         }
 
       } else {
-        // No staff profile found, deny access
         toast({ variant: "destructive", title: "Access Denied", description: "No profile found for your account." });
         router.replace('/dashboard');
       }
@@ -79,9 +74,8 @@ function AppContent({ children }: { children: React.ReactNode }) {
   }, [user, isUserLoading, firestore, router, toast, pathname]);
 
   const isLoading = isUserLoading || isAuthCheckLoading;
-  const isAuthorized = accessLevel === 'Admin' || accessLevel === 'Client' || accessLevel === 'Client Staff';
-  const isClientAdmin = clientRole === 'Admin' || accessLevel === 'Client';
-
+  const isAuthorized = accessLevel === 'Client' || accessLevel === 'Client Staff';
+  const isClientAdmin = accessLevel === 'Client'; // A "Client" is the admin of their company account.
 
   if (isLoading || !isAuthorized) {
     return (
@@ -96,7 +90,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full">
         <ClientSidebar isClientAdmin={isClientAdmin} />
         <div className="flex flex-1 flex-col">
-          <ClientHeader isAdmin={accessLevel === 'Admin'} />
+          <ClientHeader isAdmin={false} />
           <main className="flex-1 p-4 sm:p-6 bg-background">
             {children}
           </main>
