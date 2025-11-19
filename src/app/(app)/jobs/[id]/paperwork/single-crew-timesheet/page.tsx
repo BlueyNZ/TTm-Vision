@@ -27,6 +27,7 @@ import { StaffSelector } from "@/components/staff/staff-selector";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 const timeRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9])\s*([AP]M)$/i;
@@ -41,6 +42,7 @@ const timesheetSchema = z.object({
   breaks: z.coerce.number().min(0, "Breaks cannot be negative."),
   notes: z.string().optional(),
   signatureDataUrl: z.string().min(1, "A signature is required to submit the timesheet."),
+  role: z.enum(['STMS', 'TC/TTMW', 'TMO', 'Shadow Driver', 'Other Driver', 'Yard Work', 'Truck']),
 });
 
 // Helper to parse 12-hour time with AM/PM to a 24-hour format
@@ -101,6 +103,7 @@ export default function SingleCrewTimesheetPage() {
       breaks: 30,
       notes: "",
       signatureDataUrl: "",
+      role: undefined,
     },
   });
   
@@ -187,15 +190,12 @@ export default function SingleCrewTimesheetPage() {
             jobId: data.jobId,
             staffId: data.staffId,
             staffName: data.staffName,
+            role: data.role,
             jobDate: Timestamp.fromDate(data.jobDate),
             startTime: data.startTime,
             finishTime: data.finishTime,
             breaks: data.breaks,
             totalHours: totalHours,
-            isStms: false, // Defaulting as it's removed from UI
-            isNightShift: false, // Defaulting as it's removed from UI
-            isMealAllowance: false, // Defaulting as it's removed from UI
-            isToolAllowance: false, // Defaulting as it's removed from UI
             signatureDataUrl: data.signatureDataUrl,
             createdAt: Timestamp.now(),
         };
@@ -284,6 +284,33 @@ export default function SingleCrewTimesheetPage() {
                 />
             </div>
             
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role for this timesheet" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="STMS">STMS</SelectItem>
+                      <SelectItem value="TC/TTMW">TC/TTMW</SelectItem>
+                      <SelectItem value="TMO">TMO</SelectItem>
+                      <SelectItem value="Shadow Driver">Shadow Driver</SelectItem>
+                      <SelectItem value="Other Driver">Other Driver</SelectItem>
+                      <SelectItem value="Yard Work">Yard Work</SelectItem>
+                      <SelectItem value="Truck">Truck</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Timesheet Details Section */}
             <div className="space-y-4">
                 <h3 className="font-semibold text-lg border-b pb-2">Timesheet Details</h3>

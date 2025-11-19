@@ -84,16 +84,14 @@ export type Timesheet = {
   jobId: string;
   staffId: string;
   staffName: string;
+  role: 'STMS' | 'TC/TTMW' | 'TMO' | 'Shadow Driver' | 'Other Driver' | 'Yard Work' | 'Truck';
   jobDate: Timestamp;
   startTime: string;
   finishTime: string;
   breaks: number;
   totalHours: string;
-  isStms: boolean;
-  isNightShift: boolean;
-  isMealAllowance: boolean;
-  isToolAllowance: boolean;
   notes?: string;
   signatureDataUrl: string;
   createdAt: Timestamp;
 };
+
