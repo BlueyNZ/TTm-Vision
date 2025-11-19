@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -69,6 +70,7 @@ const SheetContent = React.forwardRef<
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>
+       <SheetPrimitive.Title className="sr-only">Navigation Menu</SheetPrimitive.Title>
     </SheetPrimitive.Content>
   </SheetPortal>
 ))
