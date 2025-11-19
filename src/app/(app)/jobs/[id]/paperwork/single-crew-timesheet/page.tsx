@@ -2,39 +2,24 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from "@/firebase";
-import { Job, Staff, Timesheet } from "@/lib/data";
-import { doc, query, collection, where, Timestamp, addDoc } from "firebase/firestore";
+import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { Job, Timesheet } from "@/lib/data";
+import { doc, Timestamp, addDoc, collection } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { LoaderCircle, Trash, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useMemo, useRef, useState, useEffect } from "react";
-import { format, differenceInMinutes, parse, isValid } from 'date-fns';
+import { useRef, useState } from "react";
 import { SignaturePad, type SignaturePadRef } from "@/components/ui/signature-pad";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 
 const timesheetSchema = z.object({
-  staffId: z.string().min(1, "A staff member must be selected."),
-  jobDate: z.string().min(1, "Date is required"),
-  startTime: z.string().min(1, "Start time is required"),
-  finishTime: z.string().min(1, "Finish time is required"),
-  breaks: z.string(),
-  isStms: z.boolean(),
-  isNightShift: z.boolean(),
-  isMealAllowance: z.boolean(),
-  isToolAllowance: z.boolean(),
   signatureDataUrl: z.string().min(1, "A signature is required to submit the timesheet."),
 });
 
@@ -48,7 +33,6 @@ export default function SingleCrewTimesheetPage() {
   const firestore = useFirestore();
   const signaturePadRef = useRef<SignaturePadRef>(null);
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
-  const [totalHours, setTotalHours] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const jobRef = useMemoFirebase(() => {
@@ -56,103 +40,16 @@ export default function SingleCrewTimesheetPage() {
     return doc(firestore, 'job_packs', jobId);
   }, [firestore, jobId]);
 
-  const staffQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.email) return null;
-    return query(collection(firestore, 'staff'), where('email', '==', user.email));
-  }, [firestore, user?.email]);
-
   const { data: job, isLoading: isJobLoading } = useDoc<Job>(jobRef);
-  const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
-  const currentStaffMember = useMemo(() => staffData?.[0], [staffData]);
-  
-  const allStaffCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'staff');
-  }, [firestore]);
-  const { data: allStaff, isLoading: isAllStaffLoading } = useCollection<Staff>(allStaffCollection);
 
-  const jobCrew = useMemo(() => {
-    if (!job || !allStaff) return [];
-    const crew: Staff[] = [];
-    if (job.stmsId) {
-        const stms = allStaff.find(s => s.id === job.stmsId);
-        if (stms) crew.push(stms);
-    }
-    job.tcs.forEach(tc => {
-        const tcStaff = allStaff.find(s => s.id === tc.id);
-        if (tcStaff) crew.push(tcStaff);
-    });
-    return crew;
-  }, [job, allStaff]);
-  
   const form = useForm<z.infer<typeof timesheetSchema>>({
     resolver: zodResolver(timesheetSchema),
     defaultValues: {
-      staffId: "",
-      jobDate: job?.startDate instanceof Timestamp ? format(job.startDate.toDate(), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-      startTime: '',
-      finishTime: '',
-      breaks: '30',
-      isStms: false,
-      isNightShift: false,
-      isMealAllowance: false,
-      isToolAllowance: false,
       signatureDataUrl: "",
     },
   });
 
-  useEffect(() => {
-    if (currentStaffMember && jobCrew.some(member => member.id === currentStaffMember.id)) {
-        form.setValue("staffId", currentStaffMember.id);
-    } else if (jobCrew.length > 0) {
-        form.setValue("staffId", jobCrew[0].id);
-    }
-  }, [currentStaffMember, jobCrew, form]);
-  
-
-  const startTime = form.watch("startTime");
-  const finishTime = form.watch("finishTime");
-  const breaks = form.watch("breaks");
-
-  useEffect(() => {
-    const parseTime = (timeStr: string) => {
-      let date = parse(timeStr, 'HH:mm', new Date());
-      if (!isValid(date)) {
-        date = parse(timeStr.toUpperCase(), 'h:mm a', new Date());
-      }
-      return date;
-    };
-
-    if (startTime && finishTime) {
-        const startDate = parseTime(startTime);
-        let finishDate = parseTime(finishTime);
-
-        if (isValid(startDate) && isValid(finishDate)) {
-            if (finishDate < startDate) {
-                // Handle overnight shift by adding a day to finish date
-                finishDate.setDate(finishDate.getDate() + 1);
-            }
-
-            const totalMinutes = differenceInMinutes(finishDate, startDate);
-            const breakMinutes = parseInt(breaks, 10) || 0;
-            const workMinutes = totalMinutes - breakMinutes;
-
-            if (workMinutes >= 0) {
-                const hours = Math.floor(workMinutes / 60);
-                const minutes = workMinutes % 60;
-                setTotalHours(`${hours}h ${minutes}m`);
-            } else {
-                setTotalHours(null);
-            }
-        } else {
-           setTotalHours(null);
-        }
-    } else {
-      setTotalHours(null);
-    }
-  }, [startTime, finishTime, breaks]);
-  
-  const isLoading = isJobLoading || isUserLoading || isStaffLoading || isAllStaffLoading;
+  const isLoading = isJobLoading || isUserLoading;
 
   const handleClearSignature = () => {
     signaturePadRef.current?.clear();
@@ -170,30 +67,14 @@ export default function SingleCrewTimesheetPage() {
   };
 
   async function onSubmit(data: z.infer<typeof timesheetSchema>) {
-    if (!firestore || !jobId) return;
-
-    const selectedStaffMember = allStaff?.find(s => s.id === data.staffId);
-    if (!selectedStaffMember) {
-        toast({ title: "Error", description: "Selected staff member not found.", variant: 'destructive' });
-        return;
-    }
+    if (!firestore || !jobId || !user?.displayName) return;
 
     setIsSubmitting(true);
 
     try {
         const timesheetPayload: Omit<Timesheet, 'id'> = {
             jobId: jobId,
-            staffId: data.staffId,
-            staffName: selectedStaffMember.name,
-            jobDate: Timestamp.fromDate(new Date(data.jobDate)),
-            startTime: data.startTime,
-            finishTime: data.finishTime,
-            breaks: parseInt(data.breaks, 10) || 0,
-            totalHours: totalHours || '0h 0m',
-            isStms: data.isStms,
-            isNightShift: data.isNightShift,
-            isMealAllowance: data.isMealAllowance,
-            isToolAllowance: data.isToolAllowance,
+            staffName: user.displayName,
             signatureDataUrl: data.signatureDataUrl,
             createdAt: Timestamp.now(),
         };
@@ -203,7 +84,7 @@ export default function SingleCrewTimesheetPage() {
 
         toast({
             title: "Timesheet Submitted",
-            description: `Timesheet for ${selectedStaffMember.name} has been successfully submitted.`,
+            description: `Timesheet for ${user.displayName} has been successfully submitted.`,
         });
 
         router.push(`/paperwork/${jobId}`);
@@ -237,170 +118,7 @@ export default function SingleCrewTimesheetPage() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
-              <FormField
-                control={form.control}
-                name="staffId"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Staff Member</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a staff member" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {jobCrew.map(staff => (
-                                    <SelectItem key={staff.id} value={staff.id}>
-                                        <div className="flex items-center gap-2">
-                                            <span>{staff.name}</span>
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="jobDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
-
-            <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="startTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Start Time</FormLabel>
-                          <FormControl>
-                            <Input type="text" placeholder="e.g. 8:00 AM" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="finishTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Finish Time</FormLabel>
-                          <FormControl>
-                            <Input type="text" placeholder="e.g. 4:00 PM" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="breaks"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Breaks (mins)</FormLabel>
-                          <FormControl>
-                            <Input type="text" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                </div>
-                 <div className="md:grid md:grid-cols-3 md:gap-6">
-                    <div></div>
-                    <div></div>
-                    <div className="space-y-2">
-                          <Label>Total Hours</Label>
-                          <div className="flex h-10 w-full items-center justify-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm font-medium">
-                            {totalHours ? totalHours : '...'}
-                          </div>
-                    </div>
-                </div>
-            </div>
-
-            <Separator />
-            
-            <div>
-                <Label>Allowances</Label>
-                <div className="space-y-2 mt-2">
-                    <FormField
-                      control={form.control}
-                      name="isStms"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>STMS Allowance</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="isNightShift"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Night Shift Allowance</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="isMealAllowance"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Meal Allowance</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="isToolAllowance"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Tool Allowance</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                </div>
-            </div>
-
-            <Separator />
-            
-             <FormField
+            <FormField
                 control={form.control}
                 name="signatureDataUrl"
                 render={({ field }) => (
@@ -452,7 +170,6 @@ export default function SingleCrewTimesheetPage() {
                     </FormItem>
                 )}
             />
-
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={isSubmitting}>

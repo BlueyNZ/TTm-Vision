@@ -82,17 +82,7 @@ export type Job = {
 export type Timesheet = {
   id: string;
   jobId: string;
-  staffId: string;
   staffName: string;
-  jobDate: Timestamp | Date | string;
-  startTime: string;
-  finishTime: string;
-  breaks: number;
-  totalHours: string;
-  isStms: boolean;
-  isNightShift: boolean;
-  isMealAllowance: boolean;
-  isToolAllowance: boolean;
   signatureDataUrl: string;
   createdAt: Timestamp;
 };
