@@ -125,7 +125,6 @@ export default function JobCreatePage() {
         clientName: selectedClient?.name || '',
         clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
-        endDate: endDate ? Timestamp.fromDate(endDate) : undefined,
         startTime,
         siteSetupTime,
         status: 'Upcoming',
@@ -133,6 +132,10 @@ export default function JobCreatePage() {
         stmsId: selectedStms?.id || null,
         tcs: selectedTcs.map(tc => ({id: tc.id, name: tc.name })),
     };
+    
+    if (endDate) {
+        newJob.endDate = Timestamp.fromDate(endDate);
+    }
 
     addDocumentNonBlocking(jobsCollectionRef, newJob);
 
