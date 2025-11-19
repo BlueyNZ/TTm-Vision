@@ -1,7 +1,6 @@
-
 'use client';
 import { useParams, useRouter } from 'next/navigation';
-import { Job, Timesheet } from '@/lib/data';
+import { Job, Timesheet, TruckInspection } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
@@ -9,18 +8,18 @@ import { LoaderCircle, FileText, Circle } from 'lucide-react';
 import Link from 'next/link';
 
 const paperworkLinks = [
-    { title: 'VIEW & EDIT Timesheets', href: 'timesheets', status: 'pending' },
-    { title: 'CREATE Truck Inspection', href: 'truck-inspections', status: 'incomplete' },
-    { title: 'EDIT "last" Vehicle Inspection Record', href: '#', status: 'incomplete' },
-    { title: 'VIEW & EDIT Hazard ID', href: 'hazard-id', status: 'incomplete' },
-    { title: 'VIEW & EDIT Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm', status: 'incomplete' },
-    { title: 'View/Edit TMP Checking Process', href: 'pre-installation-process', status: 'incomplete' },
-    { title: 'VIEW/EDIT On-Site Record (CoPTTM)', href: 'new-on-site-record', status: 'incomplete' },
-    { title: 'CREATE Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record', status: 'incomplete' },
-    { title: 'CREATE Job Note', href: 'job-note', status: 'incomplete' },
-    { title: 'Take Site Photos', href: '#', status: 'incomplete' },
-    { title: 'CREATE Incident or Event Report', href: 'incident-or-event-report', status: 'incomplete' },
-    { title: 'CREATE Site Audit (CoPTTM SCR)', href: 'site-audit-copttm-scr', status: 'incomplete' },
+    { title: 'VIEW & EDIT Timesheets', href: 'timesheets' },
+    { title: 'Truck Inspections', href: 'truck-inspections' },
+    { title: 'EDIT "last" Vehicle Inspection Record', href: '#' },
+    { title: 'VIEW & EDIT Hazard ID', href: 'hazard-id' },
+    { title: 'VIEW & EDIT Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm' },
+    { title: 'View/Edit TMP Checking Process', href: 'pre-installation-process' },
+    { title: 'VIEW/EDIT On-Site Record (CoPTTM)', href: 'new-on-site-record' },
+    { title: 'CREATE Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record' },
+    { title: 'CREATE Job Note', href: 'job-note' },
+    { title: 'Take Site Photos', href: '#' },
+    { title: 'CREATE Incident or Event Report', href: 'incident-or-event-report' },
+    { title: 'CREATE Site Audit (CoPTTM SCR)', href: 'site-audit-copttm-scr' },
 ];
 
 export default function PaperworkMenuPage() {
@@ -38,11 +37,17 @@ export default function PaperworkMenuPage() {
         if (!firestore || !jobId) return null;
         return collection(firestore, 'job_packs', jobId, 'timesheets');
     }, [firestore, jobId]);
+    
+    const truckInspectionsRef = useMemoFirebase(() => {
+        if (!firestore || !jobId) return null;
+        return collection(firestore, 'job_packs', jobId, 'truck_inspections');
+    }, [firestore, jobId]);
 
     const { data: job, isLoading: isJobLoading } = useDoc<Job>(jobRef);
     const { data: timesheets, isLoading: areTimesheetsLoading } = useCollection<Timesheet>(timesheetsRef);
+    const { data: truckInspections, isLoading: areInspectionsLoading } = useCollection<TruckInspection>(truckInspectionsRef);
 
-    const isLoading = isJobLoading || areTimesheetsLoading;
+    const isLoading = isJobLoading || areTimesheetsLoading || areInspectionsLoading;
 
     if (isLoading) {
         return (
@@ -66,6 +71,7 @@ export default function PaperworkMenuPage() {
     }
 
     const completedTimesheets = timesheets?.length || 0;
+    const completedInspections = truckInspections?.length || 0;
 
     return (
         <Card>
@@ -77,27 +83,36 @@ export default function PaperworkMenuPage() {
             </CardHeader>
             <CardContent>
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {paperworkLinks.map((link) => (
-                        <Link href={link.href === '#' ? '#' : `/jobs/${jobId}/paperwork/${link.href}`} key={link.title} className="block">
-                            <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col justify-between gap-3">
-                                <div className="flex items-center gap-3">
-                                    <FileText className="h-5 w-5 text-primary"/>
-                                    <span className="font-medium">{link.title}</span>
-                                </div>
-                                {link.title.includes('Timesheets') ? (
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <Circle className="h-2 w-2 fill-muted-foreground"/>
-                                        <span>{completedTimesheets} timesheets completed</span>
+                    {paperworkLinks.map((link) => {
+                        let count = -1; // Default to not show count
+                        let statusText = "Not yet completed";
+                        let isCompleted = false;
+
+                        if (link.href === 'timesheets') {
+                            count = completedTimesheets;
+                            statusText = `${count} timesheet${count === 1 ? '' : 's'} completed`;
+                            isCompleted = count > 0;
+                        } else if (link.href === 'truck-inspections') {
+                            count = completedInspections;
+                            statusText = `${count} inspection${count === 1 ? '' : 's'} completed`;
+                            isCompleted = count > 0;
+                        }
+
+                        return (
+                            <Link href={link.href === '#' ? '#' : `/jobs/${jobId}/paperwork/${link.href}`} key={link.title} className="block">
+                                <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <FileText className="h-5 w-5 text-primary"/>
+                                        <span className="font-medium">{link.title}</span>
                                     </div>
-                                ) : (
-                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <Circle className="h-2 w-2 fill-muted-foreground"/>
-                                        <span>Not yet completed</span>
-                                     </div>
-                                )}
-                            </div>
-                        </Link>
-                    ))}
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Circle className={isCompleted ? "fill-success" : "fill-muted-foreground"}/>
+                                        <span>{statusText}</span>
+                                    </div>
+                                </div>
+                            </Link>
+                        );
+                    })}
                 </div>
             </CardContent>
         </Card>
