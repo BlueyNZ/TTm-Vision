@@ -228,6 +228,13 @@ export default function TruckInspectionPage() {
     resolver: zodResolver(truckInspectionSchema),
     defaultValues: {
         jobId: jobId,
+        truckId: '',
+        driverId: '',
+        rucExpires: '',
+        odoStart: 0,
+        odoEnd: 0,
+        hubStart: 0,
+        hubEnd: 0,
         inspectionDate: new Date(),
         engineOil: { status: 'Yes' },
         coolant: { status: 'Yes' },
@@ -253,6 +260,9 @@ export default function TruckInspectionPage() {
         spillKit: { status: 'N/A' },
         fireExtinguisher: { status: 'Yes' },
         wheelChocks: { status: 'N/A' },
+        additionalComments: "",
+        inspectedById: "",
+        signatureDataUrl: ""
     },
   });
   
@@ -430,5 +440,3 @@ export default function TruckInspectionPage() {
     </Card>
   );
 }
-
-    
