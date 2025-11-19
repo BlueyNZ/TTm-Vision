@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, differenceInMinutes, isValid } from "date-fns";
+import { format, differenceInMinutes, isValid, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { StaffSelector } from "@/components/staff/staff-selector";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,13 +29,15 @@ import { useCollection } from "@/firebase/firestore/use-collection";
 import { Label } from "@/components/ui/label";
 
 
+const timeRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9])\s*([AP]M)$/i;
+
 const timesheetSchema = z.object({
   jobId: z.string(),
   staffId: z.string(),
   staffName: z.string(),
   jobDate: z.date(),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)"),
-  finishTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)"),
+  startTime: z.string().regex(timeRegex, "Invalid time format (e.g., 6:30 AM)"),
+  finishTime: z.string().regex(timeRegex, "Invalid time format (e.g., 5:00 PM)"),
   breaks: z.coerce.number().min(0, "Breaks cannot be negative."),
   isStms: z.boolean().default(false),
   isNightShift: z.boolean().default(false),
@@ -44,6 +46,26 @@ const timesheetSchema = z.object({
   notes: z.string().optional(),
   signatureDataUrl: z.string().min(1, "A signature is required to submit the timesheet."),
 });
+
+// Helper to parse 12-hour time with AM/PM to a 24-hour format
+function parse12HourTime(timeStr: string): { hours: number, minutes: number } | null {
+    const match = timeStr.match(timeRegex);
+    if (!match) return null;
+
+    let [_, hoursStr, minutesStr, ampm] = match;
+    let hours = parseInt(hoursStr, 10);
+    const minutes = parseInt(minutesStr, 10);
+
+    ampm = ampm.toUpperCase();
+
+    if (ampm === 'PM' && hours < 12) {
+        hours += 12;
+    } else if (ampm === 'AM' && hours === 12) { // Midnight case
+        hours = 0;
+    }
+
+    return { hours, minutes };
+}
 
 
 export default function SingleCrewTimesheetPage() {
@@ -78,8 +100,8 @@ export default function SingleCrewTimesheetPage() {
     defaultValues: {
       jobId: jobId,
       jobDate: new Date(),
-      startTime: "06:30",
-      finishTime: "17:00",
+      startTime: "06:30 AM",
+      finishTime: "05:00 PM",
       breaks: 30,
       isStms: false,
       isNightShift: false,
@@ -97,18 +119,18 @@ export default function SingleCrewTimesheetPage() {
   const jobDate = watch('jobDate');
 
   const totalHours = useMemo(() => {
-    const [startH, startM] = startTime.split(':').map(Number);
-    const [finishH, finishM] = finishTime.split(':').map(Number);
+    const parsedStart = parse12HourTime(startTime);
+    const parsedFinish = parse12HourTime(finishTime);
     
-    if (isNaN(startH) || isNaN(startM) || isNaN(finishH) || isNaN(finishM)) {
+    if (!parsedStart || !parsedFinish) {
       return "0h 0m";
     }
 
     const startDate = new Date(jobDate);
-    startDate.setHours(startH, startM);
+    startDate.setHours(parsedStart.hours, parsedStart.minutes, 0, 0);
 
     const finishDate = new Date(jobDate);
-    finishDate.setHours(finishH, finishM);
+    finishDate.setHours(parsedFinish.hours, parsedFinish.minutes, 0, 0);
 
     if (finishDate <= startDate) {
       finishDate.setDate(finishDate.getDate() + 1); // Handle overnight shifts
@@ -292,7 +314,7 @@ export default function SingleCrewTimesheetPage() {
                         <FormItem>
                           <FormLabel>Start Time</FormLabel>
                           <FormControl>
-                            <Input type="text" placeholder="HH:mm" {...field} />
+                            <Input type="text" placeholder="e.g., 6:30 AM" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -305,7 +327,7 @@ export default function SingleCrewTimesheetPage() {
                         <FormItem>
                           <FormLabel>Finish Time</FormLabel>
                           <FormControl>
-                            <Input type="text" placeholder="HH:mm" {...field} />
+                            <Input type="text" placeholder="e.g., 5:00 PM" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -479,5 +501,3 @@ export default function SingleCrewTimesheetPage() {
     </Card>
   );
 }
-
-    
