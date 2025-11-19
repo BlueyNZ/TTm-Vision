@@ -78,7 +78,7 @@ export default function PaperworkMenuPage() {
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {paperworkLinks.map((link) => (
-                        <Link href={link.href === '#' ? '#' : `/jobs/${jobId}/paperwork/${link.href}`} key={link.href} className="block">
+                        <Link href={link.href === '#' ? '#' : `/jobs/${jobId}/paperwork/${link.href}`} key={link.title} className="block">
                             <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col justify-between gap-3">
                                 <div className="flex items-center gap-3">
                                     <FileText className="h-5 w-5 text-primary"/>
