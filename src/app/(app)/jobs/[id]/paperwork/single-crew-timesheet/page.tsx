@@ -4,8 +4,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { Job, Staff, Timesheet } from "@/lib/data";
-import { doc, Timestamp, addDoc, collection } from "firebase/firestore";
-import { useParams, useRouter } from "next/navigation";
+import { doc, Timestamp, addDoc, collection, setDoc } from "firebase/firestore";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle, Trash, CheckCircle, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
@@ -69,9 +69,13 @@ function parse12HourTime(timeStr: string): { hours: number, minutes: number } | 
 
 export default function SingleCrewTimesheetPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
   const jobId = params.id as string;
+  const timesheetId = searchParams.get('edit');
+  const isEditMode = !!timesheetId;
+
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const signaturePadRef = useRef<SignaturePadRef>(null);
@@ -84,8 +88,15 @@ export default function SingleCrewTimesheetPage() {
     if (!firestore || !jobId) return null;
     return doc(firestore, 'job_packs', jobId);
   }, [firestore, jobId]);
+  
+  const timesheetRef = useMemoFirebase(() => {
+    if (!firestore || !jobId || !timesheetId) return null;
+    return doc(firestore, 'job_packs', jobId, 'timesheets', timesheetId);
+  }, [firestore, jobId, timesheetId]);
+
 
   const { data: job, isLoading: isJobLoading } = useDoc<Job>(jobRef);
+  const { data: timesheetToEdit, isLoading: isTimesheetLoading } = useDoc<Timesheet>(timesheetRef);
 
   const staffCollection = useMemoFirebase(() => {
     if(!firestore) return null;
@@ -147,7 +158,7 @@ export default function SingleCrewTimesheetPage() {
 
 
   useEffect(() => {
-    if (job) {
+    if (job && !isEditMode) {
       setValue('jobId', job.id);
       if (job.startDate) {
         const date = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -156,20 +167,39 @@ export default function SingleCrewTimesheetPage() {
         }
       }
     }
-  }, [job, setValue]);
+  }, [job, setValue, isEditMode]);
+
+  useEffect(() => {
+    if (isEditMode && timesheetToEdit && staffList) {
+        const staffMember = staffList.find(s => s.id === timesheetToEdit.staffId);
+        setSelectedStaff(staffMember || null);
+        form.reset({
+            jobId: timesheetToEdit.jobId,
+            staffId: timesheetToEdit.staffId,
+            staffName: timesheetToEdit.staffName,
+            jobDate: timesheetToEdit.jobDate instanceof Timestamp ? timesheetToEdit.jobDate.toDate() : new Date(timesheetToEdit.jobDate),
+            startTime: timesheetToEdit.startTime,
+            finishTime: timesheetToEdit.finishTime,
+            breaks: timesheetToEdit.breaks,
+            notes: timesheetToEdit.notes,
+            signatureDataUrl: timesheetToEdit.signatureDataUrl,
+            role: timesheetToEdit.role,
+        });
+    }
+  }, [isEditMode, timesheetToEdit, staffList, form]);
   
   useEffect(() => {
     if (selectedStaff) {
       setValue('staffId', selectedStaff.id, { shouldValidate: true });
       setValue('staffName', selectedStaff.name);
-    } else {
+    } else if (!isEditMode) { // Prevent clearing on edit load
         setValue('staffId', '', { shouldValidate: true });
         setValue('staffName', '');
     }
-  }, [selectedStaff, setValue]);
+  }, [selectedStaff, setValue, isEditMode]);
 
 
-  const isLoading = isJobLoading || isUserLoading || isStaffListLoading;
+  const isLoading = isJobLoading || isUserLoading || isStaffListLoading || (isEditMode && isTimesheetLoading);
 
   const handleClearSignature = () => {
     signaturePadRef.current?.clear();
@@ -204,18 +234,26 @@ export default function SingleCrewTimesheetPage() {
             totalHours: totalHours,
             notes: data.notes,
             signatureDataUrl: data.signatureDataUrl,
-            createdAt: Timestamp.now(),
+            createdAt: isEditMode && timesheetToEdit ? timesheetToEdit.createdAt : Timestamp.now(),
         };
 
-        const timesheetsCollectionRef = collection(firestore, 'job_packs', jobId, 'timesheets');
-        await addDoc(timesheetsCollectionRef, timesheetPayload);
+        if (isEditMode && timesheetId) {
+            const tsDocRef = doc(firestore, 'job_packs', jobId, 'timesheets', timesheetId);
+            await setDoc(tsDocRef, timesheetPayload, { merge: true });
+            toast({
+                title: "Timesheet Updated",
+                description: `Timesheet for ${data.staffName} has been successfully updated.`,
+            });
+        } else {
+             const timesheetsCollectionRef = collection(firestore, 'job_packs', jobId, 'timesheets');
+            await addDoc(timesheetsCollectionRef, timesheetPayload);
+            toast({
+                title: "Timesheet Submitted",
+                description: `Timesheet for ${data.staffName} has been successfully submitted.`,
+            });
+        }
 
-        toast({
-            title: "Timesheet Submitted",
-            description: `Timesheet for ${data.staffName} has been successfully submitted.`,
-        });
-
-        router.push(`/paperwork/${jobId}`);
+        router.push(`/jobs/${jobId}/paperwork/timesheets`);
 
     } catch (error) {
         console.error("Error submitting timesheet:", error);
@@ -238,7 +276,7 @@ export default function SingleCrewTimesheetPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Single Crew Timesheet</CardTitle>
+        <CardTitle>{isEditMode ? 'Edit' : 'Single Crew'} Timesheet</CardTitle>
         <CardDescription>
           For Job: {job?.jobNumber || '...'} at {job?.location || '...'}
         </CardDescription>
@@ -460,10 +498,11 @@ export default function SingleCrewTimesheetPage() {
                 )}
             />
           </CardContent>
-          <CardFooter>
+          <CardFooter className="justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
             <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                Submit Timesheet
+                {isEditMode ? 'Save Changes' : 'Submit Timesheet'}
             </Button>
           </CardFooter>
         </form>
@@ -471,3 +510,4 @@ export default function SingleCrewTimesheetPage() {
     </Card>
   );
 }
+
