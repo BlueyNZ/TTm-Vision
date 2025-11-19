@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 const paperworkLinks = [
     { title: 'VIEW & EDIT Timesheets', href: 'timesheets', status: 'pending' },
-    { title: 'CREATE Truck Inspection', href: 'truck-inspection', status: 'incomplete' },
+    { title: 'CREATE Truck Inspection', href: 'truck-inspections', status: 'incomplete' },
     { title: 'EDIT "last" Vehicle Inspection Record', href: '#', status: 'incomplete' },
     { title: 'VIEW & EDIT Hazard ID', href: 'hazard-id', status: 'incomplete' },
     { title: 'VIEW & EDIT Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm', status: 'incomplete' },
@@ -76,7 +76,7 @@ export default function PaperworkMenuPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {paperworkLinks.map((link) => (
                         <Link href={link.href === '#' ? '#' : `/jobs/${jobId}/paperwork/${link.href}`} key={link.title} className="block">
                             <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col justify-between gap-3">

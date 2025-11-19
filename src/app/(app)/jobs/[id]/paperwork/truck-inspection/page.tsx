@@ -3,9 +3,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from "@/firebase";
-import { Job, Staff, Truck } from "@/lib/data";
-import { doc, collection } from "firebase/firestore";
-import { useParams, useRouter } from "next/navigation";
+import { Job, Staff, Truck, TruckInspection } from "@/lib/data";
+import { doc, collection, addDoc, setDoc, Timestamp } from "firebase/firestore";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle, CalendarIcon, CheckCircle, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
@@ -208,9 +208,13 @@ const DateInput = ({ value, onChange, onBlur, ...props }: { value: Date | undefi
 
 export default function TruckInspectionPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
   const jobId = params.id as string;
+  const inspectionId = searchParams.get('edit');
+  const isEditMode = !!inspectionId;
+
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const signaturePadRef = useRef<SignaturePadRef>(null);
@@ -221,9 +225,11 @@ export default function TruckInspectionPage() {
   const { data: allJobs, isLoading: areJobsLoading } = useCollection<Job>(useMemoFirebase(() => firestore ? collection(firestore, 'job_packs') : null, [firestore]));
   const { data: trucks, isLoading: areTrucksLoading } = useCollection<Truck>(useMemoFirebase(() => firestore ? collection(firestore, 'trucks') : null, [firestore]));
   const { data: staff, isLoading: areStaffLoading } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]));
+  const { data: inspectionToEdit, isLoading: isInspectionLoading } = useDoc<TruckInspection>(useMemoFirebase(() => (firestore && inspectionId) ? doc(firestore, 'job_packs', jobId, 'truck_inspections', inspectionId) : null, [firestore, jobId, inspectionId]));
+
 
   // Form state
-  const [selectedJob, setSelectedJob] = useState<Job | null>(jobData);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedTruck, setSelectedTruck] = useState<Truck | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Staff | null>(null);
 
@@ -269,7 +275,7 @@ export default function TruckInspectionPage() {
     },
   });
   
-  const { watch, setValue } = form;
+  const { watch, setValue, reset } = form;
   const odoStart = watch('odoStart');
   const odoEnd = watch('odoEnd');
   const hubStart = watch('hubStart');
@@ -278,9 +284,39 @@ export default function TruckInspectionPage() {
 
   const odoDistance = useMemo(() => (odoEnd > odoStart ? odoEnd - odoStart : 0), [odoStart, odoEnd]);
   const hubDistance = useMemo(() => (hubEnd > hubStart ? hubEnd - hubStart : 0), [hubStart, hubEnd]);
+  
+  useEffect(() => {
+    if (jobData && !isEditMode) {
+      setSelectedJob(jobData);
+      setValue('jobId', jobData.id);
+    }
+  }, [jobData, setValue, isEditMode]);
+
+  useEffect(() => {
+    if (isEditMode && inspectionToEdit && allJobs && trucks && staff) {
+        const job = allJobs.find(j => j.id === inspectionToEdit.jobId);
+        const truck = trucks.find(t => t.id === inspectionToEdit.truckId);
+        const driver = staff.find(s => s.id === inspectionToEdit.driverId);
+        
+        setSelectedJob(job || null);
+        setSelectedTruck(truck || null);
+        setSelectedDriver(driver || null);
+
+        const formValues: any = {};
+        Object.keys(inspectionToEdit).forEach(key => {
+            const typedKey = key as keyof TruckInspection;
+            if (inspectionToEdit[typedKey] instanceof Timestamp) {
+                formValues[typedKey] = (inspectionToEdit[typedKey] as Timestamp).toDate();
+            } else {
+                formValues[typedKey] = inspectionToEdit[typedKey];
+            }
+        });
+        reset(formValues);
+    }
+}, [isEditMode, inspectionToEdit, allJobs, trucks, staff, reset]);
 
 
-  const isLoading = isJobLoading || areJobsLoading || areTrucksLoading || areStaffLoading;
+  const isLoading = isJobLoading || areJobsLoading || areTrucksLoading || areStaffLoading || (isEditMode && isInspectionLoading);
 
   const handleClearSignature = () => {
     signaturePadRef.current?.clear();
@@ -298,8 +334,40 @@ export default function TruckInspectionPage() {
   };
 
   async function onSubmit(data: z.infer<typeof truckInspectionSchema>) {
-    console.log(data);
-    toast({ title: "Form Submitted", description: "Your truck inspection has been recorded." });
+    if (!firestore || !data.jobId) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Job ID is missing.'});
+        return;
+    };
+
+    setIsSubmitting(true);
+
+    try {
+        const inspectionPayload: Omit<TruckInspection, 'id'> = {
+            ...data,
+            regoExpires: Timestamp.fromDate(data.regoExpires),
+            wofExpires: Timestamp.fromDate(data.wofExpires),
+            inspectionDate: Timestamp.fromDate(data.inspectionDate),
+            createdAt: isEditMode && inspectionToEdit ? inspectionToEdit.createdAt : Timestamp.now(),
+        };
+
+        if (isEditMode && inspectionId) {
+            const inspectionDocRef = doc(firestore, 'job_packs', data.jobId, 'truck_inspections', inspectionId);
+            await setDoc(inspectionDocRef, inspectionPayload, { merge: true });
+            toast({ title: 'Inspection Updated', description: 'Your changes have been saved.' });
+        } else {
+            const inspectionsCollectionRef = collection(firestore, 'job_packs', data.jobId, 'truck_inspections');
+            await addDoc(inspectionsCollectionRef, inspectionPayload);
+            toast({ title: "Inspection Submitted", description: "Your truck inspection has been recorded." });
+        }
+        
+        router.push(`/jobs/${data.jobId}/paperwork/truck-inspections`);
+
+    } catch (error) {
+        console.error("Error submitting inspection:", error);
+        toast({ variant: 'destructive', title: 'Submission Failed', description: 'An error occurred. Please try again.' });
+    } finally {
+        setIsSubmitting(false);
+    }
   }
 
   if (isLoading) {
@@ -313,7 +381,7 @@ export default function TruckInspectionPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Truck Inspection</CardTitle>
+        <CardTitle>{isEditMode ? 'Edit' : 'Create'} Truck Inspection</CardTitle>
         <CardDescription>
           Pre-start vehicle inspection checklist.
         </CardDescription>
@@ -536,5 +604,3 @@ export default function TruckInspectionPage() {
     </Card>
   );
 }
-
-    

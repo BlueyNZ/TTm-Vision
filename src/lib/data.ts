@@ -95,3 +95,53 @@ export type Timesheet = {
   createdAt: Timestamp;
 };
 
+type InspectionCheck = {
+    status: "Yes" | "No" | "N/A";
+    comments?: string;
+};
+
+export type TruckInspection = {
+    id: string;
+    jobId: string;
+    truckId: string;
+    driverId: string;
+    regoExpires: Timestamp;
+    wofExpires: Timestamp;
+    rucExpires: string;
+    odoStart: number;
+    odoEnd: number;
+    hubStart: number;
+    hubEnd: number;
+    
+    engineOil: InspectionCheck,
+    coolant: InspectionCheck,
+    brakeFluid: InspectionCheck,
+    adBlue: InspectionCheck,
+    brakes: InspectionCheck,
+    airBrakes: InspectionCheck,
+    tyres: InspectionCheck,
+    steering: InspectionCheck,
+    lights: InspectionCheck,
+    arrowBoard: InspectionCheck,
+    pad: InspectionCheck,
+    horn: InspectionCheck,
+    mirrors: InspectionCheck,
+    windscreen: InspectionCheck,
+    wipers: InspectionCheck,
+    cameras: InspectionCheck,
+    cabInterior: InspectionCheck,
+    seatBelts: InspectionCheck,
+    vehicleExterior: InspectionCheck,
+    gateLatches: InspectionCheck,
+    
+    firstAidKit: InspectionCheck,
+    spillKit: InspectionCheck,
+    fireExtinguisher: InspectionCheck,
+    wheelChocks: InspectionCheck,
+  
+    additionalComments?: string;
+    inspectionDate: Timestamp;
+    inspectedById: string;
+    signatureDataUrl: string;
+    createdAt: Timestamp;
+};
