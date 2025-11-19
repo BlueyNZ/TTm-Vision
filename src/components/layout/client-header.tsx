@@ -107,7 +107,7 @@ export function ClientHeader({ isAdmin }: ClientHeaderProps) {
     title = pathParts[pathParts.length - 1].replace(/-/g, " ");
   }
 
-  const showBackButton = pathParts.length > 2;
+  const showBackButton = pathParts.length > 2 && pathParts[1] !== 'dashboard';
   
   const handleBackClick = () => {
     router.back();

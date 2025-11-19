@@ -33,7 +33,6 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
   const pathParts = pathname.split("/").filter(Boolean);
   let title = "Dashboard";
   let showBackButton = false;
-  let backPath = "";
 
   const handleLogout = async () => {
     if (!auth) return;
@@ -76,7 +75,7 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
       return 'Edit Item';
     }
 
-    if (id && id !== 'create') {
+    if (id && id !== 'create' && id !== 'past') {
       if(page === 'jobs' && parts.length > 2) return `Job ${parts[2]}`; // For paperwork subpages
       if(page === 'jobs') return 'Job Details';
       if(page === 'staff') return 'Staff Profile';
@@ -90,6 +89,10 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
       if(page === 'fleet') return 'Create Truck';
       return 'Create Item';
     }
+
+    if (id === 'past' && page === 'jobs') {
+        return 'Past Jobs';
+    }
     
     if (page === 'admin' && parts.length > 1 && parts[1] === 'create-staff') {
         return 'Create Staff';
@@ -101,50 +104,23 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
   }
 
 
-  // Determine if the back button should be shown and where it should go.
-  if (pathParts.length > 0) {
-    const page = pathParts[0];
-
-    if ((page === 'requests' || page === 'paperwork') && pathParts.length > 1) {
-      showBackButton = true;
-      backPath = `/${page}`;
-    }
-    // Always show back button for settings and support
-    else if (page === 'scheduler' || page === 'settings' || page === 'support' || (page === 'client' && pathParts[1] === 'request-job')) {
-      showBackButton = true;
-      backPath = page === 'client' ? '/client/dashboard' : '/dashboard';
-    } 
-    // Handle top-level management pages
-    else if (['jobs', 'staff', 'fleet', 'clients'].includes(page) && pathParts.length === 1) {
-      showBackButton = true;
-      backPath = '/admin';
-    }
-    // Handle detail or edit pages within management sections
-    else if (['jobs', 'staff', 'fleet'].includes(page) && pathParts.length > 1) {
-      showBackButton = true;
-      // edit page or deeper should go back to detail page
-      if (pathParts[2] === 'edit' || pathParts.length > 2) { 
-        backPath = `/${pathParts[0]}/${pathParts[1]}`;
-      } else { // Detail page should go back to list page
-        backPath = `/${pathParts[0]}`;
-      }
-    }
-    // Handle create staff page
-    else if (page === 'admin' && pathParts.length > 1) {
-        showBackButton = true;
-        backPath = '/admin';
-    }
+  // Determine if the back button should be shown
+  if (pathParts.length > 0 && pathParts[0] !== 'dashboard') {
+    showBackButton = true;
   }
-
+  // Explicitly hide on top-level admin overview
+  if (pathParts[0] === 'admin' && pathParts.length === 1) {
+    showBackButton = false;
+  }
+  // Explicitly hide on top-level jobs, staff, fleet, clients pages
+  if (['jobs', 'staff', 'fleet', 'clients'].includes(pathParts[0]) && pathParts.length === 1) {
+     showBackButton = false;
+  }
 
   title = getTitleForPage(pathParts);
 
   const handleBackClick = () => {
-    if (backPath) {
-      router.push(backPath);
-    } else {
-      router.back();
-    }
+    router.back();
   }
 
   return (
