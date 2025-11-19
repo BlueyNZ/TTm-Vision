@@ -9,7 +9,7 @@ import {
   } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Job } from "@/lib/data";
-import { PlusCircle, MoreHorizontal, Circle, Eye, Edit, LoaderCircle, Trash2, History } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Circle, Eye, Edit, LoaderCircle, Trash2, History, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import {
   Table,
@@ -43,7 +43,7 @@ import {
   } from "@/components/ui/alert-dialog";
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -102,6 +102,7 @@ export default function JobsPage() {
     const firestore = useFirestore();
     const { toast } = useToast();
     const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
+    const [jobToComplete, setJobToComplete] = useState<Job | null>(null);
 
     const jobsCollection = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -125,6 +126,20 @@ export default function JobsPage() {
 
         setJobToDelete(null); // Close the dialog
     };
+
+    const handleCompleteJob = () => {
+        if (!firestore || !jobToComplete) return;
+
+        const jobDocRef = doc(firestore, 'job_packs', jobToComplete.id);
+        setDocumentNonBlocking(jobDocRef, { status: 'Completed' }, { merge: true });
+
+        toast({
+            title: "Job Completed",
+            description: `Job ${jobToComplete.jobNumber} has been marked as completed.`,
+        });
+
+        setJobToComplete(null);
+    }
     
   return (
     <>
@@ -205,12 +220,16 @@ export default function JobsPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => router.push(`/jobs/${job.id}`)}>
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    View
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        View
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => router.push(`/jobs/${job.id}/edit`)}>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Edit
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setJobToComplete(job)}>
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        Mark as Completed
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                     className="text-destructive"
@@ -248,6 +267,23 @@ export default function JobsPage() {
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog open={!!jobToComplete} onOpenChange={(open) => !open && setJobToComplete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Complete Job?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Are you sure you want to mark the job <span className="font-semibold">{jobToComplete?.jobNumber}</span> as completed? This will move it to the past jobs list.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleCompleteJob}>
+                    Complete
+                </AlertDialogAction>
+            </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
