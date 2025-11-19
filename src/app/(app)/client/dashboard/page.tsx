@@ -116,6 +116,15 @@ export default function ClientDashboardPage() {
     }, [firestore, clientId]);
     
     const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsQuery);
+
+    const sortedJobs = useMemo(() => {
+        if (!jobData) return [];
+        return [...jobData].sort((a, b) => {
+            const dateA = a.startDate instanceof Timestamp ? a.startDate.toDate() : new Date(a.startDate);
+            const dateB = b.startDate instanceof Timestamp ? b.startDate.toDate() : new Date(b.startDate);
+            return dateB.getTime() - dateA.getTime();
+        });
+    }, [jobData]);
     
     const isLoading = isUserLoading || isClientInfoLoading || isJobsLoading;
 
@@ -138,9 +147,9 @@ export default function ClientDashboardPage() {
                         <div className="flex justify-center items-center h-40">
                             <LoaderCircle className="h-8 w-8 animate-spin" />
                         </div>
-                    ) : jobData && jobData.length > 0 ? (
+                    ) : sortedJobs && sortedJobs.length > 0 ? (
                         <div className="space-y-4">
-                            {jobData.map(job => {
+                            {sortedJobs.map(job => {
                                 const displayedStatus = getDisplayedStatus(job);
                                 const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
 

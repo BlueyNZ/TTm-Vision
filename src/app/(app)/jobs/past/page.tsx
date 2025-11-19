@@ -111,6 +111,15 @@ export default function PastJobsPage() {
 
     const { data: jobData, isLoading } = useCollection<Job>(pastJobsCollection);
 
+    const sortedJobs = useMemo(() => {
+      if (!jobData) return [];
+      return [...jobData].sort((a, b) => {
+        const dateA = a.startDate instanceof Timestamp ? a.startDate.toDate() : new Date(a.startDate);
+        const dateB = b.startDate instanceof Timestamp ? b.startDate.toDate() : new Date(b.startDate);
+        return dateB.getTime() - dateA.getTime();
+      });
+    }, [jobData]);
+
     const handleDeleteJob = () => {
         if (!firestore || !jobToDelete) return;
 
@@ -163,7 +172,7 @@ export default function PastJobsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {jobData.map((job) => {
+                        {sortedJobs.map((job) => {
                             const displayedStatus = getDisplayedStatus(job);
                             return (
                             <TableRow key={job.id}>

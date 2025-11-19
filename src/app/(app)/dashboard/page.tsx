@@ -107,7 +107,7 @@ export default function DashboardPage() {
     .sort((a, b) => {
         const dateA = a.startDate instanceof Timestamp ? a.startDate.toDate() : new Date(a.startDate);
         const dateB = b.startDate instanceof Timestamp ? b.startDate.toDate() : new Date(b.startDate);
-        return dateA.getTime() - dateB.getTime();
+        return dateB.getTime() - dateA.getTime();
     });
   }, [user, jobData, currentStaffMember]);
 
