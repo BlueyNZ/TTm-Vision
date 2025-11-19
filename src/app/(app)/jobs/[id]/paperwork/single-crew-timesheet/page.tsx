@@ -292,7 +292,7 @@ export default function SingleCrewTimesheetPage() {
                         <FormItem>
                           <FormLabel>Start Time</FormLabel>
                           <FormControl>
-                            <Input type="time" {...field} />
+                            <Input type="text" placeholder="HH:mm" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -305,7 +305,7 @@ export default function SingleCrewTimesheetPage() {
                         <FormItem>
                           <FormLabel>Finish Time</FormLabel>
                           <FormControl>
-                            <Input type="time" {...field} />
+                            <Input type="text" placeholder="HH:mm" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -479,3 +479,5 @@ export default function SingleCrewTimesheetPage() {
     </Card>
   );
 }
+
+    
