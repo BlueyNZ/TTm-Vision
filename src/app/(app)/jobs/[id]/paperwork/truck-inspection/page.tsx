@@ -19,9 +19,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, isValid, parse } from "date-fns";
 import { SignaturePad, SignaturePadRef } from "@/components/ui/signature-pad";
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { JobSelector } from '@/components/jobs/job-selector';
@@ -40,8 +40,8 @@ const truckInspectionSchema = z.object({
   jobId: z.string().min(1, "Please select a job."),
   truckId: z.string().min(1, "Please select a vehicle."),
   driverId: z.string().min(1, "Please select a driver."),
-  regoExpires: z.date(),
-  wofExpires: z.date(),
+  regoExpires: z.date({ required_error: "Rego expiry date is required."}),
+  wofExpires: z.date({ required_error: "WOF/COF expiry date is required." }),
   rucExpires: z.string().min(1, "RUC details are required."),
   odoStart: z.coerce.number().min(0),
   odoEnd: z.coerce.number().min(0),
@@ -141,6 +141,69 @@ function InspectionCheck({ form, name, label, description, showNA = true }: Insp
     </div>
   );
 }
+
+const DateInput = ({ value, onChange, onBlur, ...props }: { value: Date | undefined, onChange: (date: Date | undefined) => void, onBlur: () => void }) => {
+    const [inputValue, setInputValue] = useState(value ? format(value, 'dd/MM/yyyy') : '');
+    const [popoverOpen, setPopoverOpen] = useState(false);
+    
+    useEffect(() => {
+        setInputValue(value ? format(value, 'dd/MM/yyyy') : '');
+    }, [value]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInputValue(e.target.value);
+    };
+
+    const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const parsedDate = parse(e.target.value, 'dd/MM/yyyy', new Date());
+        if (isValid(parsedDate)) {
+            onChange(parsedDate);
+            setInputValue(format(parsedDate, 'dd/MM/yyyy'));
+        } else {
+           onChange(undefined);
+           setInputValue('');
+        }
+        onBlur();
+    };
+
+    const handleDateSelect = (date: Date | undefined) => {
+        if (date) {
+            onChange(date);
+            setInputValue(format(date, 'dd/MM/yyyy'));
+            setPopoverOpen(false);
+        }
+    };
+
+    return (
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <div className="relative">
+                <Input
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    placeholder="dd/MM/yyyy"
+                    className="pr-10"
+                    {...props}
+                />
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3">
+                        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                </PopoverTrigger>
+            </div>
+            <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                    mode="single"
+                    selected={value}
+                    onSelect={handleDateSelect}
+                    disabled={(date) => date < new Date("1900-01-01")}
+                    initialFocus
+                />
+            </PopoverContent>
+        </Popover>
+    );
+};
+
 
 export default function TruckInspectionPage() {
   const params = useParams();
@@ -278,15 +341,21 @@ export default function TruckInspectionPage() {
                 <h3 className="font-semibold text-lg">Expiry Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField control={form.control} name="regoExpires" render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem>
                             <FormLabel>Rego Expires On</FormLabel>
-                            <Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage />
+                            <FormControl>
+                                <DateInput {...field} />
+                            </FormControl>
+                            <FormMessage />
                         </FormItem>
                     )} />
                     <FormField control={form.control} name="wofExpires" render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem>
                             <FormLabel>WOF/COF Expires On</FormLabel>
-                            <Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage />
+                            <FormControl>
+                                <DateInput {...field} />
+                            </FormControl>
+                             <FormMessage />
                         </FormItem>
                     )} />
                     <FormField control={form.control} name="rucExpires" render={({ field }) => (<FormItem><FormLabel>RUC Expires (km)</FormLabel><FormControl><Input placeholder="e.g. 155000" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -361,3 +430,5 @@ export default function TruckInspectionPage() {
     </Card>
   );
 }
+
+    
