@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { StaffSelector } from "@/components/staff/staff-selector";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCollection } from "@/firebase/firestore/use-collection";
+import { Label } from "@/components/ui/label";
 
 
 const timesheetSchema = z.object({
