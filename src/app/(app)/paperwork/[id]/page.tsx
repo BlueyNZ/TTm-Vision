@@ -9,20 +9,17 @@ import { LoaderCircle, FileText, Circle } from 'lucide-react';
 import Link from 'next/link';
 
 const paperworkLinks = [
-    { title: 'Timesheets', href: 'timesheets', status: 'pending' },
-    { title: 'Truck Inspection', href: 'truck-inspection', status: 'incomplete' },
-    { title: 'ESTOP Inspection', href: 'estop-inspection', status: 'incomplete' },
-    { title: 'Stop/Go Briefing', href: 'stop-go-briefing', status: 'incomplete' },
-    { title: 'TSL Decision Matrix', href: 'tsl-decision-matrix', status: 'incomplete' },
-    { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm', status: 'incomplete' },
-    { title: 'Hazard ID', href: 'hazard-id', status: 'incomplete' },
-    { title: 'Site Induction Signatures', href: 'site-induction-signatures', status: 'incomplete' },
-    { title: 'Pre-Installation Process', href: 'pre-installation-process', status: 'incomplete' },
-    { title: 'On-Site Record', href: 'new-on-site-record', status: 'incomplete' },
-    { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record', status: 'incomplete' },
-    { title: 'Job Note', href: 'job-note', status: 'incomplete' },
-    { title: 'Site Audit (COPTTM SCR)', href: 'site-audit-copttm-scr', status: 'incomplete' },
-    { title: 'Client Feedback', href: 'client-feedback', status: 'incomplete' },
+    { title: 'VIEW & EDIT Timesheets', href: 'timesheets', status: 'pending' },
+    { title: 'CREATE Truck Inspection', href: 'truck-inspection', status: 'incomplete' },
+    { title: 'VIEW & EDIT Hazard ID', href: 'hazard-id', status: 'incomplete' },
+    { title: 'VIEW & EDIT Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm', status: 'incomplete' },
+    { title: 'View/Edit TMP Checking Process', href: 'pre-installation-process', status: 'incomplete' },
+    { title: 'VIEW/EDIT On-Site Record (CoPTTM)', href: 'new-on-site-record', status: 'incomplete' },
+    { title: 'CREATE Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record', status: 'incomplete' },
+    { title: 'CREATE Job Note', href: 'job-note', status: 'incomplete' },
+    { title: 'Take Site Photos', href: '#', status: 'incomplete' }, // Assuming this will be implemented later
+    { title: 'CREATE Incident or Event Report', href: 'incident-or-event-report', status: 'incomplete' },
+    { title: 'CREATE Site Audit (CoPTTM SCR)', href: 'site-audit-copttm-scr', status: 'incomplete' },
 ];
 
 export default function PaperworkMenuPage() {
@@ -80,13 +77,13 @@ export default function PaperworkMenuPage() {
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {paperworkLinks.map((link) => (
-                        <Link href={`/jobs/${jobId}/paperwork/${link.href}`} key={link.href} className="block">
+                        <Link href={link.href === '#' ? '#' : `/jobs/${jobId}/paperwork/${link.href}`} key={link.href} className="block">
                             <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col justify-between gap-3 h-full">
                                 <div className="flex items-center gap-3">
                                     <FileText className="h-5 w-5 text-primary"/>
                                     <span className="font-medium">{link.title}</span>
                                 </div>
-                                {link.title === 'Timesheets' ? (
+                                {link.title.includes('Timesheets') ? (
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                         <Circle className="h-2 w-2 fill-muted-foreground"/>
                                         <span>{completedTimesheets} timesheets completed</span>
