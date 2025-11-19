@@ -39,10 +39,6 @@ const timesheetSchema = z.object({
   startTime: z.string().regex(timeRegex, "Invalid time format (e.g., 6:30 AM)"),
   finishTime: z.string().regex(timeRegex, "Invalid time format (e.g., 5:00 PM)"),
   breaks: z.coerce.number().min(0, "Breaks cannot be negative."),
-  isStms: z.boolean().default(false),
-  isNightShift: z.boolean().default(false),
-  isMealAllowance: z.boolean().default(false),
-  isToolAllowance: z.boolean().default(false),
   notes: z.string().optional(),
   signatureDataUrl: z.string().min(1, "A signature is required to submit the timesheet."),
 });
@@ -103,10 +99,6 @@ export default function SingleCrewTimesheetPage() {
       startTime: "06:30 AM",
       finishTime: "05:00 PM",
       breaks: 30,
-      isStms: false,
-      isNightShift: false,
-      isMealAllowance: false,
-      isToolAllowance: false,
       notes: "",
       signatureDataUrl: "",
     },
@@ -200,10 +192,10 @@ export default function SingleCrewTimesheetPage() {
             finishTime: data.finishTime,
             breaks: data.breaks,
             totalHours: totalHours,
-            isStms: data.isStms,
-            isNightShift: data.isNightShift,
-            isMealAllowance: data.isMealAllowance,
-            isToolAllowance: data.isToolAllowance,
+            isStms: false, // Defaulting as it's removed from UI
+            isNightShift: false, // Defaulting as it's removed from UI
+            isMealAllowance: false, // Defaulting as it's removed from UI
+            isToolAllowance: false, // Defaulting as it's removed from UI
             signatureDataUrl: data.signatureDataUrl,
             createdAt: Timestamp.now(),
         };
@@ -357,68 +349,6 @@ export default function SingleCrewTimesheetPage() {
                 </div>
             </div>
 
-            {/* Allowances Section */}
-            <div className="space-y-4">
-                 <h3 className="font-semibold text-lg border-b pb-2">Allowances</h3>
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="isStms"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel>STMS</FormLabel>
-                            </div>
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="isNightShift"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel>Night Shift</FormLabel>
-                            </div>
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="isMealAllowance"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel>Meal</FormLabel>
-                            </div>
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="isToolAllowance"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel>Tool</FormLabel>
-                            </div>
-                            </FormItem>
-                        )}
-                    />
-                 </div>
-            </div>
              <FormField
                 control={form.control}
                 name="notes"

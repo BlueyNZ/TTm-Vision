@@ -97,4 +97,3 @@ export type Timesheet = {
   signatureDataUrl: string;
   createdAt: Timestamp;
 };
-
