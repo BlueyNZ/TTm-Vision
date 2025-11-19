@@ -49,31 +49,31 @@ const truckInspectionSchema = z.object({
   hubStart: z.coerce.number().min(0).default(0),
   hubEnd: z.coerce.number().min(0).default(0),
   
-  engineOil: inspectionCheckSchema,
-  coolant: inspectionCheckSchema,
-  brakeFluid: inspectionCheckSchema,
-  adBlue: inspectionCheckSchema,
-  brakes: inspectionCheckSchema,
-  airBrakes: inspectionCheckSchema,
-  tyres: inspectionCheckSchema,
-  steering: inspectionCheckSchema,
-  lights: inspectionCheckSchema,
-  arrowBoard: inspectionCheckSchema,
-  pad: inspectionCheckSchema,
-  horn: inspectionCheckSchema,
-  mirrors: inspectionCheckSchema,
-  windscreen: inspectionCheckSchema,
-  wipers: inspectionCheckSchema,
-  cameras: inspectionCheckSchema,
-  cabInterior: inspectionCheckSchema,
-  seatBelts: inspectionCheckSchema,
-  vehicleExterior: inspectionCheckSchema,
-  gateLatches: inspectionCheckSchema,
+  engineOil: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  coolant: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  brakeFluid: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  adBlue: inspectionCheckSchema.default({ status: "N/A", comments: "" }),
+  brakes: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  airBrakes: inspectionCheckSchema.default({ status: "N/A", comments: "" }),
+  tyres: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  steering: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  lights: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  arrowBoard: inspectionCheckSchema.default({ status: "N/A", comments: "" }),
+  pad: inspectionCheckSchema.default({ status: "N/A", comments: "" }),
+  horn: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  mirrors: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  windscreen: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  wipers: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  cameras: inspectionCheckSchema.default({ status: "N/A", comments: "" }),
+  cabInterior: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  seatBelts: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  vehicleExterior: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  gateLatches: inspectionCheckSchema.default({ status: "N/A", comments: "" }),
   
-  firstAidKit: inspectionCheckSchema,
-  spillKit: inspectionCheckSchema,
-  fireExtinguisher: inspectionCheckSchema,
-  wheelChocks: inspectionCheckSchema,
+  firstAidKit: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  spillKit: inspectionCheckSchema.default({ status: "N/A", comments: "" }),
+  fireExtinguisher: inspectionCheckSchema.default({ status: "Yes", comments: "" }),
+  wheelChocks: inspectionCheckSchema.default({ status: "N/A", comments: "" }),
 
   additionalComments: z.string().optional().default(''),
   inspectionDate: z.date(),
@@ -87,9 +87,10 @@ type InspectionCheckProps = {
   label: string;
   description: string;
   showNA?: boolean;
+  disabled?: boolean;
 };
 
-function InspectionCheck({ form, name, label, description, showNA = true }: InspectionCheckProps) {
+function InspectionCheck({ form, name, label, description, showNA = true, disabled = false }: InspectionCheckProps) {
   return (
     <div className="rounded-lg border p-4 space-y-3">
         <div>
@@ -107,6 +108,7 @@ function InspectionCheck({ form, name, label, description, showNA = true }: Insp
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                     className="flex space-x-4"
+                    disabled={disabled}
                     >
                     <FormItem className="flex items-center space-x-2">
                         <FormControl><RadioGroupItem value="Yes" /></FormControl>
@@ -133,7 +135,7 @@ function InspectionCheck({ form, name, label, description, showNA = true }: Insp
                 render={({ field }) => (
                     <FormItem className="flex-grow">
                         <FormControl>
-                            <Input placeholder="Comments..." {...field} />
+                            <Input placeholder="Comments..." {...field} disabled={disabled}/>
                         </FormControl>
                     </FormItem>
                 )}
@@ -143,7 +145,7 @@ function InspectionCheck({ form, name, label, description, showNA = true }: Insp
   );
 }
 
-const DateInput = ({ value, onChange, onBlur, ...props }: { value: Date | undefined, onChange: (date: Date | undefined) => void, onBlur: () => void }) => {
+const DateInput = ({ value, onChange, onBlur, disabled, ...props }: { value: Date | undefined, onChange: (date: Date | undefined) => void, onBlur: () => void, disabled?: boolean }) => {
     const [inputValue, setInputValue] = useState(value ? format(value, 'dd/MM/yyyy') : '');
     const [popoverOpen, setPopoverOpen] = useState(false);
     
@@ -184,9 +186,10 @@ const DateInput = ({ value, onChange, onBlur, ...props }: { value: Date | undefi
                     onBlur={handleInputBlur}
                     placeholder="dd/MM/yyyy"
                     className="pr-10"
+                    disabled={disabled}
                     {...props}
                 />
-                <PopoverTrigger asChild>
+                <PopoverTrigger asChild disabled={disabled}>
                     <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3">
                         <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                     </Button>
@@ -216,6 +219,7 @@ export default function TruckInspectionPage() {
   const viewId = searchParams.get('view');
   const inspectionId = editId || viewId;
   const isEditMode = !!editId;
+  const isViewMode = !!viewId;
 
 
   const firestore = useFirestore();
@@ -384,7 +388,7 @@ export default function TruckInspectionPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{isEditMode ? 'Edit' : (viewId ? 'View' : 'Create')} Truck Inspection</CardTitle>
+        <CardTitle>{isEditMode ? 'Edit' : (isViewMode ? 'View' : 'Create')} Truck Inspection</CardTitle>
         <CardDescription>
           Pre-start vehicle inspection checklist.
         </CardDescription>
@@ -398,7 +402,7 @@ export default function TruckInspectionPage() {
                 <JobSelector jobs={allJobs || []} selectedJob={selectedJob} onSelectJob={(job) => {
                     setSelectedJob(job);
                     setValue('jobId', job?.id || '');
-                }} />
+                }} disabled={isViewMode} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border bg-muted/50 p-4">
                      <div>
                         <p className="text-sm font-medium text-muted-foreground">Client Name</p>
@@ -418,7 +422,7 @@ export default function TruckInspectionPage() {
                 <TruckSelector trucks={trucks || []} selectedTruck={selectedTruck} onSelectTruck={(truck) => {
                     setSelectedTruck(truck);
                     setValue('truckId', truck?.id || '');
-                }}/>
+                }} disabled={isViewMode}/>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border bg-muted/50 p-4">
                      <div>
                         <p className="text-sm font-medium text-muted-foreground">Fleet No</p>
@@ -433,7 +437,7 @@ export default function TruckInspectionPage() {
                     setSelectedDriver(staff);
                     setValue('driverId', staff?.id || '');
                     setValue('inspectedById', staff?.id || '');
-                }} placeholder="Select driver..."/>
+                }} placeholder="Select driver..." disabled={isViewMode}/>
             </div>
 
              <Separator />
@@ -445,7 +449,7 @@ export default function TruckInspectionPage() {
                         <FormItem>
                             <FormLabel>Rego Expires On</FormLabel>
                             <FormControl>
-                                <DateInput {...field} />
+                                <DateInput {...field} disabled={isViewMode}/>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -454,12 +458,12 @@ export default function TruckInspectionPage() {
                         <FormItem>
                             <FormLabel>WOF/COF Expires On</FormLabel>
                             <FormControl>
-                                <DateInput {...field} />
+                                <DateInput {...field} disabled={isViewMode}/>
                             </FormControl>
                              <FormMessage />
                         </FormItem>
                     )} />
-                    <FormField control={form.control} name="rucExpires" render={({ field }) => (<FormItem><FormLabel>RUC Expires (km)</FormLabel><FormControl><Input placeholder="e.g. 155000" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="rucExpires" render={({ field }) => (<FormItem><FormLabel>RUC Expires (km)</FormLabel><FormControl><Input placeholder="e.g. 155000" {...field} disabled={isViewMode}/></FormControl><FormMessage /></FormItem>)} />
                 </div>
             </div>
 
@@ -468,13 +472,13 @@ export default function TruckInspectionPage() {
             <div className="space-y-4">
                 <h3 className="font-semibold text-lg">HUB & ODO Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                     <FormField control={form.control} name="odoStart" render={({ field }) => (<FormItem><FormLabel>ODO Start</FormLabel><FormControl><Input type="number" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                     <FormField control={form.control} name="odoEnd" render={({ field }) => (<FormItem><FormLabel>ODO End</FormLabel><FormControl><Input type="number" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="odoStart" render={({ field }) => (<FormItem><FormLabel>ODO Start</FormLabel><FormControl><Input type="number" placeholder="0" {...field} disabled={isViewMode}/></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="odoEnd" render={({ field }) => (<FormItem><FormLabel>ODO End</FormLabel><FormControl><Input type="number" placeholder="0" {...field} disabled={isViewMode}/></FormControl><FormMessage /></FormItem>)} />
                      <div className="space-y-2"><Label>ODO Distance</Label><div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm">{odoDistance} km</div></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                     <FormField control={form.control} name="hubStart" render={({ field }) => (<FormItem><FormLabel>HUB Start</FormLabel><FormControl><Input type="number" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                     <FormField control={form.control} name="hubEnd" render={({ field }) => (<FormItem><FormLabel>HUB End</FormLabel><FormControl><Input type="number" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="hubStart" render={({ field }) => (<FormItem><FormLabel>HUB Start</FormLabel><FormControl><Input type="number" placeholder="0" {...field} disabled={isViewMode}/></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="hubEnd" render={({ field }) => (<FormItem><FormLabel>HUB End</FormLabel><FormControl><Input type="number" placeholder="0" {...field} disabled={isViewMode}/></FormControl><FormMessage /></FormItem>)} />
                     <div className="space-y-2"><Label>HUB Distance</Label><div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm">{hubDistance} km</div></div>
                 </div>
             </div>
@@ -484,26 +488,26 @@ export default function TruckInspectionPage() {
             <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Vehicle Inspection Checks</h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <InspectionCheck form={form} name="engineOil" label="Engine Oil OK?" description="Level, No Leaks" showNA={false}/>
-                    <InspectionCheck form={form} name="coolant" label="Water / Radiator Coolant OK?" description="Level, No Leaks" showNA={false}/>
-                    <InspectionCheck form={form} name="brakeFluid" label="Brake Fluid OK?" description="Level, No Leaks" showNA={false}/>
-                    <InspectionCheck form={form} name="adBlue" label="Ad Blue OK?" description="At the correct level" />
-                    <InspectionCheck form={form} name="brakes" label="Brakes OK?" description="Foot, hand & park all operational" showNA={false}/>
-                    <InspectionCheck form={form} name="airBrakes" label="Air Brakes OK?" description="No leaks, tanks drained daily" />
-                    <InspectionCheck form={form} name="tyres" label="Tyres OK?" description="Correct pressure, tread in safe limits, no damage, nut indicators correct" showNA={false}/>
-                    <InspectionCheck form={form} name="steering" label="Steering OK?" description="All Operational" showNA={false}/>
-                    <InspectionCheck form={form} name="lights" label="Lights and lenses OK?" description="Head lamps, tail lamps, indicators, brake lights all operational" />
-                    <InspectionCheck form={form} name="arrowBoard" label="Arrow board & Beacon Lights OK?" description="All operational. Functions on Arrow Board work" />
-                    <InspectionCheck form={form} name="pad" label="PAD OK?" description="Operates Correctly" />
-                    <InspectionCheck form={form} name="horn" label="HORN OK?" description="Operational" showNA={false}/>
-                    <InspectionCheck form={form} name="mirrors" label="MIRRORS OK?" description="Clean, no defects, all mirrors checked" showNA={false}/>
-                    <InspectionCheck form={form} name="windscreen" label="WINDSCREEN OK?" description="Clear, Free from Cracks & Chips" showNA={false}/>
-                    <InspectionCheck form={form} name="wipers" label="WINDSCREEN WIPERS AND WASHERS OK?" description="Operational" showNA={false}/>
-                    <InspectionCheck form={form} name="cameras" label="CAMERAS OK?" description="Are All Cameras Working?" />
-                    <InspectionCheck form={form} name="cabInterior" label="CAB INTERIOR OK?" description="Clean, No Damage, No Loose Objects" showNA={false}/>
-                    <InspectionCheck form={form} name="seatBelts" label="SEAT BELTS OK?" description="Operational & in good condition" showNA={false}/>
-                    <InspectionCheck form={form} name="vehicleExterior" label="VEHICLE EXTERIOR OK?" description="Clean, No Damage, Dents" showNA={false}/>
-                    <InspectionCheck form={form} name="gateLatches" label="GATE SAFETY CATCH / LATCHES OK?" description="Operational" />
+                    <InspectionCheck form={form} name="engineOil" label="Engine Oil OK?" description="Level, No Leaks" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="coolant" label="Water / Radiator Coolant OK?" description="Level, No Leaks" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="brakeFluid" label="Brake Fluid OK?" description="Level, No Leaks" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="adBlue" label="Ad Blue OK?" description="At the correct level" disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="brakes" label="Brakes OK?" description="Foot, hand & park all operational" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="airBrakes" label="Air Brakes OK?" description="No leaks, tanks drained daily" disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="tyres" label="Tyres OK?" description="Correct pressure, tread in safe limits, no damage, nut indicators correct" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="steering" label="Steering OK?" description="All Operational" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="lights" label="Lights and lenses OK?" description="Head lamps, tail lamps, indicators, brake lights all operational" disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="arrowBoard" label="Arrow board & Beacon Lights OK?" description="All operational. Functions on Arrow Board work" disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="pad" label="PAD OK?" description="Operates Correctly" disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="horn" label="HORN OK?" description="Operational" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="mirrors" label="MIRRORS OK?" description="Clean, no defects, all mirrors checked" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="windscreen" label="WINDSCREEN OK?" description="Clear, Free from Cracks & Chips" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="wipers" label="WINDSCREEN WIPERS AND WASHERS OK?" description="Operational" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="cameras" label="CAMERAS OK?" description="Are All Cameras Working?" disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="cabInterior" label="CAB INTERIOR OK?" description="Clean, No Damage, No Loose Objects" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="seatBelts" label="SEAT BELTS OK?" description="Operational & in good condition" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="vehicleExterior" label="VEHICLE EXTERIOR OK?" description="Clean, No Damage, Dents" showNA={false} disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="gateLatches" label="GATE SAFETY CATCH / LATCHES OK?" description="Operational" disabled={isViewMode}/>
                 </div>
             </div>
 
@@ -512,10 +516,10 @@ export default function TruckInspectionPage() {
              <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Equipment Inspection Checks</h3>
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <InspectionCheck form={form} name="firstAidKit" label="FIRST AID KIT OK?" description="Clean and Well Stocked" />
-                    <InspectionCheck form={form} name="spillKit" label="SPILL KIT OK?" description="Stocked & Complete" />
-                    <InspectionCheck form={form} name="fireExtinguisher" label="FIRE EXTINGUISHER GOOD?" description="In Test & In Good Condition" />
-                    <InspectionCheck form={form} name="wheelChocks" label="WHEEL CHOCKS OK?" description="On Board & Available for Use" />
+                    <InspectionCheck form={form} name="firstAidKit" label="FIRST AID KIT OK?" description="Clean and Well Stocked" disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="spillKit" label="SPILL KIT OK?" description="Stocked & Complete" disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="fireExtinguisher" label="FIRE EXTINGUISHER GOOD?" description="In Test & In Good Condition" disabled={isViewMode}/>
+                    <InspectionCheck form={form} name="wheelChocks" label="WHEEL CHOCKS OK?" description="On Board & Available for Use" disabled={isViewMode}/>
                 </div>
             </div>
 
@@ -534,6 +538,7 @@ export default function TruckInspectionPage() {
                                 placeholder="Add any final notes or comments..."
                                 className="resize-y"
                                 {...field}
+                                disabled={isViewMode}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -548,9 +553,9 @@ export default function TruckInspectionPage() {
                             <FormLabel>Signature</FormLabel>
                             <FormControl>
                             <div className="space-y-4">
-                                <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
+                                <Dialog open={isSignatureDialogOpen} onOpenChange={isViewMode ? undefined : setIsSignatureDialogOpen}>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" className="w-full">
+                                        <Button variant="outline" className="w-full" disabled={isViewMode}>
                                             {signatureDataUrlValue ? (
                                                 <><CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Signed (Click to re-sign)</>
                                             ) : (
@@ -596,11 +601,18 @@ export default function TruckInspectionPage() {
 
 
           </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                Submit Inspection
-            </Button>
+          <CardFooter className="justify-end gap-2">
+            {isViewMode ? (
+                 <Button type="button" onClick={() => router.back()}>Back</Button>
+            ) : (
+                <>
+                    <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        {isEditMode ? 'Save Changes' : 'Submit Inspection'}
+                    </Button>
+                </>
+            )}
           </CardFooter>
         </form>
       </Form>

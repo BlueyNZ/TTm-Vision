@@ -144,7 +144,7 @@ export default function JobTimesheetsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                             <DropdownMenuItem onClick={() => router.push(`/jobs/${jobId}/paperwork/single-crew-timesheet?edit=${ts.id}`)}>
+                             <DropdownMenuItem onClick={() => router.push(`/jobs/${jobId}/paperwork/single-crew-timesheet?view=${ts.id}`)}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View
                             </DropdownMenuItem>

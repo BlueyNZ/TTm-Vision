@@ -73,8 +73,11 @@ export default function SingleCrewTimesheetPage() {
   const router = useRouter();
   const { toast } = useToast();
   const jobId = params.id as string;
-  const timesheetId = searchParams.get('edit');
-  const isEditMode = !!timesheetId;
+  const editId = searchParams.get('edit');
+  const viewId = searchParams.get('view');
+  const timesheetId = editId || viewId;
+  const isEditMode = !!editId;
+  const isViewMode = !!viewId;
 
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -158,7 +161,7 @@ export default function SingleCrewTimesheetPage() {
 
 
   useEffect(() => {
-    if (job && !isEditMode) {
+    if (job && !timesheetId) {
       setValue('jobId', job.id);
       if (job.startDate) {
         const date = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -167,10 +170,10 @@ export default function SingleCrewTimesheetPage() {
         }
       }
     }
-  }, [job, setValue, isEditMode]);
+  }, [job, setValue, timesheetId]);
 
   useEffect(() => {
-    if (isEditMode && timesheetToEdit && staffList) {
+    if (timesheetId && timesheetToEdit && staffList) {
         const staffMember = staffList.find(s => s.id === timesheetToEdit.staffId);
         setSelectedStaff(staffMember || null);
         form.reset({
@@ -186,20 +189,20 @@ export default function SingleCrewTimesheetPage() {
             role: timesheetToEdit.role,
         });
     }
-  }, [isEditMode, timesheetToEdit, staffList, form]);
+  }, [timesheetId, timesheetToEdit, staffList, form]);
   
   useEffect(() => {
     if (selectedStaff) {
       setValue('staffId', selectedStaff.id, { shouldValidate: true });
       setValue('staffName', selectedStaff.name);
-    } else if (!isEditMode) { // Prevent clearing on edit load
+    } else if (!timesheetId) { // Prevent clearing on edit/view load
         setValue('staffId', '', { shouldValidate: true });
         setValue('staffName', '');
     }
-  }, [selectedStaff, setValue, isEditMode]);
+  }, [selectedStaff, setValue, timesheetId]);
 
 
-  const isLoading = isJobLoading || isUserLoading || isStaffListLoading || (isEditMode && isTimesheetLoading);
+  const isLoading = isJobLoading || isUserLoading || isStaffListLoading || (!!timesheetId && isTimesheetLoading);
 
   const handleClearSignature = () => {
     signaturePadRef.current?.clear();
@@ -276,7 +279,7 @@ export default function SingleCrewTimesheetPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{isEditMode ? 'Edit' : 'Single Crew'} Timesheet</CardTitle>
+        <CardTitle>{isEditMode ? 'Edit' : isViewMode ? 'View' : 'Single Crew'} Timesheet</CardTitle>
         <CardDescription>
           For Job: {job?.jobNumber || '...'} at {job?.location || '...'}
         </CardDescription>
@@ -313,6 +316,7 @@ export default function SingleCrewTimesheetPage() {
                                 "w-full pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
+                              disabled={isViewMode}
                             >
                               {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -320,7 +324,7 @@ export default function SingleCrewTimesheetPage() {
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus disabled={isViewMode}/>
                         </PopoverContent>
                       </Popover>
                       <FormMessage />
@@ -335,7 +339,7 @@ export default function SingleCrewTimesheetPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isViewMode}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role for this timesheet" />
@@ -370,6 +374,7 @@ export default function SingleCrewTimesheetPage() {
                                 selectedStaff={selectedStaff}
                                 onSelectStaff={setSelectedStaff}
                                 placeholder="Select staff member..."
+                                disabled={isViewMode}
                             />
                             <FormMessage />
                         </FormItem>
@@ -384,7 +389,7 @@ export default function SingleCrewTimesheetPage() {
                         <FormItem>
                           <FormLabel>Start Time</FormLabel>
                           <FormControl>
-                            <Input type="text" placeholder="e.g., 6:30 AM" {...field} />
+                            <Input type="text" placeholder="e.g., 6:30 AM" {...field} disabled={isViewMode}/>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -397,7 +402,7 @@ export default function SingleCrewTimesheetPage() {
                         <FormItem>
                           <FormLabel>Finish Time</FormLabel>
                           <FormControl>
-                            <Input type="text" placeholder="e.g., 5:00 PM" {...field} />
+                            <Input type="text" placeholder="e.g., 5:00 PM" {...field} disabled={isViewMode}/>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -412,7 +417,7 @@ export default function SingleCrewTimesheetPage() {
                         <FormItem>
                           <FormLabel>Breaks (minutes)</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="e.g. 30" {...field} />
+                            <Input type="number" placeholder="e.g. 30" {...field} disabled={isViewMode}/>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -438,6 +443,7 @@ export default function SingleCrewTimesheetPage() {
                             placeholder="Add any relevant notes for this timesheet..."
                             className="resize-y"
                             {...field}
+                            disabled={isViewMode}
                             />
                         </FormControl>
                         <FormMessage />
@@ -453,11 +459,11 @@ export default function SingleCrewTimesheetPage() {
                          <FormLabel>Sign Off</FormLabel>
                          <FormControl>
                            <div className="space-y-4">
-                             <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
+                             <Dialog open={isSignatureDialogOpen} onOpenChange={isViewMode ? undefined : setIsSignatureDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button variant="outline" className="w-full">
+                                    <Button variant="outline" className="w-full" disabled={isViewMode}>
                                         {signatureDataUrlValue ? (
-                                            <><CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Timesheet Signed (Click to re-sign)</>
+                                            <><CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Timesheet Signed {isViewMode ? '' : '(Click to re-sign)'}</>
                                         ) : (
                                             "Sign Off Timesheet"
                                         )}
@@ -499,15 +505,20 @@ export default function SingleCrewTimesheetPage() {
             />
           </CardContent>
           <CardFooter className="justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                {isEditMode ? 'Save Changes' : 'Submit Timesheet'}
-            </Button>
+            {isViewMode ? (
+                <Button type="button" onClick={() => router.back()}>Back</Button>
+            ) : (
+                <>
+                    <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        {isEditMode ? 'Save Changes' : 'Submit Timesheet'}
+                    </Button>
+                </>
+            )}
           </CardFooter>
         </form>
       </Form>
     </Card>
   );
 }
-
