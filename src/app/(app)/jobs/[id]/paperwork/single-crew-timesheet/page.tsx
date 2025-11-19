@@ -24,7 +24,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInMinutes, isValid, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { StaffSelector } from "@/components/staff/staff-selector";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,7 +33,7 @@ const timeRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9])\s*([AP]M)$/i;
 
 const timesheetSchema = z.object({
   jobId: z.string(),
-  staffId: z.string(),
+  staffId: z.string().min(1, "Please select a staff member."),
   staffName: z.string(),
   jobDate: z.date(),
   startTime: z.string().regex(timeRegex, "Invalid time format (e.g., 6:30 AM)"),
@@ -42,7 +41,9 @@ const timesheetSchema = z.object({
   breaks: z.coerce.number().min(0, "Breaks cannot be negative."),
   notes: z.string().optional(),
   signatureDataUrl: z.string().min(1, "A signature is required to submit the timesheet."),
-  role: z.enum(['STMS', 'TC/TTMW', 'TMO', 'Shadow Driver', 'Other Driver', 'Yard Work', 'Truck']),
+  role: z.enum(['STMS', 'TC/TTMW', 'TMO', 'Shadow Driver', 'Other Driver', 'Yard Work', 'Truck'], {
+    required_error: "Please select a role.",
+  }),
 });
 
 // Helper to parse 12-hour time with AM/PM to a 24-hour format
@@ -98,12 +99,14 @@ export default function SingleCrewTimesheetPage() {
     defaultValues: {
       jobId: jobId,
       jobDate: new Date(),
-      startTime: "06:30 AM",
-      finishTime: "05:00 PM",
+      startTime: "",
+      finishTime: "",
       breaks: 30,
       notes: "",
       signatureDataUrl: "",
       role: undefined,
+      staffId: "",
+      staffName: "",
     },
   });
   
@@ -157,8 +160,11 @@ export default function SingleCrewTimesheetPage() {
   
   useEffect(() => {
     if (selectedStaff) {
-      setValue('staffId', selectedStaff.id);
+      setValue('staffId', selectedStaff.id, { shouldValidate: true });
       setValue('staffName', selectedStaff.name);
+    } else {
+        setValue('staffId', '', { shouldValidate: true });
+        setValue('staffName', '');
     }
   }, [selectedStaff, setValue]);
 
@@ -196,6 +202,7 @@ export default function SingleCrewTimesheetPage() {
             finishTime: data.finishTime,
             breaks: data.breaks,
             totalHours: totalHours,
+            notes: data.notes,
             signatureDataUrl: data.signatureDataUrl,
             createdAt: Timestamp.now(),
         };
@@ -314,16 +321,22 @@ export default function SingleCrewTimesheetPage() {
             {/* Timesheet Details Section */}
             <div className="space-y-4">
                 <h3 className="font-semibold text-lg border-b pb-2">Timesheet Details</h3>
-                <FormItem>
-                    <FormLabel>Staff Name</FormLabel>
-                    <StaffSelector 
-                        staffList={staffList || []}
-                        selectedStaff={selectedStaff}
-                        onSelectStaff={setSelectedStaff}
-                        placeholder="Select staff member..."
-                    />
-                    <FormMessage>{form.formState.errors.staffId?.message}</FormMessage>
-                </FormItem>
+                <FormField
+                    control={form.control}
+                    name="staffId"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Staff Name</FormLabel>
+                             <StaffSelector 
+                                staffList={staffList || []}
+                                selectedStaff={selectedStaff}
+                                onSelectStaff={setSelectedStaff}
+                                placeholder="Select staff member..."
+                            />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
@@ -437,7 +450,7 @@ export default function SingleCrewTimesheetPage() {
                              </Dialog>
                               {signatureDataUrlValue && (
                                 <div className="p-4 border-dashed border-2 rounded-md flex justify-center items-center bg-muted/50">
-                                    <Image src={signatureDataUrlValue} alt="Staff signature" width={300} height={100} className="bg-white shadow-sm"/>
+                                    <Image src={signatureDataUrlValue} alt="Staff signature" width={0} height={0} sizes="100vw" style={{ width: 'auto', height: '100px' }} className="bg-white shadow-sm"/>
                                 </div>
                               )}
                            </div>
