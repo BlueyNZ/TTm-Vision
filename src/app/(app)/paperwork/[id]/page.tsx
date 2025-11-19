@@ -9,17 +9,17 @@ import { LoaderCircle, FileText, Circle } from 'lucide-react';
 import Link from 'next/link';
 
 const paperworkLinks = [
-    { title: 'VIEW & EDIT Timesheets', href: 'timesheets' },
+    { title: 'Timesheets', href: 'timesheets' },
     { title: 'Truck Inspections', href: 'truck-inspections' },
     { title: 'Hazard ID', href: 'hazard-id' },
     { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm' },
     { title: 'TMP Checking Process', href: 'pre-installation-process' },
-    { title: 'VIEW/EDIT On-Site Record (CoPTTM)', href: 'new-on-site-record' },
-    { title: 'CREATE Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record' },
-    { title: 'CREATE Job Note', href: 'job-note' },
+    { title: 'On-Site Record (CoPTTM)', href: 'new-on-site-record' },
+    { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record' },
+    { title: 'Job Note', href: 'job-note' },
     { title: 'Take Site Photos', href: '#' },
-    { title: 'CREATE Incident or Event Report', href: 'incident-or-event-report' },
-    { title: 'CREATE Site Audit (CoPTTM SCR)', href: 'site-audit-copttm-scr' },
+    { title: 'Incident or Event Report', href: 'incident-or-event-report' },
+    { title: 'Site Audit (CoPTTM SCR)', href: 'site-audit-copttm-scr' },
 ];
 
 export default function PaperworkMenuPage() {
