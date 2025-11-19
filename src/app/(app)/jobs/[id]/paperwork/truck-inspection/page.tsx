@@ -43,11 +43,11 @@ const truckInspectionSchema = z.object({
   driverId: z.string().min(1, "Please select a driver."),
   regoExpires: z.date({ required_error: "Rego expiry date is required."}),
   wofExpires: z.date({ required_error: "WOF/COF expiry date is required." }),
-  rucExpires: z.string().min(1, "RUC details are required."),
-  odoStart: z.coerce.number().min(0),
-  odoEnd: z.coerce.number().min(0),
-  hubStart: z.coerce.number().min(0),
-  hubEnd: z.coerce.number().min(0),
+  rucExpires: z.string().min(1, "RUC details are required.").default(''),
+  odoStart: z.coerce.number().min(0).default(0),
+  odoEnd: z.coerce.number().min(0).default(0),
+  hubStart: z.coerce.number().min(0).default(0),
+  hubEnd: z.coerce.number().min(0).default(0),
   
   engineOil: inspectionCheckSchema,
   coolant: inspectionCheckSchema,
@@ -212,8 +212,11 @@ export default function TruckInspectionPage() {
   const router = useRouter();
   const { toast } = useToast();
   const jobId = params.id as string;
-  const inspectionId = searchParams.get('edit');
-  const isEditMode = !!inspectionId;
+  const editId = searchParams.get('edit');
+  const viewId = searchParams.get('view');
+  const inspectionId = editId || viewId;
+  const isEditMode = !!editId;
+
 
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -286,14 +289,14 @@ export default function TruckInspectionPage() {
   const hubDistance = useMemo(() => (hubEnd > hubStart ? hubEnd - hubStart : 0), [hubStart, hubEnd]);
   
   useEffect(() => {
-    if (jobData && !isEditMode) {
+    if (jobData && !inspectionId) {
       setSelectedJob(jobData);
       setValue('jobId', jobData.id);
     }
-  }, [jobData, setValue, isEditMode]);
+  }, [jobData, setValue, inspectionId]);
 
   useEffect(() => {
-    if (isEditMode && inspectionToEdit && allJobs && trucks && staff) {
+    if (inspectionId && inspectionToEdit && allJobs && trucks && staff) {
         const job = allJobs.find(j => j.id === inspectionToEdit.jobId);
         const truck = trucks.find(t => t.id === inspectionToEdit.truckId);
         const driver = staff.find(s => s.id === inspectionToEdit.driverId);
@@ -313,10 +316,10 @@ export default function TruckInspectionPage() {
         });
         reset(formValues);
     }
-}, [isEditMode, inspectionToEdit, allJobs, trucks, staff, reset]);
+}, [inspectionId, inspectionToEdit, allJobs, trucks, staff, reset]);
 
 
-  const isLoading = isJobLoading || areJobsLoading || areTrucksLoading || areStaffLoading || (isEditMode && isInspectionLoading);
+  const isLoading = isJobLoading || areJobsLoading || areTrucksLoading || areStaffLoading || (!!inspectionId && isInspectionLoading);
 
   const handleClearSignature = () => {
     signaturePadRef.current?.clear();
@@ -381,7 +384,7 @@ export default function TruckInspectionPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{isEditMode ? 'Edit' : 'Create'} Truck Inspection</CardTitle>
+        <CardTitle>{isEditMode ? 'Edit' : (viewId ? 'View' : 'Create')} Truck Inspection</CardTitle>
         <CardDescription>
           Pre-start vehicle inspection checklist.
         </CardDescription>

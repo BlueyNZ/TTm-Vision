@@ -147,7 +147,7 @@ export default function JobTruckInspectionsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                             <DropdownMenuItem onClick={() => router.push(`/jobs/${jobId}/paperwork/truck-inspection?edit=${inspection.id}`)}>
+                             <DropdownMenuItem onClick={() => router.push(`/jobs/${jobId}/paperwork/truck-inspection?view=${inspection.id}`)}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View
                             </DropdownMenuItem>
