@@ -1,3 +1,4 @@
+
 'use client';
 import { useParams, useRouter } from 'next/navigation';
 import { Job, Timesheet, TruckInspection } from '@/lib/data';
@@ -10,8 +11,7 @@ import Link from 'next/link';
 const paperworkLinks = [
     { title: 'VIEW & EDIT Timesheets', href: 'timesheets' },
     { title: 'Truck Inspections', href: 'truck-inspections' },
-    { title: 'EDIT "last" Vehicle Inspection Record', href: '#' },
-    { title: 'VIEW & EDIT Hazard ID', href: 'hazard-id' },
+    { title: 'Hazard ID', href: 'hazard-id' },
     { title: 'VIEW & EDIT Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm' },
     { title: 'View/Edit TMP Checking Process', href: 'pre-installation-process' },
     { title: 'VIEW/EDIT On-Site Record (CoPTTM)', href: 'new-on-site-record' },
