@@ -6,7 +6,7 @@ import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from "@
 import { Job, Staff, Truck } from "@/lib/data";
 import { doc, collection } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
-import { LoaderCircle, CalendarIcon } from "lucide-react";
+import { LoaderCircle, CalendarIcon, CheckCircle, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,6 +28,7 @@ import { JobSelector } from '@/components/jobs/job-selector';
 import { TruckSelector } from '@/components/fleet/truck-selector';
 import { StaffSelector } from '@/components/staff/staff-selector';
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 
 const checkStatus = z.enum(["Yes", "No", "N/A"]);
 
@@ -212,6 +213,8 @@ export default function TruckInspectionPage() {
   const jobId = params.id as string;
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const signaturePadRef = useRef<SignaturePadRef>(null);
+  const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
 
   // Data fetching
   const { data: jobData, isLoading: isJobLoading } = useDoc<Job>(useMemoFirebase(() => firestore ? doc(firestore, 'job_packs', jobId) : null, [firestore, jobId]));
@@ -271,12 +274,28 @@ export default function TruckInspectionPage() {
   const odoEnd = watch('odoEnd');
   const hubStart = watch('hubStart');
   const hubEnd = watch('hubEnd');
+  const signatureDataUrlValue = watch("signatureDataUrl");
 
   const odoDistance = useMemo(() => (odoEnd > odoStart ? odoEnd - odoStart : 0), [odoStart, odoEnd]);
   const hubDistance = useMemo(() => (hubEnd > hubStart ? hubEnd - hubStart : 0), [hubStart, hubEnd]);
 
 
   const isLoading = isJobLoading || areJobsLoading || areTrucksLoading || areStaffLoading;
+
+  const handleClearSignature = () => {
+    signaturePadRef.current?.clear();
+    form.setValue("signatureDataUrl", "", { shouldValidate: true });
+  };
+
+  const handleConfirmSignature = () => {
+    if (signaturePadRef.current && !signaturePadRef.current.isEmpty()) {
+        const dataUrl = signaturePadRef.current.toDataURL();
+        form.setValue("signatureDataUrl", dataUrl, { shouldValidate: true });
+        setIsSignatureDialogOpen(false);
+    } else {
+        form.setError("signatureDataUrl", { type: "manual", message: "Please provide a signature before confirming." });
+    }
+  };
 
   async function onSubmit(data: z.infer<typeof truckInspectionSchema>) {
     console.log(data);
@@ -342,6 +361,7 @@ export default function TruckInspectionPage() {
                 <StaffSelector staffList={staff || []} selectedStaff={selectedDriver} onSelectStaff={(staff) => {
                     setSelectedDriver(staff);
                     setValue('driverId', staff?.id || '');
+                    setValue('inspectedById', staff?.id || '');
                 }} placeholder="Select driver..."/>
             </div>
 
@@ -428,6 +448,82 @@ export default function TruckInspectionPage() {
                 </div>
             </div>
 
+            <Separator />
+
+            <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Sign Off</h3>
+                <FormField
+                    control={form.control}
+                    name="additionalComments"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Additional Comments?</FormLabel>
+                            <FormControl>
+                                <Textarea
+                                placeholder="Add any final notes or comments..."
+                                className="resize-y"
+                                {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="signatureDataUrl"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Signature</FormLabel>
+                            <FormControl>
+                            <div className="space-y-4">
+                                <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" className="w-full">
+                                            {signatureDataUrlValue ? (
+                                                <><CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Signed (Click to re-sign)</>
+                                            ) : (
+                                                "Provide Signature"
+                                            )}
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Sign Inspection</DialogTitle>
+                                            <DialogDescription>
+                                                By signing, you confirm that this inspection is accurate to the best of your knowledge.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="py-4">
+                                            <SignaturePad 
+                                                ref={signaturePadRef}
+                                            />
+                                        </div>
+                                        <DialogFooter>
+                                            <Button type="button" variant="ghost" onClick={handleClearSignature}>
+                                                <Trash className="mr-2 h-4 w-4" />
+                                                Clear
+                                            </Button>
+                                            <Button type="button" onClick={handleConfirmSignature}>
+                                                Confirm Signature
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                                {signatureDataUrlValue && (
+                                    <div className="p-4 border-dashed border-2 rounded-md flex justify-center items-center bg-muted/50">
+                                        <Image src={signatureDataUrlValue} alt="Driver signature" width={0} height={0} sizes="100vw" style={{ width: 'auto', height: '100px' }} className="bg-white shadow-sm"/>
+                                    </div>
+                                )}
+                            </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+
+
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={isSubmitting}>
@@ -440,3 +536,5 @@ export default function TruckInspectionPage() {
     </Card>
   );
 }
+
+    
