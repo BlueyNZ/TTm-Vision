@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { Job, Staff, OnSiteRecord } from "@/lib/data";
+import { Job, Staff, OnSiteRecord, TtmHandover, TtmDelegation } from "@/lib/data";
 import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { LoaderCircle, PlusCircle, Trash, CheckCircle, Signature } from "lucide-react";
@@ -29,17 +29,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const handoverSchema = z.object({
   id: z.string().optional(),
   isExternal: z.boolean().default(false),
-  receivingStmsId: z.string().min(1),
+  receivingStmsId: z.string().min(1, "A staff member must be selected."),
+  receivingStmsName: z.string(),
+  receivingStmsNztaId: z.string().optional(),
   receivingStmsSignatureDataUrl: z.string().min(1, "Signature is required."),
-  briefingCompleted: z.boolean().default(false),
+  briefingCompleted: z.boolean().default(false).refine(val => val === true, {
+    message: "Briefing must be confirmed."
+  }),
 });
 
 const delegationSchema = z.object({
   id: z.string().optional(),
   isExternal: z.boolean().default(false),
-  delegatedPersonId: z.string().min(1),
+  delegatedPersonId: z.string().min(1, "A staff member must be selected."),
+  delegatedPersonName: z.string(),
+  delegatedPersonNztaId: z.string().optional(),
   delegatedPersonSignatureDataUrl: z.string().min(1, "Signature is required."),
-  briefingCompleted: z.boolean().default(false),
+  briefingCompleted: z.boolean().default(false).refine(val => val === true, {
+    message: "Briefing must be confirmed."
+  }),
 });
 
 const onSiteRecordSchema = z.object({
@@ -54,13 +62,16 @@ const onSiteRecordSchema = z.object({
   workingSpaceSignatureDataUrl: z.string().optional(),
   handovers: z.array(handoverSchema).optional(),
   delegations: z.array(delegationSchema).optional(),
-}).refine(data => data.isStmsInChargeOfWorkingSpace || (data.workingSpacePerson && data.workingSpaceContact && data.workingSpaceSignatureDataUrl), {
+}).refine(data => {
+    if (data.isStmsInChargeOfWorkingSpace) return true;
+    return !!data.workingSpacePerson && !!data.workingSpaceContact && !!data.workingSpaceSignatureDataUrl;
+}, {
   message: "If STMS is not in charge, working space person, contact, and signature are required.",
-  path: ["workingSpacePerson"],
+  path: ["workingSpacePerson"], // you can point to any of the fields
 });
 
 
-type SignatureTarget = 
+type SignatureTarget =
   | { type: 'stms' }
   | { type: 'workingSpace' }
   | { type: 'handover'; index: number }
@@ -84,7 +95,7 @@ export default function NewOnSiteRecordPage() {
 
   const staffCollection = useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]);
   const { data: staffList, isLoading: isStaffLoading } = useCollection<Staff>(staffCollection);
-  
+
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
 
   const form = useForm<z.infer<typeof onSiteRecordSchema>>({
@@ -102,10 +113,15 @@ export default function NewOnSiteRecordPage() {
     },
   });
 
-  const { watch, setValue, control } = form;
+  const { watch, setValue, control, trigger } = form;
+  const { fields: handoverFields, append: appendHandover, remove: removeHandover } = useFieldArray({ control, name: "handovers" });
+  const { fields: delegationFields, append: appendDelegation, remove: removeDelegation } = useFieldArray({ control, name: "delegations" });
+  
   const isStmsInChargeOfWorkingSpace = watch('isStmsInChargeOfWorkingSpace');
   const stmsSignature = watch('stmsSignatureDataUrl');
   const workingSpaceSignature = watch('workingSpaceSignatureDataUrl');
+  const handovers = watch('handovers');
+  const delegations = watch('delegations');
 
   useEffect(() => {
     if (selectedStms) {
@@ -128,7 +144,7 @@ export default function NewOnSiteRecordPage() {
   const handleConfirmSignature = () => {
     if (signaturePadRef.current && !signaturePadRef.current.isEmpty() && signatureTarget) {
       const signatureDataUrl = signaturePadRef.current.toDataURL();
-      
+
       switch (signatureTarget.type) {
         case 'stms':
           setValue('stmsSignatureDataUrl', signatureDataUrl, { shouldValidate: true });
@@ -136,7 +152,12 @@ export default function NewOnSiteRecordPage() {
         case 'workingSpace':
           setValue('workingSpaceSignatureDataUrl', signatureDataUrl, { shouldValidate: true });
           break;
-        // Cases for handover and delegation would be added here
+        case 'handover':
+          setValue(`handovers.${signatureTarget.index}.receivingStmsSignatureDataUrl`, signatureDataUrl, { shouldValidate: true });
+          break;
+        case 'delegation':
+           setValue(`delegations.${signatureTarget.index}.delegatedPersonSignatureDataUrl`, signatureDataUrl, { shouldValidate: true });
+           break;
       }
 
       setIsSignatureDialogOpen(false);
@@ -188,7 +209,7 @@ export default function NewOnSiteRecordPage() {
                       render={() => (
                           <FormItem>
                               <FormLabel>STMS in Charge</FormLabel>
-                              <StaffSelector 
+                              <StaffSelector
                                   staffList={staffList?.filter(s => s.role === 'STMS') || []}
                                   selectedStaff={selectedStms}
                                   onSelectStaff={setSelectedStms}
@@ -262,15 +283,109 @@ export default function NewOnSiteRecordPage() {
 
               <div className="space-y-4">
                   <h3 className="font-semibold text-lg border-b pb-2">TTM STMS Handover</h3>
-                  <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                      <p>Handover functionality with signature will be implemented here.</p>
+                  <div className="space-y-4">
+                      {handoverFields.map((field, index) => (
+                          <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
+                              <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeHandover(index)}>
+                                <Trash className="h-4 w-4 text-destructive" />
+                              </Button>
+                              <StaffSelector
+                                  staffList={staffList?.filter(s => s.role === 'STMS') || []}
+                                  onSelectStaff={(staff) => {
+                                      if (staff) {
+                                          setValue(`handovers.${index}.receivingStmsId`, staff.id, { shouldValidate: true });
+                                          setValue(`handovers.${index}.receivingStmsName`, staff.name);
+                                          setValue(`handovers.${index}.receivingStmsNztaId`, staff.nztaId || 'N/A');
+                                      }
+                                  }}
+                                  placeholder="Select receiving STMS..."
+                                  selectedStaff={staffList?.find(s => s.id === handovers?.[index]?.receivingStmsId)}
+                              />
+                              {watch(`handovers.${index}.receivingStmsName`) && (
+                                <p className="text-sm text-muted-foreground px-1">NZTA ID: {watch(`handovers.${index}.receivingStmsNztaId`) || 'N/A'}</p>
+                              )}
+                              <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'handover', index })}>
+                                <Signature className="mr-2 h-4 w-4" />
+                                {watch(`handovers.${index}.receivingStmsSignatureDataUrl`) ? "Update Signature" : "Sign for Handover"}
+                              </Button>
+                              {watch(`handovers.${index}.receivingStmsSignatureDataUrl`) && (
+                                  <div className="p-2 border rounded-md bg-muted/50 flex justify-center">
+                                      <Image src={watch(`handovers.${index}.receivingStmsSignatureDataUrl`)} alt="Handover Signature" width={200} height={80} className="bg-white"/>
+                                  </div>
+                              )}
+                               <FormField
+                                  control={control}
+                                  name={`handovers.${index}.briefingCompleted`}
+                                  render={({ field }) => (
+                                      <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                                      <FormControl>
+                                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                      </FormControl>
+                                      <div className="space-y-1 leading-none">
+                                          <FormLabel>Tick to confirm handover briefing completed (To be completed by the receiving STMS)</FormLabel>
+                                      </div>
+                                      </FormItem>
+                                  )}
+                              />
+                          </div>
+                      ))}
+                      <Button type="button" variant="outline" size="sm" onClick={() => appendHandover({ receivingStmsId: '', receivingStmsName: '', briefingCompleted: false, receivingStmsSignatureDataUrl: '' })}>
+                          <PlusCircle className="mr-2 h-4 w-4"/> Add Handover
+                      </Button>
                   </div>
               </div>
               
               <div className="space-y-4">
                   <h3 className="font-semibold text-lg border-b pb-2">Delegation</h3>
-                  <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                      <p>Delegation functionality with signature will be implemented here.</p>
+                   <div className="space-y-4">
+                      {delegationFields.map((field, index) => (
+                          <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
+                              <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeDelegation(index)}>
+                                <Trash className="h-4 w-4 text-destructive" />
+                              </Button>
+                              <StaffSelector
+                                  staffList={staffList || []}
+                                  onSelectStaff={(staff) => {
+                                      if (staff) {
+                                          setValue(`delegations.${index}.delegatedPersonId`, staff.id, { shouldValidate: true });
+                                          setValue(`delegations.${index}.delegatedPersonName`, staff.name);
+                                          setValue(`delegations.${index}.delegatedPersonNztaId`, staff.nztaId || 'N/A');
+                                      }
+                                  }}
+                                  placeholder="Select person to delegate to..."
+                                  selectedStaff={staffList?.find(s => s.id === delegations?.[index]?.delegatedPersonId)}
+                              />
+                               {watch(`delegations.${index}.delegatedPersonName`) && (
+                                <p className="text-sm text-muted-foreground px-1">NZTA ID: {watch(`delegations.${index}.delegatedPersonNztaId`) || 'N/A'}</p>
+                              )}
+                              <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'delegation', index })}>
+                                <Signature className="mr-2 h-4 w-4" />
+                                {watch(`delegations.${index}.delegatedPersonSignatureDataUrl`) ? "Update Signature" : "Sign for Delegation"}
+                              </Button>
+                              {watch(`delegations.${index}.delegatedPersonSignatureDataUrl`) && (
+                                  <div className="p-2 border rounded-md bg-muted/50 flex justify-center">
+                                      <Image src={watch(`delegations.${index}.delegatedPersonSignatureDataUrl`)} alt="Delegation Signature" width={200} height={80} className="bg-white"/>
+                                  </div>
+                              )}
+                               <FormField
+                                  control={control}
+                                  name={`delegations.${index}.briefingCompleted`}
+                                  render={({ field }) => (
+                                      <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                                      <FormControl>
+                                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                      </FormControl>
+                                      <div className="space-y-1 leading-none">
+                                          <FormLabel>Tick to confirm handover briefing completed</FormLabel>
+                                      </div>
+                                      </FormItem>
+                                  )}
+                              />
+                          </div>
+                      ))}
+                      <Button type="button" variant="outline" size="sm" onClick={() => appendDelegation({ delegatedPersonId: '', delegatedPersonName: '', briefingCompleted: false, delegatedPersonSignatureDataUrl: '' })}>
+                          <PlusCircle className="mr-2 h-4 w-4"/> Add Delegation
+                      </Button>
                   </div>
               </div>
               
@@ -297,7 +412,6 @@ export default function NewOnSiteRecordPage() {
                        <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add Comment</Button>
                   </div>
               </div>
-
 
             </CardContent>
             <CardFooter className="justify-end gap-2">
