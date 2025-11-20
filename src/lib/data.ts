@@ -148,12 +148,12 @@ export type TruckInspection = {
 
 export type Hazard = {
   present: 'Yes' | 'No';
-  control: string;
+  control?: string;
 };
 
 export type SiteHazard = {
-  description: string;
-  control: string;
+  description?: string;
+  control?: string;
 };
 
 export type HazardId = {
@@ -177,13 +177,13 @@ export type HazardId = {
     visibility: Hazard;
   };
   siteSpecificHazards: SiteHazard[];
-  siteAccessExit: string;
-  safetyZones: string;
-  evacuationPoints: string;
-  adjustmentsToSite: string;
-  nearestMedicalCentre: string;
-  other: string;
-  requiredPpe: string[];
+  siteAccessExit?: string;
+  safetyZones?: string;
+  evacuationPoints?: string;
+  adjustmentsToSite?: string;
+  nearestMedicalCentre?: string;
+  other?: string;
+  requiredPpe?: string[];
   createdAt: Timestamp;
 };
 
@@ -195,13 +195,73 @@ export type HazardIdNzgttm = {
   performedAt: Timestamp;
   signees: number;
   signaturesObtained: number;
-  siteAccessExit: string;
-  safetyZones: string;
-  evacuationPoints: string;
-  adjustmentsToSite: string;
-  nearestMedicalCentre: string;
-  other: string;
-  requiredPpe: string[];
-  otherPpe: string;
+  siteAccessExit?: string;
+  safetyZones?: string;
+  evacuationPoints?: string;
+  adjustmentsToSite?: string;
+  nearestMedicalCentre?: string;
+  other?: string;
+  requiredPpe?: string[];
+  otherPpe?: string;
   createdAt: Timestamp;
+};
+
+type ProcessCheck = {
+  status: 'Yes' | 'No' | 'N/A';
+};
+
+export type TmpCheckingProcess = {
+  id: string;
+  jobId: string;
+  tmpNumber: string;
+  tmdNumber: string;
+  tmpType: 'GENERIC' | 'SITE SPECIFIC';
+  createdAt: Timestamp;
+
+  // Checks
+  locationDetails: {
+    correctRoadLevel: ProcessCheck;
+    trafficCountConfirmed: ProcessCheck;
+    comment: string;
+  };
+  shape: {
+    intersections: ProcessCheck;
+    verticalCurves: ProcessCheck;
+    horizontalCurves: ProcessCheck;
+    sufficientAdvanceWarning: ProcessCheck;
+    comment: string;
+  };
+  directionAndProtection: {
+    sufficientLength: ProcessCheck;
+    sufficientWidth: ProcessCheck;
+    adequateSightDistance: ProcessCheck;
+    sufficientRoomForTtc: ProcessCheck;
+    comment: string;
+  };
+  requiredSpeedRestrictions: {
+    correctTsl: ProcessCheck;
+    comment: string;
+  };
+  plantAndEquipment: {
+    plantFits: ProcessCheck;
+    comment: string;
+  };
+  personalSafety: {
+    workersInWorkingSpace: ProcessCheck;
+    comment: string;
+  };
+  layoutDiagrams: {
+    diagramsMatch: ProcessCheck;
+    manageHeavyVehicles: ProcessCheck;
+    changesRequired: ProcessCheck;
+    comment: string;
+  };
+  
+  completedBy: {
+    staffId: string;
+    staffName: string;
+    signatureDataUrl: string;
+    dateSigned: Timestamp;
+    qualification: string;
+  }[];
 };

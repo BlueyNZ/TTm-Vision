@@ -1,7 +1,7 @@
 
 'use client';
 import { useParams, useRouter } from 'next/navigation';
-import { Job, Timesheet, TruckInspection, HazardId, HazardIdNzgttm } from '@/lib/data';
+import { Job, Timesheet, TruckInspection, HazardId, HazardIdNzgttm, TmpCheckingProcess } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
@@ -13,7 +13,7 @@ const paperworkLinks = [
     { title: 'Truck Inspections', href: 'truck-inspections', collection: 'truck_inspections' },
     { title: 'Hazard ID', href: 'hazard-id', collection: 'hazard_ids' },
     { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm', collection: 'hazard_ids_nzgttm' },
-    { title: 'TMP Checking Process', href: 'pre-installation-process' },
+    { title: 'TMP Checking Process', href: 'pre-installation-process', collection: 'tmp_checking_processes' },
     { title: 'On-Site Record (CoPTTM)', href: 'new-on-site-record' },
     { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record' },
     { title: 'Job Note', href: 'job-note' },
@@ -39,13 +39,16 @@ export default function PaperworkMenuPage() {
     const truckInspectionsRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'truck_inspections') : null, [firestore, jobId]);
     const hazardIdsRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'hazard_ids') : null, [firestore, jobId]);
     const hazardIdsNzgttmRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'hazard_ids_nzgttm') : null, [firestore, jobId]);
+    const tmpCheckingProcessesRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'tmp_checking_processes') : null, [firestore, jobId]);
 
     const { data: timesheets, isLoading: areTimesheetsLoading } = useCollection<Timesheet>(timesheetsRef);
     const { data: truckInspections, isLoading: areInspectionsLoading } = useCollection<TruckInspection>(truckInspectionsRef);
     const { data: hazardIds, isLoading: areHazardIdsLoading } = useCollection<HazardId>(hazardIdsRef);
     const { data: hazardIdsNzgttm, isLoading: areHazardIdsNzgttmLoading } = useCollection<HazardIdNzgttm>(hazardIdsNzgttmRef);
+    const { data: tmpCheckingProcesses, isLoading: areTmpCheckingProcessesLoading } = useCollection<TmpCheckingProcess>(tmpCheckingProcessesRef);
 
-    const isLoading = isJobLoading || areTimesheetsLoading || areInspectionsLoading || areHazardIdsLoading || areHazardIdsNzgttmLoading;
+
+    const isLoading = isJobLoading || areTimesheetsLoading || areInspectionsLoading || areHazardIdsLoading || areHazardIdsNzgttmLoading || areTmpCheckingProcessesLoading;
 
     if (isLoading) {
         return (
@@ -73,6 +76,7 @@ export default function PaperworkMenuPage() {
         truck_inspections: truckInspections,
         hazard_ids: hazardIds,
         hazard_ids_nzgttm: hazardIdsNzgttm,
+        tmp_checking_processes: tmpCheckingProcesses,
     };
 
     return (
