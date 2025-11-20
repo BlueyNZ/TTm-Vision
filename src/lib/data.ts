@@ -186,3 +186,22 @@ export type HazardId = {
   requiredPpe: string[];
   createdAt: Timestamp;
 };
+
+export type HazardIdNzgttm = {
+  id: string;
+  jobId: string;
+  hazardIdNo: string;
+  performedBy: string;
+  performedAt: Timestamp;
+  signees: number;
+  signaturesObtained: number;
+  siteAccessExit: string;
+  safetyZones: string;
+  evacuationPoints: string;
+  adjustmentsToSite: string;
+  nearestMedicalCentre: string;
+  other: string;
+  requiredPpe: string[];
+  otherPpe: string;
+  createdAt: Timestamp;
+};
