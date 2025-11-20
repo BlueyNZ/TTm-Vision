@@ -33,6 +33,7 @@ export type Staff = {
   accessLevel: 'Staff Member' | 'Admin' | 'Client' | 'Client Staff';
   clientId?: string; // ID of the client company if this is a client user
   clientRole?: 'Admin' | 'Staff';
+  nztaId?: string;
 };
 
 export type Truck = {
@@ -264,4 +265,61 @@ export type TmpCheckingProcess = {
     dateSigned: Timestamp;
     qualification: string;
   }[];
+};
+
+export type OnSiteRecord = {
+  id: string;
+  jobId: string;
+  jobDate: Timestamp;
+  tmpNumber?: string;
+  stmsInChargeId?: string;
+  stmsSignatureDataUrl?: string;
+  stmsTimeSigned?: Timestamp;
+  isStmsInChargeOfWorkingSpace: boolean;
+  workingSpacePerson?: string;
+  workingSpaceContact?: string;
+  workingSpaceSignatureDataUrl?: string;
+  createdAt: Timestamp;
+}
+
+export type TtmHandover = {
+  id: string;
+  onSiteRecordId: string;
+  isExternal: boolean;
+  receivingStmsId: string;
+  receivingStmsSignatureDataUrl: string;
+  timeSigned: Timestamp;
+  briefingCompleted: boolean;
+};
+
+export type TtmDelegation = {
+  id: string;
+  onSiteRecordId: string;
+  isExternal: boolean;
+  delegatedPersonId: string;
+  delegatedPersonSignatureDataUrl: string;
+  timeSigned: Timestamp;
+  briefingCompleted: boolean;
+};
+
+export type TemporarySpeedLimit = {
+  id: string;
+  onSiteRecordId: string;
+  streetName: string;
+  dateTimeInstalled: Timestamp;
+  tslSpeed: number;
+  placementFrom: string;
+  placementTo: string;
+  length: number;
+  removalDate?: Timestamp;
+  removalTime?: Timestamp;
+};
+
+export type WorksiteMonitoring = {
+  id: string;
+  onSiteRecordId: string;
+  checkType: 'Site Set-Up' | 'Site Check' | 'Site Removal';
+  dateTime: Timestamp;
+  signatureDataUrl: string;
+  comments: string;
 };
