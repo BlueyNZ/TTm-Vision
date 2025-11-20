@@ -279,6 +279,7 @@ export type OnSiteRecord = {
   workingSpacePerson?: string;
   workingSpaceContact?: string;
   workingSpaceSignatureDataUrl?: string;
+  workingSpaceTimeSigned?: Timestamp;
   createdAt: Timestamp;
 }
 

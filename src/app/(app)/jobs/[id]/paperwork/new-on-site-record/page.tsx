@@ -6,7 +6,7 @@ import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { Job, Staff, OnSiteRecord } from "@/lib/data";
 import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
-import { LoaderCircle, PlusCircle, Trash, CheckCircle } from "lucide-react";
+import { LoaderCircle, PlusCircle, Trash, CheckCircle, Signature } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,6 +26,22 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 
+const handoverSchema = z.object({
+  id: z.string().optional(),
+  isExternal: z.boolean().default(false),
+  receivingStmsId: z.string().min(1),
+  receivingStmsSignatureDataUrl: z.string().min(1, "Signature is required."),
+  briefingCompleted: z.boolean().default(false),
+});
+
+const delegationSchema = z.object({
+  id: z.string().optional(),
+  isExternal: z.boolean().default(false),
+  delegatedPersonId: z.string().min(1),
+  delegatedPersonSignatureDataUrl: z.string().min(1, "Signature is required."),
+  briefingCompleted: z.boolean().default(false),
+});
+
 const onSiteRecordSchema = z.object({
   jobId: z.string(),
   jobDate: z.date(),
@@ -36,7 +52,19 @@ const onSiteRecordSchema = z.object({
   workingSpacePerson: z.string().optional(),
   workingSpaceContact: z.string().optional(),
   workingSpaceSignatureDataUrl: z.string().optional(),
+  handovers: z.array(handoverSchema).optional(),
+  delegations: z.array(delegationSchema).optional(),
+}).refine(data => data.isStmsInChargeOfWorkingSpace || (data.workingSpacePerson && data.workingSpaceContact && data.workingSpaceSignatureDataUrl), {
+  message: "If STMS is not in charge, working space person, contact, and signature are required.",
+  path: ["workingSpacePerson"],
 });
+
+
+type SignatureTarget = 
+  | { type: 'stms' }
+  | { type: 'workingSpace' }
+  | { type: 'handover'; index: number }
+  | { type: 'delegation'; index: number };
 
 
 export default function NewOnSiteRecordPage() {
@@ -45,8 +73,11 @@ export default function NewOnSiteRecordPage() {
   const { toast } = useToast();
   const jobId = params.id as string;
   const firestore = useFirestore();
+  const signaturePadRef = useRef<SignaturePadRef>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
+  const [signatureTarget, setSignatureTarget] = useState<SignatureTarget | null>(null);
 
   const jobRef = useMemoFirebase(() => (firestore && jobId) ? doc(firestore, 'job_packs', jobId) : null, [firestore, jobId]);
   const { data: job, isLoading: isJobLoading } = useDoc<Job>(jobRef);
@@ -63,11 +94,18 @@ export default function NewOnSiteRecordPage() {
       jobDate: new Date(),
       tmpNumber: "",
       isStmsInChargeOfWorkingSpace: false,
+      stmsInChargeId: "",
+      stmsSignatureDataUrl: "",
+      workingSpaceSignatureDataUrl: "",
+      handovers: [],
+      delegations: [],
     },
   });
 
-  const { watch, setValue } = form;
+  const { watch, setValue, control } = form;
   const isStmsInChargeOfWorkingSpace = watch('isStmsInChargeOfWorkingSpace');
+  const stmsSignature = watch('stmsSignatureDataUrl');
+  const workingSpaceSignature = watch('workingSpaceSignatureDataUrl');
 
   useEffect(() => {
     if (selectedStms) {
@@ -82,6 +120,34 @@ export default function NewOnSiteRecordPage() {
     }
   }, [job, setValue]);
 
+  const handleOpenSignatureDialog = (target: SignatureTarget) => {
+    setSignatureTarget(target);
+    setIsSignatureDialogOpen(true);
+  };
+
+  const handleConfirmSignature = () => {
+    if (signaturePadRef.current && !signaturePadRef.current.isEmpty() && signatureTarget) {
+      const signatureDataUrl = signaturePadRef.current.toDataURL();
+      
+      switch (signatureTarget.type) {
+        case 'stms':
+          setValue('stmsSignatureDataUrl', signatureDataUrl, { shouldValidate: true });
+          break;
+        case 'workingSpace':
+          setValue('workingSpaceSignatureDataUrl', signatureDataUrl, { shouldValidate: true });
+          break;
+        // Cases for handover and delegation would be added here
+      }
+
+      setIsSignatureDialogOpen(false);
+      setSignatureTarget(null);
+      signaturePadRef.current.clear();
+    } else {
+        toast({ title: "Signature Required", description: "Please provide a signature.", variant: "destructive"})
+    }
+  };
+
+
   async function onSubmit(data: z.infer<typeof onSiteRecordSchema>) {
     console.log("Form data:", data);
     toast({ title: "Form is under construction.", description: "Saving is not yet implemented."});
@@ -94,141 +160,174 @@ export default function NewOnSiteRecordPage() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>On Site Record (CoPTTM)</CardTitle>
-        <CardDescription>Edition 4, July 2020</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-8">
-             <div className="space-y-4">
-              <h3 className="font-semibold text-lg border-b pb-2">Job Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <p><span className="font-medium">Job No:</span> {job?.jobNumber}</p>
-                <p><span className="font-medium">Job Date:</span> {job?.startDate ? format(job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate), 'dd/MM/yyyy') : ''}</p>
-                <p className="md:col-span-2"><span className="font-medium">Client:</span> {job?.clientName}</p>
-                <p className="md:col-span-2"><span className="font-medium">Location:</span> {job?.location}</p>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>On Site Record (CoPTTM)</CardTitle>
+          <CardDescription>Edition 4, July 2020</CardDescription>
+        </CardHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="space-y-8">
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg border-b pb-2">Job Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <p><span className="font-medium">Job No:</span> {job?.jobNumber}</p>
+                  <p><span className="font-medium">Job Date:</span> {job?.startDate ? format(job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate), 'dd/MM/yyyy') : ''}</p>
+                  <p className="md:col-span-2"><span className="font-medium">Client:</span> {job?.clientName}</p>
+                  <p className="md:col-span-2"><span className="font-medium">Location:</span> {job?.location}</p>
+                </div>
+                <FormField control={form.control} name="tmpNumber" render={({ field }) => (<FormItem><FormLabel>TMP Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
               </div>
-              <FormField control={form.control} name="tmpNumber" render={({ field }) => (<FormItem><FormLabel>TMP Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-            </div>
 
-            <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Location Details</h3>
-                <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                    <p>Location details table will be implemented here.</p>
-                </div>
-            </div>
-            
-            <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">TTM STMS</h3>
-                 <FormField
-                    control={form.control}
-                    name="stmsInChargeId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>STMS in Charge</FormLabel>
-                            <StaffSelector 
-                                staffList={staffList?.filter(s => s.role === 'STMS') || []}
-                                selectedStaff={selectedStms}
-                                onSelectStaff={setSelectedStms}
-                                placeholder="Select STMS..."
-                            />
-                            {selectedStms && (
-                                <p className="text-sm text-muted-foreground">NZTA ID: {selectedStms.nztaId || 'N/A'}</p>
-                            )}
+              <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">TTM STMS</h3>
+                   <FormField
+                      control={form.control}
+                      name="stmsInChargeId"
+                      render={() => (
+                          <FormItem>
+                              <FormLabel>STMS in Charge</FormLabel>
+                              <StaffSelector 
+                                  staffList={staffList?.filter(s => s.role === 'STMS') || []}
+                                  selectedStaff={selectedStms}
+                                  onSelectStaff={setSelectedStms}
+                                  placeholder="Select STMS..."
+                              />
+                              {selectedStms && (
+                                  <p className="text-sm text-muted-foreground">NZTA ID: {selectedStms.nztaId || 'N/A'}</p>
+                              )}
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="stmsSignatureDataUrl"
+                      render={() => (
+                          <FormItem>
+                            <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'stms'})}>
+                              <Signature className="mr-2 h-4 w-4" />
+                              {stmsSignature ? "Update Signature" : "Sign as STMS in Charge"}
+                            </Button>
+                            {stmsSignature && <div className="p-2 border rounded-md bg-muted/50 flex justify-center"><Image src={stmsSignature} alt="STMS Signature" width={200} height={80} className="bg-white" /></div>}
                             <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 {/* Signature placeholder */}
-                <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                    <p>STMS Signature pad will be here.</p>
-                </div>
-            </div>
+                          </FormItem>
+                      )}
+                  />
+              </div>
 
-            <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Working Space</h3>
-                <FormField
-                    control={form.control}
-                    name="isStmsInChargeOfWorkingSpace"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                            <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                            <FormLabel>
-                                Tick if STMS is also in charge of Working Space
-                            </FormLabel>
-                        </div>
-                        </FormItem>
-                    )}
-                />
-                {!isStmsInChargeOfWorkingSpace && (
-                    <div className="space-y-4 p-4 border rounded-md">
-                        <FormField control={form.control} name="workingSpacePerson" render={({ field }) => (<FormItem><FormLabel>Person responsible for working space</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="workingSpaceContact" render={({ field }) => (<FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                         {/* Signature placeholder */}
-                        <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                            <p>Working Space Signature pad will be here.</p>
-                        </div>
-                    </div>
-                )}
-            </div>
+              <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">Working Space</h3>
+                  <FormField
+                      control={control}
+                      name="isStmsInChargeOfWorkingSpace"
+                      render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                          <FormControl>
+                              <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                  Tick if STMS is also in charge of Working Space
+                              </FormLabel>
+                          </div>
+                          </FormItem>
+                      )}
+                  />
+                  {!isStmsInChargeOfWorkingSpace && (
+                      <div className="space-y-4 p-4 border rounded-md">
+                          <FormField control={control} name="workingSpacePerson" render={({ field }) => (<FormItem><FormLabel>Person responsible for working space</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField control={control} name="workingSpaceContact" render={({ field }) => (<FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField
+                              control={control}
+                              name="workingSpaceSignatureDataUrl"
+                              render={() => (
+                                <FormItem>
+                                  <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'workingSpace'})}>
+                                    <Signature className="mr-2 h-4 w-4" />
+                                    {workingSpaceSignature ? "Update Signature" : "Sign for Working Space"}
+                                  </Button>
+                                  {workingSpaceSignature && <div className="p-2 border rounded-md bg-muted/50 flex justify-center"><Image src={workingSpaceSignature} alt="Working Space Signature" width={200} height={80} className="bg-white" /></div>}
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                          />
+                      </div>
+                  )}
+              </div>
 
-            <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">TTM STMS Handover</h3>
-                <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                    <p>Handover functionality will be implemented here.</p>
-                </div>
-            </div>
-            
-            <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Delegation</h3>
-                <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                    <p>Delegation functionality will be implemented here.</p>
-                </div>
-            </div>
-            
-             <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Temporary Speed Limits Details</h3>
-                <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                    <p>TSL management will be implemented here.</p>
-                    <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add TSL</Button>
-                </div>
-            </div>
+              <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">TTM STMS Handover</h3>
+                  <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
+                      <p>Handover functionality with signature will be implemented here.</p>
+                  </div>
+              </div>
+              
+              <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">Delegation</h3>
+                  <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
+                      <p>Delegation functionality with signature will be implemented here.</p>
+                  </div>
+              </div>
+              
+              <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">Temporary Speed Limits Details</h3>
+                  <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
+                      <p>TSL management will be implemented here.</p>
+                      <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add TSL</Button>
+                  </div>
+              </div>
 
-            <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Worksite Monitoring</h3>
-                 <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                    <p>Worksite monitoring checks will be listed here.</p>
-                     <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add Site Check</Button>
-                </div>
-            </div>
-            
-            <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Comments / Site Adjustments</h3>
-                 <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                    <p>Comments will be listed here.</p>
-                     <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add Comment</Button>
-                </div>
-            </div>
+              <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">Worksite Monitoring</h3>
+                   <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
+                      <p>Worksite monitoring checks will be listed here.</p>
+                       <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add Site Check</Button>
+                  </div>
+              </div>
+              
+              <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">Comments / Site Adjustments</h3>
+                   <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
+                      <p>Comments will be listed here.</p>
+                       <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add Comment</Button>
+                  </div>
+              </div>
 
 
-          </CardContent>
-          <CardFooter className="justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                Submit Form
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+            </CardContent>
+            <CardFooter className="justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                  Submit Form
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+      
+      <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Provide Signature</DialogTitle>
+                <DialogDescription>
+                    Please sign in the box below to confirm.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+                <SignaturePad ref={signaturePadRef} />
+            </div>
+            <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => signaturePadRef.current?.clear()}>Clear</Button>
+                <Button type="button" onClick={handleConfirmSignature}>Confirm Signature</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
