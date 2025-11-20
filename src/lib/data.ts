@@ -145,3 +145,44 @@ export type TruckInspection = {
     signatureDataUrl: string;
     createdAt: Timestamp;
 };
+
+export type Hazard = {
+  present: 'Yes' | 'No';
+  control: string;
+};
+
+export type SiteHazard = {
+  description: string;
+  control: string;
+};
+
+export type HazardId = {
+  id: string;
+  jobId: string;
+  hazardIdNo: string;
+  performedBy: string;
+  signees: number;
+  performedAt: Timestamp;
+  commonHazards: {
+    contractorMovements: Hazard;
+    poorRoadSurface: Hazard;
+    mobilityScooters: Hazard;
+    largeVehicles: Hazard;
+    weather: Hazard;
+    cyclists: Hazard;
+    excessSpeed: Hazard;
+    pedestriansFootpathClosed: Hazard;
+    pedestriansFootpathDetour: Hazard;
+    trafficVehicles: Hazard;
+    visibility: Hazard;
+  };
+  siteSpecificHazards: SiteHazard[];
+  siteAccessExit: string;
+  safetyZones: string;
+  evacuationPoints: string;
+  adjustmentsToSite: string;
+  nearestMedicalCentre: string;
+  other: string;
+  requiredPpe: string[];
+  createdAt: Timestamp;
+};

@@ -96,7 +96,12 @@ export default function PaperworkMenuPage() {
                             count = completedInspections;
                             statusText = `${count} inspection${count === 1 ? '' : 's'} completed`;
                             isCompleted = count > 0;
+                        } else if (link.href === 'hazard-id') {
+                            // This logic can be expanded when hazard ID submissions are stored
+                             isCompleted = false;
+                             statusText = "Not yet completed";
                         }
+
 
                         return (
                             <Link href={link.href === '#' ? '#' : `/jobs/${jobId}/paperwork/${link.href}`} key={link.title} className="block">
