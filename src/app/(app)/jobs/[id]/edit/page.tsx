@@ -204,14 +204,24 @@ export default function JobEditPage() {
         tcs: selectedTcs.map(tc => ({ id: tc.id, name: tc.name })),
         contactPerson: contactPerson,
         contactNumber: contactNumber,
-        tmpUrl: tmpUrl || undefined,
-        wapUrl: wapUrl || undefined,
     };
 
     if (endDate) {
       updatedJob.endDate = Timestamp.fromDate(endDate);
     } else {
       updatedJob.endDate = undefined;
+    }
+
+    if (tmpUrl) {
+        updatedJob.tmpUrl = tmpUrl;
+    } else {
+        updatedJob.tmpUrl = undefined;
+    }
+
+    if (wapUrl) {
+        updatedJob.wapUrl = wapUrl;
+    } else {
+        updatedJob.wapUrl = undefined;
     }
 
     const jobDocRef = doc(firestore, 'job_packs', job.id);

@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState }from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { addDoc, setDoc } from 'firebase/firestore';
-import { collection, Timestamp, getDocs } from 'firebase/firestore';
+import { collection, Timestamp, getDocs, doc } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
 import { X, Calendar as CalendarIcon, LoaderCircle, Upload, File as FileIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -144,7 +144,7 @@ export default function JobCreatePage() {
 
     const coordinates = await getCoordinates(location);
 
-    const newJob: Omit<Job, 'id' | 'endDate'> & { endDate?: Timestamp } = {
+    const newJob: Partial<Job> = {
         jobNumber: newJobNumber,
         name,
         location,
@@ -158,8 +158,6 @@ export default function JobCreatePage() {
         stms: selectedStms?.name || null,
         stmsId: selectedStms?.id || null,
         tcs: selectedTcs.map(tc => ({id: tc.id, name: tc.name })),
-        tmpUrl: '',
-        wapUrl: '',
     };
     
     if (endDate) {
@@ -168,18 +166,19 @@ export default function JobCreatePage() {
     
     try {
         const docRef = await addDoc(jobsCollectionRef, newJob);
+        const updatePayload: Partial<Job> = {};
 
-        let finalTmpUrl = '';
-        let finalWapUrl = '';
         if (tmpFile) {
-            finalTmpUrl = await handleFileUpload(tmpFile, 'tmp', docRef.id) || '';
+            const uploadedUrl = await handleFileUpload(tmpFile, 'tmp', docRef.id);
+            if(uploadedUrl) updatePayload.tmpUrl = uploadedUrl;
         }
         if (wapFile) {
-            finalWapUrl = await handleFileUpload(wapFile, 'wap', docRef.id) || '';
+            const uploadedUrl = await handleFileUpload(wapFile, 'wap', docRef.id);
+            if(uploadedUrl) updatePayload.wapUrl = uploadedUrl;
         }
 
-        if(finalTmpUrl || finalWapUrl) {
-            await setDoc(docRef, { tmpUrl: finalTmpUrl, wapUrl: finalWapUrl }, { merge: true });
+        if(Object.keys(updatePayload).length > 0) {
+            await setDoc(doc(firestore, 'job_packs', docRef.id), updatePayload, { merge: true });
         }
 
         toast({
