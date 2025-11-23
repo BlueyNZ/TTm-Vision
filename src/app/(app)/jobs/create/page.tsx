@@ -56,8 +56,6 @@ export default function JobCreatePage() {
   
   const [tmpFile, setTmpFile] = useState<File | null>(null);
   const [wapFile, setWapFile] = useState<File | null>(null);
-  const [tmpUrl, setTmpUrl] = useState<string | null>(null);
-  const [wapUrl, setWapUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
 
@@ -100,11 +98,6 @@ export default function JobCreatePage() {
     setIsUploading(true);
     try {
       const downloadUrl = await uploadFile(file, `jobs/${jobId}/${type}/${file.name}`);
-      if (type === 'tmp') {
-        setTmpUrl(downloadUrl);
-      } else {
-        setWapUrl(downloadUrl);
-      }
       toast({ title: 'Upload Successful', description: `${file.name} has been uploaded.` });
       return downloadUrl;
     } catch (error) {
@@ -165,21 +158,21 @@ export default function JobCreatePage() {
     }
     
     try {
-        const docRef = await addDoc(jobsCollectionRef, newJob);
-        const updatePayload: Partial<Job> = {};
+        // Create the document first to get an ID
+        const docRef = doc(jobsCollectionRef);
 
+        // Upload files using the new ID
         if (tmpFile) {
             const uploadedUrl = await handleFileUpload(tmpFile, 'tmp', docRef.id);
-            if(uploadedUrl) updatePayload.tmpUrl = uploadedUrl;
+            if(uploadedUrl) newJob.tmpUrl = uploadedUrl;
         }
         if (wapFile) {
             const uploadedUrl = await handleFileUpload(wapFile, 'wap', docRef.id);
-            if(uploadedUrl) updatePayload.wapUrl = uploadedUrl;
+            if(uploadedUrl) newJob.wapUrl = uploadedUrl;
         }
-
-        if(Object.keys(updatePayload).length > 0) {
-            await setDoc(doc(firestore, 'job_packs', docRef.id), updatePayload, { merge: true });
-        }
+        
+        // Now set the document with all the data
+        await setDoc(docRef, newJob);
 
         toast({
         title: 'Job Created',

@@ -211,21 +211,20 @@ export default function JobEditPage() {
     } else {
       updatedJob.endDate = undefined;
     }
-
-    if (tmpUrl) {
-        updatedJob.tmpUrl = tmpUrl;
-    } else {
-        updatedJob.tmpUrl = undefined;
-    }
-
-    if (wapUrl) {
-        updatedJob.wapUrl = wapUrl;
-    } else {
-        updatedJob.wapUrl = undefined;
-    }
+    
+    if (tmpUrl) updatedJob.tmpUrl = tmpUrl;
+    if (wapUrl) updatedJob.wapUrl = wapUrl;
 
     const jobDocRef = doc(firestore, 'job_packs', job.id);
-    setDocumentNonBlocking(jobDocRef, updatedJob, { merge: true });
+    
+    const finalUpdate: {[k: string]: any} = {};
+    for (const key in updatedJob) {
+        if(updatedJob[key as keyof typeof updatedJob] !== undefined) {
+            finalUpdate[key] = updatedJob[key as keyof typeof updatedJob];
+        }
+    }
+
+    setDocumentNonBlocking(jobDocRef, finalUpdate, { merge: true });
 
     toast({
       title: 'Job Updated',
