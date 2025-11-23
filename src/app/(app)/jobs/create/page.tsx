@@ -1,3 +1,4 @@
+
 'use client';
 import { useRouter } from 'next/navigation';
 import { Job, Staff, Client } from '@/lib/data';
@@ -9,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useState }from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { addDoc, setDoc } from 'firebase/firestore';
 import { collection, Timestamp, getDocs } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
 import { X, Calendar as CalendarIcon, LoaderCircle, Upload, File as FileIcon } from 'lucide-react';
@@ -137,14 +138,13 @@ export default function JobCreatePage() {
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
     
-    // Get the total number of jobs to create the next job number
     const jobSnapshot = await getDocs(jobsCollectionRef);
     const jobCount = jobSnapshot.size;
     const newJobNumber = `TF-${String(jobCount + 1).padStart(4, '0')}`;
 
     const coordinates = await getCoordinates(location);
 
-    const newJob: Omit<Job, 'id'> = {
+    const newJob: Omit<Job, 'id' | 'endDate'> & { endDate?: Timestamp } = {
         jobNumber: newJobNumber,
         name,
         location,
@@ -166,9 +166,9 @@ export default function JobCreatePage() {
         newJob.endDate = Timestamp.fromDate(endDate);
     }
     
-    const docRef = await addDocumentNonBlocking(jobsCollectionRef, newJob);
+    try {
+        const docRef = await addDoc(jobsCollectionRef, newJob);
 
-    if (docRef) {
         let finalTmpUrl = '';
         let finalWapUrl = '';
         if (tmpFile) {
@@ -179,7 +179,7 @@ export default function JobCreatePage() {
         }
 
         if(finalTmpUrl || finalWapUrl) {
-          setDocumentNonBlocking(docRef, { tmpUrl: finalTmpUrl, wapUrl: finalWapUrl }, { merge: true });
+            await setDoc(docRef, { tmpUrl: finalTmpUrl, wapUrl: finalWapUrl }, { merge: true });
         }
 
         toast({
@@ -187,11 +187,13 @@ export default function JobCreatePage() {
         description: `Job ${newJobNumber} at ${location} has been created.`,
         });
         router.push(`/jobs`);
-    } else {
-        toast({ variant: 'destructive', title: 'Creation Failed', description: 'Could not create job document.' });
-    }
 
-    setIsSubmitting(false);
+    } catch (error) {
+        console.error("Error creating job:", error)
+        toast({ variant: 'destructive', title: 'Creation Failed', description: 'Could not create job document.' });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (

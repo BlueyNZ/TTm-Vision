@@ -1,3 +1,4 @@
+
 'use client';
 import { useParams, useRouter } from 'next/navigation';
 import { Job, Staff, Client } from '@/lib/data';
@@ -195,7 +196,6 @@ export default function JobEditPage() {
         clientName: selectedClient?.name || '',
         clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
-        endDate: endDate ? Timestamp.fromDate(endDate) : undefined,
         startTime,
         siteSetupTime,
         status: jobStatus,
@@ -207,6 +207,12 @@ export default function JobEditPage() {
         tmpUrl: tmpUrl || undefined,
         wapUrl: wapUrl || undefined,
     };
+
+    if (endDate) {
+      updatedJob.endDate = Timestamp.fromDate(endDate);
+    } else {
+      updatedJob.endDate = undefined;
+    }
 
     const jobDocRef = doc(firestore, 'job_packs', job.id);
     setDocumentNonBlocking(jobDocRef, updatedJob, { merge: true });
