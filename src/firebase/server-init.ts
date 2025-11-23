@@ -28,7 +28,7 @@ export function initializeFirebaseOnServer(): App {
     : undefined;
 
   if (serviceAccount) {
-    // Production / Deployed environment
+    // Production / Deployed environment with explicit service account
      app = initializeApp({
         credential: cert(serviceAccount),
         projectId: firebaseConfig.projectId
