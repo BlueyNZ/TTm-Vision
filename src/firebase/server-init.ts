@@ -1,11 +1,14 @@
 
-import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
 import * as admin from 'firebase-admin';
 import { firebaseConfig } from '@/firebase/config';
 
 /**
  * Initializes and returns the Firebase Admin App instance for server-side operations.
  * It ensures the app is initialized only once (singleton pattern).
+ *
+ * In a secure server environment (like Google Cloud), initializing without explicit
+ * credentials allows the SDK to use Application Default Credentials.
  *
  * @returns The initialized Firebase Admin App instance.
  */
@@ -15,16 +18,10 @@ export async function initializeFirebaseOnServer(): Promise<App> {
     return admin.apps[0];
   }
 
-  // Parse the service account from environment variables.
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-    ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    : undefined;
-
-  // Initialize the app with the appropriate credentials.
+  // Initialize the app without explicit credentials.
+  // This allows it to automatically use the environment's Application Default Credentials.
   const app = initializeApp({
-    credential: serviceAccount ? cert(serviceAccount) : undefined, // Use service account if available
     projectId: firebaseConfig.projectId,
-    // The storage bucket needs to be explicitly provided for the Admin SDK.
     storageBucket: firebaseConfig.storageBucket,
   });
 
