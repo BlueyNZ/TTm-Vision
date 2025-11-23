@@ -1,7 +1,5 @@
 
-'use server';
-
-import { initializeApp, getApps, getApp, cert, App } from 'firebase-admin/app';
+import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import * as admin from 'firebase-admin';
 import { firebaseConfig } from '@/firebase/config';
 
@@ -11,7 +9,7 @@ import { firebaseConfig } from '@/firebase/config';
  *
  * @returns The initialized Firebase Admin App instance.
  */
-export function initializeFirebaseOnServer(): App {
+export async function initializeFirebaseOnServer(): Promise<App> {
   // If the app is already initialized, return the existing instance.
   if (admin.apps.length > 0 && admin.apps[0]) {
     return admin.apps[0];

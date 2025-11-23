@@ -34,7 +34,7 @@ export const uploadFileFlow = ai.defineFlow(
     outputSchema: UploadFileOutputSchema,
   },
   async (input) => {
-    const app = initializeFirebaseOnServer();
+    const app = await initializeFirebaseOnServer();
     const storage = getStorage(app);
     const bucket = storage.bucket(firebaseConfig.storageBucket);
 
