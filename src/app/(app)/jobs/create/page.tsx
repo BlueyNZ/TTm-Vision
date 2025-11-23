@@ -12,13 +12,14 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, Timestamp, getDocs } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
-import { X, Calendar as CalendarIcon, LoaderCircle } from 'lucide-react';
+import { X, Calendar as CalendarIcon, LoaderCircle, Upload, File as FileIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
 import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
+import { uploadFile } from '@/firebase/storage';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
   if (typeof window === 'undefined' || !window.google) return null;
@@ -51,6 +52,12 @@ export default function JobCreatePage() {
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [tmpFile, setTmpFile] = useState<File | null>(null);
+  const [wapFile, setWapFile] = useState<File | null>(null);
+  const [tmpUrl, setTmpUrl] = useState<string | null>(null);
+  const [wapUrl, setWapUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
 
   const staffCollection = useMemoFirebase(() => {
@@ -87,6 +94,26 @@ export default function JobCreatePage() {
   const handleRemoveStms = () => {
     setSelectedStms(null);
   }
+
+  const handleFileUpload = async (file: File, type: 'tmp' | 'wap', jobId: string) => {
+    setIsUploading(true);
+    try {
+      const downloadUrl = await uploadFile(file, `jobs/${jobId}/${type}/${file.name}`);
+      if (type === 'tmp') {
+        setTmpUrl(downloadUrl);
+      } else {
+        setWapUrl(downloadUrl);
+      }
+      toast({ title: 'Upload Successful', description: `${file.name} has been uploaded.` });
+      return downloadUrl;
+    } catch (error) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload file.' });
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,19 +158,39 @@ export default function JobCreatePage() {
         stms: selectedStms?.name || null,
         stmsId: selectedStms?.id || null,
         tcs: selectedTcs.map(tc => ({id: tc.id, name: tc.name })),
+        tmpUrl: '',
+        wapUrl: '',
     };
     
     if (endDate) {
         newJob.endDate = Timestamp.fromDate(endDate);
     }
+    
+    const docRef = await addDocumentNonBlocking(jobsCollectionRef, newJob);
 
-    addDocumentNonBlocking(jobsCollectionRef, newJob);
+    if (docRef) {
+        let finalTmpUrl = '';
+        let finalWapUrl = '';
+        if (tmpFile) {
+            finalTmpUrl = await handleFileUpload(tmpFile, 'tmp', docRef.id) || '';
+        }
+        if (wapFile) {
+            finalWapUrl = await handleFileUpload(wapFile, 'wap', docRef.id) || '';
+        }
 
-    toast({
-      title: 'Job Created',
-      description: `Job ${newJobNumber} at ${location} has been created.`,
-    });
-    router.push(`/jobs`);
+        if(finalTmpUrl || finalWapUrl) {
+          setDocumentNonBlocking(docRef, { tmpUrl: finalTmpUrl, wapUrl: finalWapUrl }, { merge: true });
+        }
+
+        toast({
+        title: 'Job Created',
+        description: `Job ${newJobNumber} at ${location} has been created.`,
+        });
+        router.push(`/jobs`);
+    } else {
+        toast({ variant: 'destructive', title: 'Creation Failed', description: 'Could not create job document.' });
+    }
+
     setIsSubmitting(false);
   };
 
@@ -240,6 +287,19 @@ export default function JobCreatePage() {
                 <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.target.value)} placeholder="e.g. 20:00"/>
             </div>
           </div>
+          <div className="space-y-4">
+            <Label>TMP / WAP Files</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="tmp-upload" className="text-sm font-medium">TMP Paperwork</Label>
+                    <Input id="tmp-upload" type="file" onChange={(e) => setTmpFile(e.target.files?.[0] || null)} className="file:text-primary file:font-semibold"/>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="wap-upload" className="text-sm font-medium">WAP Paperwork</Label>
+                    <Input id="wap-upload" type="file" onChange={(e) => setWapFile(e.target.files?.[0] || null)} className="file:text-primary file:font-semibold"/>
+                </div>
+            </div>
+           </div>
            <div className="space-y-2">
             <Label>STMS</Label>
              <StaffSelector 
@@ -291,9 +351,9 @@ export default function JobCreatePage() {
           </div>
         </CardContent>
         <CardFooter className="justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting || isUploading}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting || isUploading}>
+              {isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
               {isSubmitting ? 'Creating...' : 'Create Job'}
             </Button>
         </CardFooter>

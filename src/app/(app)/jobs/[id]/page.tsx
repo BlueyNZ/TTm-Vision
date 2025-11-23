@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { Job } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock, ChevronDown, MessageSquare, Building, Phone } from 'lucide-react';
+import { Calendar, Info, MapPin, FileText, Edit, Users, UserSquare, LoaderCircle, Clock, ChevronDown, MessageSquare, Building, Phone, Download } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -251,6 +251,32 @@ export default function JobDetailPage() {
             </div>
           </CardContent>
       </Card>
+      
+      {(job.tmpUrl || job.wapUrl) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Paperwork Files</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {job.tmpUrl && (
+              <a href={job.tmpUrl} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="w-full justify-start">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download TMP Paperwork
+                </Button>
+              </a>
+            )}
+            {job.wapUrl && (
+              <a href={job.wapUrl} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="w-full justify-start">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download WAP Paperwork
+                </Button>
+              </a>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
           <CardHeader>

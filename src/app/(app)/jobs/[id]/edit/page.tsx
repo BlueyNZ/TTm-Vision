@@ -13,13 +13,14 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc, Timestamp } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
-import { X, LoaderCircle, Calendar as CalendarIcon } from 'lucide-react';
+import { X, LoaderCircle, Calendar as CalendarIcon, Upload, File as FileIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
 import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
+import { uploadFile } from '@/firebase/storage';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
   if (typeof window === 'undefined' || !window.google) return null;
@@ -57,6 +58,13 @@ export default function JobEditPage() {
   const [contactPerson, setContactPerson] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [tmpFile, setTmpFile] = useState<File | null>(null);
+  const [wapFile, setWapFile] = useState<File | null>(null);
+  const [tmpUrl, setTmpUrl] = useState<string | null>(null);
+  const [wapUrl, setWapUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -97,6 +105,8 @@ export default function JobEditPage() {
       setJobStatus(job.status);
       setContactPerson(job.contactPerson || '');
       setContactNumber(job.contactNumber || '');
+      setTmpUrl(job.tmpUrl || null);
+      setWapUrl(job.wapUrl || null);
 
       if (staffList) {
         const stms = staffList.find(s => s.id === job.stmsId);
@@ -134,6 +144,27 @@ export default function JobEditPage() {
     setSelectedStms(null);
   }
 
+  const handleFileUpload = async (file: File, type: 'tmp' | 'wap') => {
+    if (!jobId) return;
+    setIsUploading(true);
+    try {
+      const downloadUrl = await uploadFile(file, `jobs/${jobId}/${type}/${file.name}`);
+      if (type === 'tmp') {
+        setTmpUrl(downloadUrl);
+        setTmpFile(null);
+      } else {
+        setWapUrl(downloadUrl);
+        setWapFile(null);
+      }
+      toast({ title: 'Upload Successful', description: `${file.name} has been uploaded.` });
+    } catch (error) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload file.' });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,7 +188,7 @@ export default function JobEditPage() {
 
     const coordinates = await getCoordinates(jobLocation);
 
-    const updatedJob = {
+    const updatedJob: Partial<Job> = {
         name: jobName,
         location: jobLocation,
         coordinates: coordinates,
@@ -173,6 +204,8 @@ export default function JobEditPage() {
         tcs: selectedTcs.map(tc => ({ id: tc.id, name: tc.name })),
         contactPerson: contactPerson,
         contactNumber: contactNumber,
+        tmpUrl: tmpUrl || undefined,
+        wapUrl: wapUrl || undefined,
     };
 
     const jobDocRef = doc(firestore, 'job_packs', job.id);
@@ -298,6 +331,23 @@ export default function JobEditPage() {
                 <Input id="startTime" type="text" value={startTime} onChange={e => setStartTime(e.target.value)} placeholder="e.g. 20:00" />
             </div>
           </div>
+          <div className="space-y-4">
+            <Label>TMP / WAP Files</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="tmp-upload" className="text-sm font-medium">TMP Paperwork</Label>
+                    <Input id="tmp-upload" type="file" onChange={(e) => setTmpFile(e.target.files?.[0] || null)} className="file:text-primary file:font-semibold"/>
+                    {tmpFile && <Button type="button" size="sm" onClick={() => handleFileUpload(tmpFile, 'tmp')} disabled={isUploading}>{isUploading ? <LoaderCircle className="animate-spin" /> : <Upload />} Upload TMP</Button>}
+                    {tmpUrl && <div className="text-sm text-green-600 flex items-center gap-2"><FileIcon className="h-4 w-4" /> <a href={tmpUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">View Uploaded TMP</a></div>}
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="wap-upload" className="text-sm font-medium">WAP Paperwork</Label>
+                    <Input id="wap-upload" type="file" onChange={(e) => setWapFile(e.target.files?.[0] || null)} className="file:text-primary file:font-semibold"/>
+                    {wapFile && <Button type="button" size="sm" onClick={() => handleFileUpload(wapFile, 'wap')} disabled={isUploading}>{isUploading ? <LoaderCircle className="animate-spin" /> : <Upload />} Upload WAP</Button>}
+                    {wapUrl && <div className="text-sm text-green-600 flex items-center gap-2"><FileIcon className="h-4 w-4" /> <a href={wapUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">View Uploaded WAP</a></div>}
+                </div>
+            </div>
+           </div>
            <div className="space-y-2">
             <Label>STMS</Label>
              <StaffSelector 
@@ -364,7 +414,7 @@ export default function JobEditPage() {
         </CardContent>
         <CardFooter className="justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || isUploading}>
                 {isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>

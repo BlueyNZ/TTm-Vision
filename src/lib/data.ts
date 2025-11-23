@@ -78,6 +78,8 @@ export type Job = {
   tcs: { id: Staff['id'], name: Staff['name']}[];
   contactPerson?: string;
   contactNumber?: string;
+  tmpUrl?: string;
+  wapUrl?: string;
 };
 
 export type Timesheet = {
