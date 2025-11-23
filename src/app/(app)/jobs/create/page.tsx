@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useState }from 'react';
+import { useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { addDoc, setDoc } from 'firebase/firestore';
 import { collection, Timestamp, getDocs, doc } from 'firebase/firestore';
@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
 import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
-import { uploadFile } from '@/firebase/storage';
+import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
@@ -38,6 +38,15 @@ async function getCoordinates(address: string): Promise<{ lat: number; lng: numb
   }
   return null;
 }
+
+// Helper to convert file to base64 data URL
+const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 
 export default function JobCreatePage() {
   const router = useRouter();
@@ -133,7 +142,7 @@ export default function JobCreatePage() {
         clientName: selectedClient?.name || '',
         clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
-        endDate: endDate ? Timestamp.fromDate(endDate) : undefined,
+        ...(endDate && { endDate: Timestamp.fromDate(endDate) }),
         startTime,
         siteSetupTime,
         status: 'Upcoming',
@@ -146,24 +155,39 @@ export default function JobCreatePage() {
         await setDoc(docRef, newJob);
 
         let tmpUrl, wapUrl;
+        setIsUploading(true);
 
         if (tmpFile) {
-            setIsUploading(true);
-            tmpUrl = await uploadFile(tmpFile, `jobs/${docRef.id}/tmp/${tmpFile.name}`);
+            const fileData = await toBase64(tmpFile);
+            const result = await uploadFile({
+                filePath: `jobs/${docRef.id}/tmp/${tmpFile.name}`,
+                fileData,
+                fileName: tmpFile.name,
+                fileType: tmpFile.type,
+            });
+            tmpUrl = result.downloadUrl;
         }
         if (wapFile) {
-            setIsUploading(true);
-            wapUrl = await uploadFile(wapFile, `jobs/${docRef.id}/wap/${wapFile.name}`);
+            const fileData = await toBase64(wapFile);
+             const result = await uploadFile({
+                filePath: `jobs/${docRef.id}/wap/${wapFile.name}`,
+                fileData,
+                fileName: wapFile.name,
+                fileType: wapFile.type,
+            });
+            wapUrl = result.downloadUrl;
         }
         
         setIsUploading(false);
 
-        if (tmpUrl || wapUrl) {
-            const updatePayload: { tmpUrl?: string, wapUrl?: string } = {};
-            if (tmpUrl) updatePayload.tmpUrl = tmpUrl;
-            if (wapUrl) updatePayload.wapUrl = wapUrl;
+        const updatePayload: Partial<Job> = {};
+        if (tmpUrl) updatePayload.tmpUrl = tmpUrl;
+        if (wapUrl) updatePayload.wapUrl = wapUrl;
+
+        if (Object.keys(updatePayload).length > 0) {
             setDocumentNonBlocking(docRef, updatePayload, { merge: true });
         }
+
 
         toast({
         title: 'Job Created',

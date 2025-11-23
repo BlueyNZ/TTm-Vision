@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState }from 'react';
+import { useEffect, useState } from 'react';
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc, Timestamp } from 'firebase/firestore';
@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
 import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
-import { uploadFile } from '@/firebase/storage';
+import { uploadFile } from '@/ai/flows/upload-file-flow';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
   if (typeof window === 'undefined' || !window.google) return null;
@@ -38,6 +38,16 @@ async function getCoordinates(address: string): Promise<{ lat: number; lng: numb
   }
   return null;
 }
+
+// Helper to convert file to base64 data URL
+const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+
 
 export default function JobEditPage() {
   const params = useParams();
@@ -149,12 +159,19 @@ export default function JobEditPage() {
     if (!jobId) return;
     setIsUploading(true);
     try {
-      const downloadUrl = await uploadFile(file, `jobs/${jobId}/${type}/${file.name}`);
+      const fileData = await toBase64(file);
+      const result = await uploadFile({
+          filePath: `jobs/${jobId}/${type}/${file.name}`,
+          fileData,
+          fileName: file.name,
+          fileType: file.type,
+      });
+
       if (type === 'tmp') {
-        setTmpUrl(downloadUrl);
+        setTmpUrl(result.downloadUrl);
         setTmpFile(null);
       } else {
-        setWapUrl(downloadUrl);
+        setWapUrl(result.downloadUrl);
         setWapFile(null);
       }
       toast({ title: 'Upload Successful', description: `${file.name} has been uploaded.` });
@@ -192,7 +209,7 @@ export default function JobEditPage() {
     const updatedJob: Partial<Job> = {
         name: jobName,
         location: jobLocation,
-        coordinates: coordinates,
+        coordinates,
         clientName: selectedClient?.name || '',
         clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
@@ -208,6 +225,8 @@ export default function JobEditPage() {
 
     if (endDate) {
       updatedJob.endDate = Timestamp.fromDate(endDate);
+    } else {
+      updatedJob.endDate = undefined;
     }
     
     if (tmpUrl) updatedJob.tmpUrl = tmpUrl;

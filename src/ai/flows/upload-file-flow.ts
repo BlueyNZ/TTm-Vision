@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for uploading files to Firebase Storage.
@@ -17,9 +18,14 @@ const UploadFileInputSchema = z.object({
   fileType: z.string().describe("The MIME type of the file (e.g., 'application/pdf')."),
 });
 
+export type UploadFileInput = z.infer<typeof UploadFileInputSchema>;
+
 const UploadFileOutputSchema = z.object({
   downloadUrl: z.string().describe('The public URL to access the uploaded file.'),
 });
+
+export type UploadFileOutput = z.infer<typeof UploadFileOutputSchema>;
+
 
 export const uploadFileFlow = ai.defineFlow(
   {
@@ -32,9 +38,15 @@ export const uploadFileFlow = ai.defineFlow(
     const storage = getStorage(app);
     const bucket = storage.bucket(firebaseConfig.storageBucket);
 
-    const { fileData, filePath, fileName, fileType } = input;
+    const { fileData, filePath, fileType } = input;
     
-    const buffer = Buffer.from(fileData, 'base64');
+    // The incoming fileData is a data URL: 'data:mime/type;base64,xxxxxxxx'
+    // We need to strip the prefix to get just the base64 data.
+    const base64Data = fileData.split(',')[1];
+    if (!base64Data) {
+      throw new Error('Invalid file data format. Expected a Base64 data URL.');
+    }
+    const buffer = Buffer.from(base64Data, 'base64');
 
     const file = bucket.file(filePath);
 
@@ -51,3 +63,7 @@ export const uploadFileFlow = ai.defineFlow(
     return { downloadUrl };
   }
 );
+
+export async function uploadFile(input: UploadFileInput): Promise<UploadFileOutput> {
+    return uploadFileFlow(input);
+}
