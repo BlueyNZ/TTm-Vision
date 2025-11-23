@@ -1,0 +1,18 @@
+{
+  "storage": {
+    "rules": "storage.rules",
+    "cors": [
+      {
+        "origin": [
+          "https://*.cloudworkstations.dev"
+        ],
+        "method": [
+          "GET",
+          "POST",
+          "PUT"
+        ],
+        "maxAgeSeconds": 3600
+      }
+    ]
+  }
+}
