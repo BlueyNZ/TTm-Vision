@@ -208,23 +208,13 @@ export default function JobEditPage() {
 
     if (endDate) {
       updatedJob.endDate = Timestamp.fromDate(endDate);
-    } else {
-      updatedJob.endDate = undefined;
     }
     
     if (tmpUrl) updatedJob.tmpUrl = tmpUrl;
     if (wapUrl) updatedJob.wapUrl = wapUrl;
 
     const jobDocRef = doc(firestore, 'job_packs', job.id);
-    
-    const finalUpdate: {[k: string]: any} = {};
-    for (const key in updatedJob) {
-        if(updatedJob[key as keyof typeof updatedJob] !== undefined) {
-            finalUpdate[key] = updatedJob[key as keyof typeof updatedJob];
-        }
-    }
-
-    setDocumentNonBlocking(jobDocRef, finalUpdate, { merge: true });
+    setDocumentNonBlocking(jobDocRef, updatedJob, { merge: true });
 
     toast({
       title: 'Job Updated',
@@ -369,6 +359,7 @@ export default function JobEditPage() {
                 staffList={staffList || []}
                 onSelectStaff={handleSelectStms}
                 placeholder="Select STMS"
+                selectedStaff={selectedStms}
                 disabledIds={[...selectedTcs.map(tc => tc.id), selectedStms?.id].filter(id => !!id) as string[]}
             />
             {selectedStms && (

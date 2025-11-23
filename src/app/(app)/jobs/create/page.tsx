@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
 import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
 import { uploadFile } from '@/firebase/storage';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
   if (typeof window === 'undefined' || !window.google) return null;
@@ -94,21 +95,6 @@ export default function JobCreatePage() {
     setSelectedStms(null);
   }
 
-  const handleFileUpload = async (file: File, type: 'tmp' | 'wap', jobId: string) => {
-    setIsUploading(true);
-    try {
-      const downloadUrl = await uploadFile(file, `jobs/${jobId}/${type}/${file.name}`);
-      toast({ title: 'Upload Successful', description: `${file.name} has been uploaded.` });
-      return downloadUrl;
-    } catch (error) {
-      console.error(error);
-      toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload file.' });
-      return null;
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firestore || !startDate) {
@@ -137,7 +123,9 @@ export default function JobCreatePage() {
 
     const coordinates = await getCoordinates(location);
 
-    const newJob: Partial<Job> = {
+    const docRef = doc(jobsCollectionRef);
+
+    const newJob: Omit<Job, 'id'> = {
         jobNumber: newJobNumber,
         name,
         location,
@@ -145,6 +133,7 @@ export default function JobCreatePage() {
         clientName: selectedClient?.name || '',
         clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
+        endDate: endDate ? Timestamp.fromDate(endDate) : undefined,
         startTime,
         siteSetupTime,
         status: 'Upcoming',
@@ -153,26 +142,28 @@ export default function JobCreatePage() {
         tcs: selectedTcs.map(tc => ({id: tc.id, name: tc.name })),
     };
     
-    if (endDate) {
-        newJob.endDate = Timestamp.fromDate(endDate);
-    }
-    
     try {
-        // Create the document first to get an ID
-        const docRef = doc(jobsCollectionRef);
+        await setDoc(docRef, newJob);
 
-        // Upload files using the new ID
+        let tmpUrl, wapUrl;
+
         if (tmpFile) {
-            const uploadedUrl = await handleFileUpload(tmpFile, 'tmp', docRef.id);
-            if(uploadedUrl) newJob.tmpUrl = uploadedUrl;
+            setIsUploading(true);
+            tmpUrl = await uploadFile(tmpFile, `jobs/${docRef.id}/tmp/${tmpFile.name}`);
         }
         if (wapFile) {
-            const uploadedUrl = await handleFileUpload(wapFile, 'wap', docRef.id);
-            if(uploadedUrl) newJob.wapUrl = uploadedUrl;
+            setIsUploading(true);
+            wapUrl = await uploadFile(wapFile, `jobs/${docRef.id}/wap/${wapFile.name}`);
         }
         
-        // Now set the document with all the data
-        await setDoc(docRef, newJob);
+        setIsUploading(false);
+
+        if (tmpUrl || wapUrl) {
+            const updatePayload: { tmpUrl?: string, wapUrl?: string } = {};
+            if (tmpUrl) updatePayload.tmpUrl = tmpUrl;
+            if (wapUrl) updatePayload.wapUrl = wapUrl;
+            setDocumentNonBlocking(docRef, updatePayload, { merge: true });
+        }
 
         toast({
         title: 'Job Created',
@@ -347,8 +338,8 @@ export default function JobCreatePage() {
         <CardFooter className="justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting || isUploading}>Cancel</Button>
             <Button type="submit" disabled={isSubmitting || isUploading}>
-              {isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {isSubmitting ? 'Creating...' : 'Create Job'}
+              {isSubmitting || isUploading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isSubmitting || isUploading ? 'Saving...' : 'Create Job'}
             </Button>
         </CardFooter>
       </Card>
