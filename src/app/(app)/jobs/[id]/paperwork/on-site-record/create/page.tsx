@@ -3,10 +3,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { Job, Staff, OnSiteRecord, TtmHandover, TtmDelegation } from "@/lib/data";
+import { Job, Staff, OnSiteRecord, TtmHandover, TtmDelegation, WorksiteMonitoring } from "@/lib/data";
 import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { LoaderCircle, PlusCircle, Trash, CheckCircle, Signature } from "lucide-react";
+import { LoaderCircle, PlusCircle, Trash, CheckCircle, Signature, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +15,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { StaffSelector } from "@/components/staff/staff-selector";
@@ -24,6 +26,9 @@ import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 
 const handoverSchema = z.object({
@@ -50,6 +55,14 @@ const delegationSchema = z.object({
   }),
 });
 
+const worksiteMonitoringSchema = z.object({
+  checkType: z.enum(['Site Set-Up', 'Site Check', 'Unattended/Removal']),
+  dateTime: z.date(),
+  signatureDataUrl: z.string().min(1, 'Signature is required.'),
+  comments: z.string().min(1, 'Comments are required.'),
+  isNextCheckRequired: z.enum(['Yes', 'No']).optional(),
+});
+
 const onSiteRecordSchema = z.object({
   jobId: z.string(),
   jobDate: z.date(),
@@ -62,6 +75,7 @@ const onSiteRecordSchema = z.object({
   workingSpaceSignatureDataUrl: z.string().optional(),
   handovers: z.array(handoverSchema).optional(),
   delegations: z.array(delegationSchema).optional(),
+  worksiteMonitoring: z.array(worksiteMonitoringSchema).optional(),
 }).refine(data => {
     if (data.isStmsInChargeOfWorkingSpace) return true;
     return !!data.workingSpacePerson && !!data.workingSpaceContact && !!data.workingSpaceSignatureDataUrl;
@@ -70,12 +84,44 @@ const onSiteRecordSchema = z.object({
   path: ["workingSpacePerson"], // you can point to any of the fields
 });
 
+const DateTimePicker = ({ value, onChange }: { value: Date, onChange: (date: Date) => void }) => {
+  const [date, setDate] = useState<Date | undefined>(value);
+  const [time, setTime] = useState(format(value, 'HH:mm'));
+
+  useEffect(() => {
+    if (date) {
+      const [hours, minutes] = time.split(':').map(Number);
+      const newDateTime = new Date(date);
+      newDateTime.setHours(hours, minutes);
+      onChange(newDateTime);
+    }
+  }, [date, time, onChange]);
+  
+  return (
+    <div className="flex items-center gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className={cn("w-[180px] justify-start text-left font-normal", !date && "text-muted-foreground")}>
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? format(date, 'PPP') : 'Pick a date'}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0">
+          <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+        </PopoverContent>
+      </Popover>
+      <Input type="time" value={time} onChange={e => setTime(e.target.value)} className="w-[120px]" />
+    </div>
+  );
+};
+
 
 type SignatureTarget =
   | { type: 'stms' }
   | { type: 'workingSpace' }
   | { type: 'handover'; index: number }
-  | { type: 'delegation'; index: number };
+  | { type: 'delegation'; index: number }
+  | { type: 'worksite'; index: number };
 
 
 export default function NewOnSiteRecordPage() {
@@ -110,18 +156,22 @@ export default function NewOnSiteRecordPage() {
       workingSpaceSignatureDataUrl: "",
       handovers: [],
       delegations: [],
+      worksiteMonitoring: [{ checkType: 'Site Set-Up', dateTime: new Date(), signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' }],
     },
   });
 
-  const { watch, setValue, control, trigger } = form;
+  const { watch, setValue, control, trigger, getValues } = form;
   const { fields: handoverFields, append: appendHandover, remove: removeHandover } = useFieldArray({ control, name: "handovers" });
   const { fields: delegationFields, append: appendDelegation, remove: removeDelegation } = useFieldArray({ control, name: "delegations" });
+  const { fields: worksiteFields, append: appendWorksite, remove: removeWorksite } = useFieldArray({ control, name: "worksiteMonitoring" });
   
   const isStmsInChargeOfWorkingSpace = watch('isStmsInChargeOfWorkingSpace');
   const stmsSignature = watch('stmsSignatureDataUrl');
   const workingSpaceSignature = watch('workingSpaceSignatureDataUrl');
   const handovers = watch('handovers');
   const delegations = watch('delegations');
+  const worksiteMonitoring = watch('worksiteMonitoring');
+
 
   useEffect(() => {
     if (selectedStms) {
@@ -158,6 +208,9 @@ export default function NewOnSiteRecordPage() {
         case 'delegation':
            setValue(`delegations.${signatureTarget.index}.delegatedPersonSignatureDataUrl`, signatureDataUrl, { shouldValidate: true });
            break;
+        case 'worksite':
+           setValue(`worksiteMonitoring.${signatureTarget.index}.signatureDataUrl`, signatureDataUrl, { shouldValidate: true });
+           break;
       }
 
       setIsSignatureDialogOpen(false);
@@ -167,6 +220,19 @@ export default function NewOnSiteRecordPage() {
         toast({ title: "Signature Required", description: "Please provide a signature.", variant: "destructive"})
     }
   };
+  
+  const handleAddWorksiteCheck = () => {
+    const lastCheck = worksiteFields[worksiteFields.length - 1];
+    const isNextRequired = getValues(`worksiteMonitoring.${worksiteFields.length - 1}.isNextCheckRequired`);
+    const nextCheckType = isNextRequired === 'No' ? 'Unattended/Removal' : 'Site Check';
+    appendWorksite({
+      checkType: nextCheckType,
+      dateTime: new Date(),
+      signatureDataUrl: '',
+      comments: '',
+      isNextCheckRequired: 'Yes'
+    });
+  }
 
 
   async function onSubmit(data: z.infer<typeof onSiteRecordSchema>) {
@@ -388,20 +454,97 @@ export default function NewOnSiteRecordPage() {
                       </Button>
                   </div>
               </div>
+
+               <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">Worksite Monitoring</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Check Type</TableHead>
+                        <TableHead>Date & Time</TableHead>
+                        <TableHead>Signature</TableHead>
+                        <TableHead>Comments</TableHead>
+                        <TableHead><span className="sr-only">Actions</span></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {worksiteFields.map((field, index) => (
+                        <TableRow key={field.id}>
+                          <TableCell>
+                            <Input value={field.checkType} disabled className="bg-muted"/>
+                          </TableCell>
+                          <TableCell>
+                            <FormField
+                              control={control}
+                              name={`worksiteMonitoring.${index}.dateTime`}
+                              render={({ field }) => (
+                                <DateTimePicker {...field} />
+                              )}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog({ type: 'worksite', index })}>
+                              <Signature className="mr-2 h-4 w-4" />
+                              {watch(`worksiteMonitoring.${index}.signatureDataUrl`) ? "Signed" : "Sign"}
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <FormField
+                              control={control}
+                              name={`worksiteMonitoring.${index}.comments`}
+                              render={({ field }) => (
+                                <FormControl><Textarea {...field} /></FormControl>
+                              )}
+                            />
+                          </TableCell>
+                           <TableCell>
+                            {worksiteFields.length > 1 && (
+                              <Button type="button" variant="ghost" size="icon" onClick={() => removeWorksite(index)}>
+                                <Trash className="h-4 w-4 text-destructive"/>
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddWorksiteCheck}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Site Check
+                  </Button>
+                  {worksiteFields.length > 0 && (
+                     <FormField
+                        control={control}
+                        name={`worksiteMonitoring.${worksiteFields.length - 1}.isNextCheckRequired`}
+                        render={({ field }) => (
+                          <FormItem className="p-4 border rounded-md">
+                            <FormLabel>Is another 2-hour site check required?</FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                value={field.value}
+                                className="flex items-center space-x-4 pt-2"
+                              >
+                                <FormItem className="flex items-center space-x-2">
+                                  <FormControl><RadioGroupItem value="Yes" /></FormControl>
+                                  <FormLabel className="font-normal">Yes</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2">
+                                  <FormControl><RadioGroupItem value="No" /></FormControl>
+                                  <FormLabel className="font-normal">No (final check will be Unattended/Removal)</FormLabel>
+                                </FormItem>
+                              </RadioGroup>
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                  )}
+              </div>
               
               <div className="space-y-4">
                   <h3 className="font-semibold text-lg border-b pb-2">Temporary Speed Limits Details</h3>
                   <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
                       <p>TSL management will be implemented here.</p>
                       <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add TSL</Button>
-                  </div>
-              </div>
-
-              <div className="space-y-4">
-                  <h3 className="font-semibold text-lg border-b pb-2">Worksite Monitoring</h3>
-                   <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                      <p>Worksite monitoring checks will be listed here.</p>
-                       <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add Site Check</Button>
                   </div>
               </div>
               

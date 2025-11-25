@@ -269,6 +269,16 @@ export type TmpCheckingProcess = {
   }[];
 };
 
+export type WorksiteMonitoring = {
+  id?: string;
+  checkType: 'Site Set-Up' | 'Site Check' | 'Unattended/Removal';
+  dateTime: Date;
+  signatureDataUrl: string;
+  comments: string;
+  isNextCheckRequired?: 'Yes' | 'No';
+};
+
+
 export type OnSiteRecord = {
   id: string;
   jobId: string;
@@ -282,6 +292,9 @@ export type OnSiteRecord = {
   workingSpaceContact?: string;
   workingSpaceSignatureDataUrl?: string;
   workingSpaceTimeSigned?: Timestamp;
+  handovers?: TtmHandover[];
+  delegations?: TtmDelegation[];
+  worksiteMonitoring?: WorksiteMonitoring[];
   createdAt: Timestamp;
 }
 
@@ -316,13 +329,4 @@ export type TemporarySpeedLimit = {
   length: number;
   removalDate?: Timestamp;
   removalTime?: Timestamp;
-};
-
-export type WorksiteMonitoring = {
-  id: string;
-  onSiteRecordId: string;
-  checkType: 'Site Set-Up' | 'Site Check' | 'Site Removal';
-  dateTime: Timestamp;
-  signatureDataUrl: string;
-  comments: string;
 };
