@@ -24,7 +24,7 @@ import { SignaturePad, SignaturePadRef } from "@/components/ui/signature-pad";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
-import { format, isValid } from "date-fns";
+import { format, isValid, parse } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -89,6 +89,7 @@ const onSiteRecordSchema = z.object({
   delegations: z.array(delegationSchema).optional(),
   worksiteMonitoring: z.array(worksiteMonitoringSchema).optional(),
   temporarySpeedLimits: z.array(temporarySpeedLimitSchema).optional(),
+  generalComments: z.string().optional(),
 }).refine(data => {
     if (data.isStmsInChargeOfWorkingSpace) return true;
     return !!data.workingSpacePerson && !!data.workingSpaceContact && !!data.workingSpaceSignatureDataUrl;
@@ -183,6 +184,7 @@ export default function NewOnSiteRecordPage() {
       delegations: [],
       worksiteMonitoring: [{ checkType: 'Site Set-Up', dateTime: new Date(), signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' }],
       temporarySpeedLimits: [],
+      generalComments: '',
     },
   });
 
@@ -674,11 +676,23 @@ export default function NewOnSiteRecordPage() {
               </div>
               
               <div className="space-y-4">
-                  <h3 className="font-semibold text-lg border-b pb-2">Comments / Site Adjustments</h3>
-                   <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                      <p>Comments will be listed here.</p>
-                       <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add Comment</Button>
-                  </div>
+                <h3 className="font-semibold text-lg border-b pb-2">Comments / Site Adjustments</h3>
+                 <FormField
+                    control={control}
+                    name="generalComments"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <Textarea
+                                placeholder="Add any general comments or notes about site adjustments here..."
+                                className="min-h-[150px]"
+                                {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
               </div>
 
             </CardContent>
@@ -713,4 +727,3 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
-
