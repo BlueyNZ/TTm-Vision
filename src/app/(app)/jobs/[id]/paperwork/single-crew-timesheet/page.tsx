@@ -256,7 +256,7 @@ export default function SingleCrewTimesheetPage() {
             });
         }
 
-        router.push(`/jobs/${jobId}/paperwork/timesheets`);
+        router.push(`/jobs/${jobId}/paperwork`);
 
     } catch (error) {
         console.error("Error submitting timesheet:", error);

@@ -367,7 +367,7 @@ export default function TruckInspectionPage() {
             toast({ title: "Inspection Submitted", description: "Your truck inspection has been recorded." });
         }
         
-        router.push(`/jobs/${data.jobId}/paperwork/truck-inspections`);
+        router.push(`/jobs/${data.jobId}/paperwork`);
 
     } catch (error) {
         console.error("Error submitting inspection:", error);

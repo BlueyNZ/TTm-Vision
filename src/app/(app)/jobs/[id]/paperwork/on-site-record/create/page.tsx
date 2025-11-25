@@ -229,7 +229,7 @@ export default function NewOnSiteRecordPage() {
 
   async function onSubmit(data: z.infer<typeof onSiteRecordSchema>) {
     console.log("Form data:", data);
-    toast({ title: "Form is under construction.", description: "Saving is not yet implemented."});
+    router.push(`/jobs/${jobId}/paperwork`);
   }
 
   const isLoading = isJobLoading || isStaffLoading;
@@ -409,17 +409,27 @@ export default function NewOnSiteRecordPage() {
                                   )}
                                 />
                               ) : (
-                                <StaffSelector
-                                    staffList={staffList?.filter(s => s.role === 'STMS') || []}
-                                    onSelectStaff={(staff) => {
-                                        if (staff) {
-                                            setValue(`handovers.${index}.receivingStmsId`, staff.id, { shouldValidate: true });
-                                            setValue(`handovers.${index}.receivingStmsName`, staff.name);
-                                            setValue(`handovers.${index}.receivingStmsNztaId`, staff.nztaId || 'N/A');
-                                        }
-                                    }}
-                                    placeholder="Select receiving STMS..."
-                                    selectedStaff={staffList?.find(s => s.id === handovers?.[index]?.receivingStmsId)}
+                                <FormField
+                                  control={control}
+                                  name={`handovers.${index}.receivingStmsId`}
+                                  render={() => (
+                                    <FormItem>
+                                      <FormLabel>Name</FormLabel>
+                                      <StaffSelector
+                                          staffList={staffList?.filter(s => s.role === 'STMS') || []}
+                                          onSelectStaff={(staff) => {
+                                              if (staff) {
+                                                  setValue(`handovers.${index}.receivingStmsId`, staff.id, { shouldValidate: true });
+                                                  setValue(`handovers.${index}.receivingStmsName`, staff.name);
+                                                  setValue(`handovers.${index}.receivingStmsNztaId`, staff.nztaId || 'N/A');
+                                              }
+                                          }}
+                                          placeholder="Select receiving STMS..."
+                                          selectedStaff={staffList?.find(s => s.id === handovers?.[index]?.receivingStmsId)}
+                                      />
+                                      <FormMessage/>
+                                    </FormItem>
+                                  )}
                                 />
                               )}
                               
@@ -466,17 +476,27 @@ export default function NewOnSiteRecordPage() {
                               <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeDelegation(index)}>
                                 <Trash className="h-4 w-4 text-destructive" />
                               </Button>
-                              <StaffSelector
-                                  staffList={staffList || []}
-                                  onSelectStaff={(staff) => {
-                                      if (staff) {
-                                          setValue(`delegations.${index}.delegatedPersonId`, staff.id, { shouldValidate: true });
-                                          setValue(`delegations.${index}.delegatedPersonName`, staff.name);
-                                          setValue(`delegations.${index}.delegatedPersonNztaId`, staff.nztaId || 'N/A');
-                                      }
-                                  }}
-                                  placeholder="Select person to delegate to..."
-                                  selectedStaff={staffList?.find(s => s.id === delegations?.[index]?.delegatedPersonId)}
+                              <FormField
+                                control={form.control}
+                                name={`delegations.${index}.delegatedPersonId`}
+                                render={() => (
+                                  <FormItem>
+                                    <FormLabel>Delegated To</FormLabel>
+                                    <StaffSelector
+                                        staffList={staffList || []}
+                                        onSelectStaff={(staff) => {
+                                            if (staff) {
+                                                setValue(`delegations.${index}.delegatedPersonId`, staff.id, { shouldValidate: true });
+                                                setValue(`delegations.${index}.delegatedPersonName`, staff.name);
+                                                setValue(`delegations.${index}.delegatedPersonNztaId`, staff.nztaId || 'N/A');
+                                            }
+                                        }}
+                                        placeholder="Select person to delegate to..."
+                                        selectedStaff={staffList?.find(s => s.id === delegations?.[index]?.delegatedPersonId)}
+                                    />
+                                    <FormMessage/>
+                                  </FormItem>
+                                )}
                               />
                                {watch(`delegations.${index}.delegatedPersonName`) && (
                                 <p className="text-sm text-muted-foreground px-1">NZTA ID: {watch(`delegations.${index}.delegatedPersonNztaId`) || 'N/A'}</p>
@@ -506,7 +526,7 @@ export default function NewOnSiteRecordPage() {
                               />
                           </div>
                       ))}
-                      <Button type="button" variant="outline" size="sm" onClick={() => appendDelegation({ delegatedPersonId: '', delegatedPersonName: '', briefingCompleted: false, delegatedPersonSignatureDataUrl: '' })}>
+                      <Button type="button" variant="outline" size="sm" onClick={() => appendDelegation({ isExternal: false, delegatedPersonId: '', delegatedPersonName: '', briefingCompleted: false, delegatedPersonSignatureDataUrl: '' })}>
                           <PlusCircle className="mr-2 h-4 w-4"/> Add Delegation
                       </Button>
                   </div>
@@ -767,5 +787,3 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
-
-    
