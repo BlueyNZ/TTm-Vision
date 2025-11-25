@@ -179,6 +179,8 @@ export default function NewOnSiteRecordPage() {
       isStmsInChargeOfWorkingSpace: false,
       stmsInChargeId: "",
       stmsSignatureDataUrl: "",
+      workingSpacePerson: "",
+      workingSpaceContact: "",
       workingSpaceSignatureDataUrl: "",
       handovers: [],
       delegations: [],
