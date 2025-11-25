@@ -24,7 +24,7 @@ import { SignaturePad, SignaturePadRef } from "@/components/ui/signature-pad";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -94,18 +94,30 @@ const onSiteRecordSchema = z.object({
   path: ["workingSpacePerson"], // you can point to any of the fields
 });
 
-const DateTimePicker = ({ value, onChange, disabled }: { value: Date, onChange: (date: Date) => void, disabled?: boolean }) => {
+const DateTimePicker = ({ value, onChange, disabled }: { value?: Date, onChange: (date: Date) => void, disabled?: boolean }) => {
   const [date, setDate] = useState<Date | undefined>(value);
-  const [time, setTime] = useState(format(value, 'HH:mm'));
+  const [time, setTime] = useState(value && isValid(value) ? format(value, 'HH:mm') : '');
 
   useEffect(() => {
     if (date) {
       const [hours, minutes] = time.split(':').map(Number);
-      const newDateTime = new Date(date);
-      newDateTime.setHours(hours, minutes);
-      onChange(newDateTime);
+      if(!isNaN(hours) && !isNaN(minutes)) {
+        const newDateTime = new Date(date);
+        newDateTime.setHours(hours, minutes);
+        onChange(newDateTime);
+      }
     }
   }, [date, time, onChange]);
+
+  useEffect(() => {
+    if (value && isValid(value)) {
+      setDate(value);
+      setTime(format(value, 'HH:mm'));
+    } else {
+      setDate(undefined);
+      setTime('');
+    }
+  }, [value]);
   
   return (
     <div className="flex items-center gap-2">
@@ -195,7 +207,7 @@ export default function NewOnSiteRecordPage() {
     if(job && getValues('jobDate').toDateString() === new Date().toDateString()) {
         const jobStartDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
         const formDate = getValues('jobDate');
-        if (formDate.toDateString() !== jobStartDate.toDateString()) {
+        if (isValid(jobStartDate) && isValid(formDate) && formDate.toDateString() !== jobStartDate.toDateString()) {
           setValue('jobDate', jobStartDate);
         }
     }
@@ -685,3 +697,4 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
+
