@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { Job, Staff, OnSiteRecord, TtmHandover, TtmDelegation, WorksiteMonitoring } from "@/lib/data";
-import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs, setDoc } from "firebase/firestore";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle, PlusCircle, Trash, CheckCircle, Signature, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -84,7 +84,7 @@ const onSiteRecordSchema = z.object({
   path: ["workingSpacePerson"], // you can point to any of the fields
 });
 
-const DateTimePicker = ({ value, onChange }: { value: Date, onChange: (date: Date) => void }) => {
+const DateTimePicker = ({ value, onChange, disabled }: { value: Date, onChange: (date: Date) => void, disabled?: boolean }) => {
   const [date, setDate] = useState<Date | undefined>(value);
   const [time, setTime] = useState(format(value, 'HH:mm'));
 
@@ -101,7 +101,7 @@ const DateTimePicker = ({ value, onChange }: { value: Date, onChange: (date: Dat
     <div className="flex items-center gap-2">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className={cn("w-[180px] justify-start text-left font-normal", !date && "text-muted-foreground")}>
+          <Button variant="outline" className={cn("w-[180px] justify-start text-left font-normal", !date && "text-muted-foreground")} disabled={disabled}>
             <CalendarIcon className="mr-2 h-4 w-4" />
             {date ? format(date, 'PPP') : 'Pick a date'}
           </Button>
@@ -110,7 +110,7 @@ const DateTimePicker = ({ value, onChange }: { value: Date, onChange: (date: Dat
           <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
         </PopoverContent>
       </Popover>
-      <Input type="time" value={time} onChange={e => setTime(e.target.value)} className="w-[120px]" />
+      <Input type="time" value={time} onChange={e => setTime(e.target.value)} className="w-[120px]" disabled={disabled} />
     </div>
   );
 };
@@ -180,10 +180,9 @@ export default function NewOnSiteRecordPage() {
   }, [selectedStms, setValue]);
 
   useEffect(() => {
-    if(job?.startDate) {
+    if(job?.startDate && getValues('jobDate').toDateString() === new Date().toDateString()) {
         const jobStartDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
         const formDate = getValues('jobDate');
-        // Only update if the form date is different from the job date to prevent loops
         if (formDate.toDateString() !== jobStartDate.toDateString()) {
           setValue('jobDate', jobStartDate);
         }
@@ -227,7 +226,10 @@ export default function NewOnSiteRecordPage() {
   
   const handleAddWorksiteCheck = () => {
     const lastCheckIndex = worksiteFields.length - 1;
-    if (lastCheckIndex < 0) return;
+    if (lastCheckIndex < 0) { // If there are no checks yet, add a Site Set-Up
+        appendWorksite({ checkType: 'Site Set-Up', dateTime: new Date(), signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' });
+        return;
+    };
   
     const lastCheck = getValues(`worksiteMonitoring.${lastCheckIndex}`);
     const nextCheckType = lastCheck.isNextCheckRequired === 'No' ? 'Unattended/Removal' : 'Site Check';
@@ -476,44 +478,61 @@ export default function NewOnSiteRecordPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {worksiteFields.map((field, index) => (
-                          <TableRow key={field.id}>
-                            <TableCell>
-                              <Input value={field.checkType} disabled className="bg-muted"/>
-                            </TableCell>
-                            <TableCell>
-                              <FormField
-                                control={control}
-                                name={`worksiteMonitoring.${index}.dateTime`}
-                                render={({ field }) => (
-                                  <DateTimePicker {...field} />
+                        {worksiteFields.map((field, index) => {
+                          const signatureDataUrl = watch(`worksiteMonitoring.${index}.signatureDataUrl`);
+                          return (
+                            <TableRow key={field.id}>
+                              <TableCell>
+                                <Input value={field.checkType} disabled className="bg-muted"/>
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={control}
+                                  name={`worksiteMonitoring.${index}.dateTime`}
+                                  render={({ field }) => (
+                                    <DateTimePicker {...field} />
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                {signatureDataUrl ? (
+                                    <div className="flex items-center gap-2">
+                                        <Image src={signatureDataUrl} alt="Signature" width={100} height={40} className="bg-white rounded-sm border" />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setValue(`worksiteMonitoring.${index}.signatureDataUrl`, '', { shouldValidate: true })}
+                                        >
+                                            <Trash className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog({ type: 'worksite', index })}>
+                                        <Signature className="mr-2 h-4 w-4" />
+                                        Sign
+                                    </Button>
                                 )}
-                              />
                             </TableCell>
-                            <TableCell>
-                              <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog({ type: 'worksite', index })}>
-                                <Signature className="mr-2 h-4 w-4" />
-                                {watch(`worksiteMonitoring.${index}.signatureDataUrl`) ? "Signed" : "Sign"}
-                              </Button>
-                            </TableCell>
-                            <TableCell>
-                              <FormField
-                                control={control}
-                                name={`worksiteMonitoring.${index}.comments`}
-                                render={({ field }) => (
-                                  <FormControl><Textarea {...field} /></FormControl>
+                              <TableCell>
+                                <FormField
+                                  control={control}
+                                  name={`worksiteMonitoring.${index}.comments`}
+                                  render={({ field }) => (
+                                    <FormControl><Textarea {...field} /></FormControl>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                {worksiteFields.length > 1 && (
+                                  <Button type="button" variant="ghost" size="icon" onClick={() => removeWorksite(index)}>
+                                    <Trash className="h-4 w-4 text-destructive"/>
+                                  </Button>
                                 )}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              {worksiteFields.length > 1 && (
-                                <Button type="button" variant="ghost" size="icon" onClick={() => removeWorksite(index)}>
-                                  <Trash className="h-4 w-4 text-destructive"/>
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -597,3 +616,5 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
+
+    
