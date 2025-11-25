@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -65,12 +66,12 @@ const worksiteMonitoringSchema = z.object({
 const temporarySpeedLimitSchema = z.object({
   streetName: z.string().min(1, 'Street name is required.'),
   dateTimeInstalled: z.date(),
+  dateTimeTslRemoved: z.date().optional(),
   tslSpeed: z.coerce.number().min(0, 'Speed must be a positive number.'),
   placementFrom: z.string().min(1, "Placement 'from' location is required."),
   placementTo: z.string().min(1, "Placement 'to' location is required."),
   lengthOfTsl: z.coerce.number().min(0, 'Length must be a positive number.'),
   dateTslRemainsInPlace: z.date().optional(),
-  dateTimeTslRemoved: z.date().optional(),
 });
 
 
@@ -268,6 +269,8 @@ export default function NewOnSiteRecordPage() {
       isNextCheckRequired: 'Yes'
     });
   }
+
+  const showAddCheckButton = worksiteFields.length === 0 || worksiteFields[worksiteFields.length - 1]?.checkType !== 'Unattended/Removal';
 
 
   async function onSubmit(data: z.infer<typeof onSiteRecordSchema>) {
@@ -594,9 +597,11 @@ export default function NewOnSiteRecordPage() {
                       </TableBody>
                     </Table>
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddWorksiteCheck}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Site Check
-                  </Button>
+                  {showAddCheckButton && (
+                    <Button type="button" variant="outline" size="sm" onClick={handleAddWorksiteCheck}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Site Check
+                    </Button>
+                  )}
                   {worksiteFields.length > 0 && worksiteFields[worksiteFields.length - 1].checkType !== 'Unattended/Removal' && (
                      <FormField
                         control={control}
@@ -708,3 +713,4 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
+
