@@ -57,7 +57,7 @@ const delegationSchema = z.object({
 
 const worksiteMonitoringSchema = z.object({
   checkType: z.enum(['Site Set-Up', 'Site Check', 'Unattended/Removal']),
-  dateTime: z.date(),
+  dateTime: z.string().min(1, "Date & Time is required."),
   signatureDataUrl: z.string().min(1, 'Signature is required.'),
   comments: z.string().min(1, 'Comments are required.'),
   isNextCheckRequired: z.enum(['Yes', 'No']).optional(),
@@ -65,19 +65,19 @@ const worksiteMonitoringSchema = z.object({
 
 const temporarySpeedLimitSchema = z.object({
   streetName: z.string().min(1, 'Street name is required.'),
-  dateTimeInstalled: z.date(),
-  dateTimeTslRemoved: z.date().optional(),
+  dateTimeInstalled: z.string().min(1, "Install date & time is required."),
+  dateTimeTslRemoved: z.string().optional(),
   tslSpeed: z.coerce.number().min(0, 'Speed must be a positive number.'),
   placementFrom: z.string().min(1, "Placement 'from' location is required."),
   placementTo: z.string().min(1, "Placement 'to' location is required."),
   lengthOfTsl: z.coerce.number().min(0, 'Length must be a positive number.'),
-  dateTslRemainsInPlace: z.date().optional(),
+  dateTslRemainsInPlace: z.string().optional(),
 });
 
 
 const onSiteRecordSchema = z.object({
   jobId: z.string(),
-  jobDate: z.date(),
+  jobDate: z.string().min(1, "Job date is required."),
   tmpNumber: z.string().optional(),
   stmsInChargeId: z.string().min(1, "STMS in charge is required."),
   stmsSignatureDataUrl: z.string().min(1, "STMS signature is required."),
@@ -95,52 +95,8 @@ const onSiteRecordSchema = z.object({
     return !!data.workingSpacePerson && !!data.workingSpaceContact && !!data.workingSpaceSignatureDataUrl;
 }, {
   message: "If STMS is not in charge, working space person, contact, and signature are required.",
-  path: ["workingSpacePerson"], // you can point to any of the fields
+  path: ["workingSpacePerson"],
 });
-
-const DateTimePicker = ({ value, onChange, disabled }: { value?: Date, onChange: (date: Date) => void, disabled?: boolean }) => {
-  const [date, setDate] = useState<Date | undefined>(value);
-  const [time, setTime] = useState(value && isValid(value) ? format(value, 'HH:mm') : '');
-
-  useEffect(() => {
-    if (date) {
-      const [hours, minutes] = time.split(':').map(Number);
-      if(!isNaN(hours) && !isNaN(minutes)) {
-        const newDateTime = new Date(date);
-        newDateTime.setHours(hours, minutes);
-        onChange(newDateTime);
-      }
-    }
-  }, [date, time, onChange]);
-
-  useEffect(() => {
-    if (value && isValid(value)) {
-      setDate(value);
-      setTime(format(value, 'HH:mm'));
-    } else {
-      setDate(undefined);
-      setTime('');
-    }
-  }, [value]);
-  
-  return (
-    <div className="flex items-center gap-2">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")} disabled={disabled}>
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, 'PPP') : 'Pick a date'}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0">
-          <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-        </PopoverContent>
-      </Popover>
-      <Input type="time" value={time} onChange={e => setTime(e.target.value)} className="w-[120px]" disabled={disabled} />
-    </div>
-  );
-};
-
 
 type SignatureTarget =
   | { type: 'stms' }
@@ -174,7 +130,7 @@ export default function NewOnSiteRecordPage() {
     resolver: zodResolver(onSiteRecordSchema),
     defaultValues: {
       jobId: jobId,
-      jobDate: new Date(),
+      jobDate: "",
       tmpNumber: "",
       isStmsInChargeOfWorkingSpace: false,
       stmsInChargeId: "",
@@ -184,7 +140,7 @@ export default function NewOnSiteRecordPage() {
       workingSpaceSignatureDataUrl: "",
       handovers: [],
       delegations: [],
-      worksiteMonitoring: [{ checkType: 'Site Set-Up', dateTime: new Date(), signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' }],
+      worksiteMonitoring: [{ checkType: 'Site Set-Up', dateTime: '', signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' }],
       temporarySpeedLimits: [],
       generalComments: '',
     },
@@ -209,16 +165,6 @@ export default function NewOnSiteRecordPage() {
       setValue('stmsInChargeId', selectedStms.id);
     }
   }, [selectedStms, setValue]);
-
-  useEffect(() => {
-    if(job && getValues('jobDate').toDateString() === new Date().toDateString()) {
-        const jobStartDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
-        const formDate = getValues('jobDate');
-        if (isValid(jobStartDate) && isValid(formDate) && formDate.toDateString() !== jobStartDate.toDateString()) {
-          setValue('jobDate', jobStartDate);
-        }
-    }
-  }, [job, setValue, getValues]);
 
   const handleOpenSignatureDialog = (target: SignatureTarget) => {
     setSignatureTarget(target);
@@ -258,7 +204,7 @@ export default function NewOnSiteRecordPage() {
   const handleAddWorksiteCheck = () => {
     const lastCheckIndex = worksiteFields.length - 1;
     if (lastCheckIndex < 0) { // If there are no checks yet, add a Site Set-Up
-        appendWorksite({ checkType: 'Site Set-Up', dateTime: new Date(), signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' });
+        appendWorksite({ checkType: 'Site Set-Up', dateTime: '', signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' });
         return;
     };
   
@@ -267,7 +213,7 @@ export default function NewOnSiteRecordPage() {
     
     appendWorksite({
       checkType: nextCheckType,
-      dateTime: new Date(),
+      dateTime: '',
       signatureDataUrl: '',
       comments: '',
       isNextCheckRequired: 'Yes'
@@ -302,7 +248,7 @@ export default function NewOnSiteRecordPage() {
                 <h3 className="font-semibold text-lg border-b pb-2">Job Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <p><span className="font-medium">Job No:</span> {job?.jobNumber}</p>
-                  <p><span className="font-medium">Job Date:</span> {job?.startDate ? format(job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate), 'dd/MM/yyyy') : ''}</p>
+                   <FormField control={form.control} name="jobDate" render={({ field }) => (<FormItem><FormLabel>Job Date</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <p className="md:col-span-2"><span className="font-medium">Client:</span> {job?.clientName}</p>
                   <p className="md:col-span-2"><span className="font-medium">Location:</span> {job?.location}</p>
                 </div>
@@ -555,7 +501,7 @@ export default function NewOnSiteRecordPage() {
                                   control={control}
                                   name={`worksiteMonitoring.${index}.dateTime`}
                                   render={({ field }) => (
-                                    <DateTimePicker {...field} />
+                                    <FormControl><Input placeholder="e.g. 14/11/2025 7:15 AM" {...field} /></FormControl>
                                   )}
                                 />
                               </TableCell>
@@ -645,18 +591,18 @@ export default function NewOnSiteRecordPage() {
                                 </Button>
                                 <FormField control={control} name={`temporarySpeedLimits.${index}.streetName`} render={({ field }) => (<FormItem><FormLabel>Street Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeInstalled`} render={({ field }) => (<FormItem><FormLabel>Date &amp; Time Installed</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeTslRemoved`} render={({ field }) => (<FormItem><FormLabel>Date &amp; Time TSL Removed</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeInstalled`} render={({ field }) => (<FormItem><FormLabel>Date &amp; Time Installed</FormLabel><FormControl><Input placeholder="e.g. 14/11/2025 7:15 AM" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeTslRemoved`} render={({ field }) => (<FormItem><FormLabel>Date &amp; Time TSL Removed</FormLabel><FormControl><Input placeholder="e.g. 14/11/2025 5:00 PM" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.placementFrom`} render={({ field }) => (<FormItem><FormLabel>Placement From</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.placementTo`} render={({ field }) => (<FormItem><FormLabel>Placement To</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.placementFrom`} render={({ field }) => (<FormItem><FormLabel>Placement From (RP/House No.)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.placementTo`} render={({ field }) => (<FormItem><FormLabel>Placement To (RP/House No.)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <FormField control={control} name={`temporarySpeedLimits.${index}.tslSpeed`} render={({ field }) => (<FormItem><FormLabel>TSL Speed (km/h)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                     <FormField control={control} name={`temporarySpeedLimits.${index}.lengthOfTsl`} render={({ field }) => (<FormItem><FormLabel>Length of TSL (m)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
-                                <FormField control={control} name={`temporarySpeedLimits.${index}.dateTslRemainsInPlace`} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Date TSL Remains in Place</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.dateTslRemainsInPlace`} render={({ field }) => (<FormItem><FormLabel>Date TSL Remains in Place</FormLabel><FormControl><Input placeholder="e.g. 15/11/2025" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             </div>
                         ))}
                         <Button
@@ -669,7 +615,7 @@ export default function NewOnSiteRecordPage() {
                                 placementTo: '',
                                 tslSpeed: 0,
                                 lengthOfTsl: 0,
-                                dateTimeInstalled: new Date(),
+                                dateTimeInstalled: '',
                             })}
                         >
                             <PlusCircle className="mr-2 h-4 w-4" /> Add TSL
@@ -729,5 +675,7 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
+
+    
 
     
