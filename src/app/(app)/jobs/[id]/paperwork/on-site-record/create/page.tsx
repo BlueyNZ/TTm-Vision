@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -530,7 +529,7 @@ export default function NewOnSiteRecordPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="min-w-[150px]">Check Type</TableHead>
-                          <TableHead className="min-w-[280px]">Date & Time</TableHead>
+                          <TableHead className="min-w-[280px]">Date &amp; Time</TableHead>
                           <TableHead className="min-w-[150px]">Signature</TableHead>
                           <TableHead className="min-w-[200px]">Comments</TableHead>
                           <TableHead><span className="sr-only">Actions</span></TableHead>
@@ -636,15 +635,19 @@ export default function NewOnSiteRecordPage() {
                                     <Trash className="h-4 w-4 text-destructive" />
                                 </Button>
                                 <FormField control={control} name={`temporarySpeedLimits.${index}.streetName`} render={({ field }) => (<FormItem><FormLabel>Street Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={control} name={`temporarySpeedLimits.${index}.tslSpeed`} render={({ field }) => (<FormItem><FormLabel>TSL Speed (km/h)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeInstalled`} render={({ field }) => (<FormItem><FormLabel>Date &amp; Time Installed</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeTslRemoved`} render={({ field }) => (<FormItem><FormLabel>Date &amp; Time TSL Removed</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField control={control} name={`temporarySpeedLimits.${index}.placementFrom`} render={({ field }) => (<FormItem><FormLabel>Placement From</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                   <FormField control={control} name={`temporarySpeedLimits.${index}.placementTo`} render={({ field }) => (<FormItem><FormLabel>Placement To</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
-                                <FormField control={control} name={`temporarySpeedLimits.${index}.lengthOfTsl`} render={({ field }) => (<FormItem><FormLabel>Length of TSL (m)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeInstalled`} render={({ field }) => (<FormItem><FormLabel>Date & Time Installed</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField control={control} name={`temporarySpeedLimits.${index}.tslSpeed`} render={({ field }) => (<FormItem><FormLabel>TSL Speed (km/h)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={control} name={`temporarySpeedLimits.${index}.lengthOfTsl`} render={({ field }) => (<FormItem><FormLabel>Length of TSL (m)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
                                 <FormField control={control} name={`temporarySpeedLimits.${index}.dateTslRemainsInPlace`} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Date TSL Remains in Place</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                                <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeTslRemoved`} render={({ field }) => (<FormItem><FormLabel>Date & Time TSL Removed (Optional)</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
                             </div>
                         ))}
                         <Button
