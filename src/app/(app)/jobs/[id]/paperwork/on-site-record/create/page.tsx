@@ -181,10 +181,14 @@ export default function NewOnSiteRecordPage() {
 
   useEffect(() => {
     if(job?.startDate) {
-        const date = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
-        setValue('jobDate', date);
+        const jobStartDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+        const formDate = getValues('jobDate');
+        // Only update if the form date is different from the job date to prevent loops
+        if (formDate.toDateString() !== jobStartDate.toDateString()) {
+          setValue('jobDate', jobStartDate);
+        }
     }
-  }, [job, setValue]);
+  }, [job, setValue, getValues]);
 
   const handleOpenSignatureDialog = (target: SignatureTarget) => {
     setSignatureTarget(target);
@@ -222,9 +226,12 @@ export default function NewOnSiteRecordPage() {
   };
   
   const handleAddWorksiteCheck = () => {
-    const lastCheck = worksiteFields[worksiteFields.length - 1];
-    const isNextRequired = getValues(`worksiteMonitoring.${worksiteFields.length - 1}.isNextCheckRequired`);
-    const nextCheckType = isNextRequired === 'No' ? 'Unattended/Removal' : 'Site Check';
+    const lastCheckIndex = worksiteFields.length - 1;
+    if (lastCheckIndex < 0) return;
+  
+    const lastCheck = getValues(`worksiteMonitoring.${lastCheckIndex}`);
+    const nextCheckType = lastCheck.isNextCheckRequired === 'No' ? 'Unattended/Removal' : 'Site Check';
+    
     appendWorksite({
       checkType: nextCheckType,
       dateTime: new Date(),
@@ -457,61 +464,63 @@ export default function NewOnSiteRecordPage() {
 
                <div className="space-y-4">
                   <h3 className="font-semibold text-lg border-b pb-2">Worksite Monitoring</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Check Type</TableHead>
-                        <TableHead>Date & Time</TableHead>
-                        <TableHead>Signature</TableHead>
-                        <TableHead>Comments</TableHead>
-                        <TableHead><span className="sr-only">Actions</span></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {worksiteFields.map((field, index) => (
-                        <TableRow key={field.id}>
-                          <TableCell>
-                            <Input value={field.checkType} disabled className="bg-muted"/>
-                          </TableCell>
-                          <TableCell>
-                            <FormField
-                              control={control}
-                              name={`worksiteMonitoring.${index}.dateTime`}
-                              render={({ field }) => (
-                                <DateTimePicker {...field} />
-                              )}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog({ type: 'worksite', index })}>
-                              <Signature className="mr-2 h-4 w-4" />
-                              {watch(`worksiteMonitoring.${index}.signatureDataUrl`) ? "Signed" : "Sign"}
-                            </Button>
-                          </TableCell>
-                          <TableCell>
-                            <FormField
-                              control={control}
-                              name={`worksiteMonitoring.${index}.comments`}
-                              render={({ field }) => (
-                                <FormControl><Textarea {...field} /></FormControl>
-                              )}
-                            />
-                          </TableCell>
-                           <TableCell>
-                            {worksiteFields.length > 1 && (
-                              <Button type="button" variant="ghost" size="icon" onClick={() => removeWorksite(index)}>
-                                <Trash className="h-4 w-4 text-destructive"/>
-                              </Button>
-                            )}
-                          </TableCell>
+                  <div className="w-full overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[150px]">Check Type</TableHead>
+                          <TableHead className="min-w-[280px]">Date & Time</TableHead>
+                          <TableHead className="min-w-[150px]">Signature</TableHead>
+                          <TableHead className="min-w-[200px]">Comments</TableHead>
+                          <TableHead><span className="sr-only">Actions</span></TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {worksiteFields.map((field, index) => (
+                          <TableRow key={field.id}>
+                            <TableCell>
+                              <Input value={field.checkType} disabled className="bg-muted"/>
+                            </TableCell>
+                            <TableCell>
+                              <FormField
+                                control={control}
+                                name={`worksiteMonitoring.${index}.dateTime`}
+                                render={({ field }) => (
+                                  <DateTimePicker {...field} />
+                                )}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog({ type: 'worksite', index })}>
+                                <Signature className="mr-2 h-4 w-4" />
+                                {watch(`worksiteMonitoring.${index}.signatureDataUrl`) ? "Signed" : "Sign"}
+                              </Button>
+                            </TableCell>
+                            <TableCell>
+                              <FormField
+                                control={control}
+                                name={`worksiteMonitoring.${index}.comments`}
+                                render={({ field }) => (
+                                  <FormControl><Textarea {...field} /></FormControl>
+                                )}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              {worksiteFields.length > 1 && (
+                                <Button type="button" variant="ghost" size="icon" onClick={() => removeWorksite(index)}>
+                                  <Trash className="h-4 w-4 text-destructive"/>
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                   <Button type="button" variant="outline" size="sm" onClick={handleAddWorksiteCheck}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Site Check
                   </Button>
-                  {worksiteFields.length > 0 && (
+                  {worksiteFields.length > 0 && worksiteFields[worksiteFields.length - 1].checkType !== 'Unattended/Removal' && (
                      <FormField
                         control={control}
                         name={`worksiteMonitoring.${worksiteFields.length - 1}.isNextCheckRequired`}
