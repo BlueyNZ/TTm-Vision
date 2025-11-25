@@ -180,7 +180,7 @@ export default function NewOnSiteRecordPage() {
   }, [selectedStms, setValue]);
 
   useEffect(() => {
-    if(job?.startDate && getValues('jobDate').toDateString() === new Date().toDateString()) {
+    if(job && getValues('jobDate').toDateString() === new Date().toDateString()) {
         const jobStartDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
         const formDate = getValues('jobDate');
         if (formDate.toDateString() !== jobStartDate.toDateString()) {
@@ -386,7 +386,7 @@ export default function NewOnSiteRecordPage() {
                                   name={`handovers.${index}.receivingStmsName`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>External Person's Name</FormLabel>
+                                      <FormLabel>Name</FormLabel>
                                       <FormControl><Input placeholder="Enter name..." {...field} /></FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -407,7 +407,7 @@ export default function NewOnSiteRecordPage() {
                                 />
                               )}
                               
-                              {watch(`handovers.${index}.receivingStmsName`) && (
+                              {watch(`handovers.${index}.receivingStmsName`) && !isExternal && (
                                 <p className="text-sm text-muted-foreground px-1">NZTA ID: {watch(`handovers.${index}.receivingStmsNztaId`) || 'N/A'}</p>
                               )}
                               <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'handover', index })}>
@@ -649,5 +649,4 @@ export default function NewOnSiteRecordPage() {
   );
 }
 
-    
     
