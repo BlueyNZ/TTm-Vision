@@ -231,7 +231,7 @@ export default function NewOnSiteRecordPage() {
                               <Signature className="mr-2 h-4 w-4" />
                               {stmsSignature ? "Update Signature" : "Sign as STMS in Charge"}
                             </Button>
-                            {stmsSignature && <div className="p-2 border rounded-md bg-muted/50 flex justify-center"><Image src={stmsSignature} alt="STMS Signature" width={200} height={80} className="bg-white" style={{ objectFit: 'contain' }} /></div>}
+                            {stmsSignature && <div className="p-2 border rounded-md bg-muted/50 flex justify-center"><Image src={stmsSignature} alt="STMS Signature" width={200} height={80} style={{ objectFit: 'contain' }} className="bg-white" /></div>}
                             <FormMessage />
                           </FormItem>
                       )}
@@ -272,7 +272,7 @@ export default function NewOnSiteRecordPage() {
                                     <Signature className="mr-2 h-4 w-4" />
                                     {workingSpaceSignature ? "Update Signature" : "Sign for Working Space"}
                                   </Button>
-                                  {workingSpaceSignature && <div className="p-2 border rounded-md bg-muted/50 flex justify-center"><Image src={workingSpaceSignature} alt="Working Space Signature" width={200} height={80} className="bg-white" style={{ objectFit: 'contain' }} /></div>}
+                                  {workingSpaceSignature && <div className="p-2 border rounded-md bg-muted/50 flex justify-center"><Image src={workingSpaceSignature} alt="Working Space Signature" width={200} height={80} style={{ objectFit: 'contain' }} className="bg-white" /></div>}
                                   <FormMessage />
                                 </FormItem>
                               )}
@@ -310,7 +310,7 @@ export default function NewOnSiteRecordPage() {
                               </Button>
                               {watch(`handovers.${index}.receivingStmsSignatureDataUrl`) && (
                                   <div className="p-2 border rounded-md bg-muted/50 flex justify-center">
-                                      <Image src={watch(`handovers.${index}.receivingStmsSignatureDataUrl`)} alt="Handover Signature" width={200} height={80} className="bg-white" style={{ objectFit: 'contain' }}/>
+                                      <Image src={watch(`handovers.${index}.receivingStmsSignatureDataUrl`)} alt="Handover Signature" width={200} height={80} style={{ objectFit: 'contain' }} className="bg-white"/>
                                   </div>
                               )}
                                <FormField
@@ -364,7 +364,7 @@ export default function NewOnSiteRecordPage() {
                               </Button>
                               {watch(`delegations.${index}.delegatedPersonSignatureDataUrl`) && (
                                   <div className="p-2 border rounded-md bg-muted/50 flex justify-center">
-                                      <Image src={watch(`delegations.${index}.delegatedPersonSignatureDataUrl`)} alt="Delegation Signature" width={200} height={80} className="bg-white" style={{ objectFit: 'contain' }}/>
+                                      <Image src={watch(`delegations.${index}.delegatedPersonSignatureDataUrl`)} alt="Delegation Signature" width={200} height={80} style={{ objectFit: 'contain' }} className="bg-white"/>
                                   </div>
                               )}
                                <FormField

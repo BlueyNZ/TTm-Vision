@@ -588,7 +588,7 @@ export default function TruckInspectionPage() {
                                 </Dialog>
                                 {signatureDataUrlValue && (
                                     <div className="p-4 border-dashed border-2 rounded-md flex justify-center items-center bg-muted/50">
-                                        <Image src={signatureDataUrlValue} alt="Driver signature" width={0} height={0} sizes="100vw" style={{ width: 'auto', height: '100px' }} className="bg-white shadow-sm"/>
+                                        <Image src={signatureDataUrlValue} alt="Driver signature" width={200} height={100} style={{ objectFit: 'contain', width: 'auto' }} className="bg-white shadow-sm"/>
                                     </div>
                                 )}
                             </div>
