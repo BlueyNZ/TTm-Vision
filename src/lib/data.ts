@@ -322,8 +322,11 @@ export type TtmDelegation = {
 export type TemporarySpeedLimit = {
   id?: string;
   streetName: string;
-  rpOrHouseNo: string;
-  tslSetupDateTime: Date;
-  tslRemovalDateTime?: Date;
-  tslSiteDistance: number;
+  dateTimeInstalled: Date;
+  tslSpeed: number;
+  placementFrom: string;
+  placementTo: string;
+  lengthOfTsl: number;
+  dateTslRemainsInPlace?: Date;
+  dateTimeTslRemoved?: Date;
 };

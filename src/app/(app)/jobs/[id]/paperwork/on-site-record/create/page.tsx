@@ -65,10 +65,13 @@ const worksiteMonitoringSchema = z.object({
 
 const temporarySpeedLimitSchema = z.object({
   streetName: z.string().min(1, 'Street name is required.'),
-  rpOrHouseNo: z.string().min(1, 'RP/House No. is required.'),
-  tslSetupDateTime: z.date(),
-  tslRemovalDateTime: z.date().optional(),
-  tslSiteDistance: z.coerce.number().min(0, 'Distance must be a positive number.'),
+  dateTimeInstalled: z.date(),
+  tslSpeed: z.coerce.number().min(0, 'Speed must be a positive number.'),
+  placementFrom: z.string().min(1, "Placement 'from' location is required."),
+  placementTo: z.string().min(1, "Placement 'to' location is required."),
+  lengthOfTsl: z.coerce.number().min(0, 'Length must be a positive number.'),
+  dateTslRemainsInPlace: z.date().optional(),
+  dateTimeTslRemoved: z.date().optional(),
 });
 
 
@@ -553,7 +556,7 @@ export default function NewOnSiteRecordPage() {
                               <TableCell>
                                 {signatureDataUrl ? (
                                     <div className="flex items-center gap-2">
-                                        <Image src={signatureDataUrl} alt="Signature" width={100} height={40} className="bg-white rounded-sm border" />
+                                        <Image src={signatureDataUrl} alt="Signature" width={100} height={40} style={{ objectFit: 'contain' }} className="bg-white rounded-sm border" />
                                         <Button
                                             type="button"
                                             variant="ghost"
@@ -633,12 +636,15 @@ export default function NewOnSiteRecordPage() {
                                     <Trash className="h-4 w-4 text-destructive" />
                                 </Button>
                                 <FormField control={control} name={`temporarySpeedLimits.${index}.streetName`} render={({ field }) => (<FormItem><FormLabel>Street Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={control} name={`temporarySpeedLimits.${index}.rpOrHouseNo`} render={({ field }) => (<FormItem><FormLabel>RP / House No.</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.tslSpeed`} render={({ field }) => (<FormItem><FormLabel>TSL Speed (km/h)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.tslSetupDateTime`} render={({ field }) => (<FormItem><FormLabel>TSL Setup</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.tslRemovalDateTime`} render={({ field }) => (<FormItem><FormLabel>TSL Removal (Optional)</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.placementFrom`} render={({ field }) => (<FormItem><FormLabel>Placement From</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.placementTo`} render={({ field }) => (<FormItem><FormLabel>Placement To</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
-                                <FormField control={control} name={`temporarySpeedLimits.${index}.tslSiteDistance`} render={({ field }) => (<FormItem><FormLabel>TSL to TSL Site Distance (m)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.lengthOfTsl`} render={({ field }) => (<FormItem><FormLabel>Length of TSL (m)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeInstalled`} render={({ field }) => (<FormItem><FormLabel>Date & Time Installed</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.dateTslRemainsInPlace`} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Date TSL Remains in Place</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeTslRemoved`} render={({ field }) => (<FormItem><FormLabel>Date & Time TSL Removed (Optional)</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
                             </div>
                         ))}
                         <Button
@@ -647,9 +653,11 @@ export default function NewOnSiteRecordPage() {
                             size="sm"
                             onClick={() => appendTsl({
                                 streetName: '',
-                                rpOrHouseNo: '',
-                                tslSetupDateTime: new Date(),
-                                tslSiteDistance: 0,
+                                placementFrom: '',
+                                placementTo: '',
+                                tslSpeed: 0,
+                                lengthOfTsl: 0,
+                                dateTimeInstalled: new Date(),
                             })}
                         >
                             <PlusCircle className="mr-2 h-4 w-4" /> Add TSL
@@ -697,4 +705,3 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
-
