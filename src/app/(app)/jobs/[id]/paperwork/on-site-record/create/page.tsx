@@ -57,7 +57,8 @@ const delegationSchema = z.object({
 
 const worksiteMonitoringSchema = z.object({
   checkType: z.enum(['Site Set-Up', 'Site Check', 'Unattended/Removal']),
-  dateTime: z.string().min(1, "Date & Time is required."),
+  date: z.date(),
+  time: z.string().min(1, "Time is required."),
   signatureDataUrl: z.string().min(1, 'Signature is required.'),
   comments: z.string().min(1, 'Comments are required.'),
   isNextCheckRequired: z.enum(['Yes', 'No']).optional(),
@@ -65,8 +66,10 @@ const worksiteMonitoringSchema = z.object({
 
 const temporarySpeedLimitSchema = z.object({
   streetName: z.string().min(1, 'Street name is required.'),
-  dateTimeInstalled: z.string().min(1, "Install date & time is required."),
-  dateTimeTslRemoved: z.string().optional(),
+  installDate: z.date(),
+  installTime: z.string().min(1, "Install time is required."),
+  removalDate: z.date().optional(),
+  removalTime: z.string().optional(),
   tslSpeed: z.coerce.number().min(0, 'Speed must be a positive number.'),
   placementFrom: z.string().min(1, "Placement 'from' location is required."),
   placementTo: z.string().min(1, "Placement 'to' location is required."),
@@ -140,7 +143,7 @@ export default function NewOnSiteRecordPage() {
       workingSpaceSignatureDataUrl: "",
       handovers: [],
       delegations: [],
-      worksiteMonitoring: [{ checkType: 'Site Set-Up', dateTime: '', signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' }],
+      worksiteMonitoring: [{ checkType: 'Site Set-Up', date: new Date(), time: '', signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' }],
       temporarySpeedLimits: [],
       generalComments: '',
     },
@@ -203,8 +206,8 @@ export default function NewOnSiteRecordPage() {
   
   const handleAddWorksiteCheck = () => {
     const lastCheckIndex = worksiteFields.length - 1;
-    if (lastCheckIndex < 0) { // If there are no checks yet, add a Site Set-Up
-        appendWorksite({ checkType: 'Site Set-Up', dateTime: '', signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' });
+    if (lastCheckIndex < 0) {
+        appendWorksite({ checkType: 'Site Set-Up', date: new Date(), time: '', signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' });
         return;
     };
   
@@ -213,7 +216,8 @@ export default function NewOnSiteRecordPage() {
     
     appendWorksite({
       checkType: nextCheckType,
-      dateTime: '',
+      date: new Date(),
+      time: '',
       signatureDataUrl: '',
       comments: '',
       isNextCheckRequired: 'Yes'
@@ -497,24 +501,42 @@ export default function NewOnSiteRecordPage() {
                                 <Input value={field.checkType} disabled className="bg-muted"/>
                               </TableCell>
                               <TableCell>
+                                <div className="flex gap-2">
                                 <FormField
                                   control={control}
-                                  name={`worksiteMonitoring.${index}.dateTime`}
+                                  name={`worksiteMonitoring.${index}.date`}
                                   render={({ field }) => (
-                                    <FormControl><Input placeholder="e.g. 14/11/2025 7:15 AM" {...field} /></FormControl>
+                                    <FormItem>
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <FormControl>
+                                            <Button variant={"outline"} className={cn("w-[140px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                          </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/>
+                                        </PopoverContent>
+                                      </Popover>
+                                    </FormItem>
                                   )}
                                 />
+                                 <FormField
+                                  control={control}
+                                  name={`worksiteMonitoring.${index}.time`}
+                                  render={({ field }) => (
+                                    <FormControl><Input placeholder="Time" {...field} className="w-[100px]" /></FormControl>
+                                  )}
+                                />
+                                </div>
                               </TableCell>
                               <TableCell>
                                 {signatureDataUrl ? (
                                     <div className="flex items-center gap-2">
                                         <Image src={signatureDataUrl} alt="Signature" width={100} height={40} style={{ objectFit: 'contain' }} className="bg-white rounded-sm border" />
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setValue(`worksiteMonitoring.${index}.signatureDataUrl`, '', { shouldValidate: true })}
-                                        >
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => setValue(`worksiteMonitoring.${index}.signatureDataUrl`, '', { shouldValidate: true })}>
                                             <Trash className="h-4 w-4 text-destructive" />
                                         </Button>
                                     </div>
@@ -591,8 +613,20 @@ export default function NewOnSiteRecordPage() {
                                 </Button>
                                 <FormField control={control} name={`temporarySpeedLimits.${index}.streetName`} render={({ field }) => (<FormItem><FormLabel>Street Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeInstalled`} render={({ field }) => (<FormItem><FormLabel>Date &amp; Time Installed</FormLabel><FormControl><Input placeholder="e.g. 14/11/2025 7:15 AM" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.dateTimeTslRemoved`} render={({ field }) => (<FormItem><FormLabel>Date &amp; Time TSL Removed</FormLabel><FormControl><Input placeholder="e.g. 14/11/2025 5:00 PM" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <div className="space-y-2">
+                                      <FormLabel>Date & Time Installed</FormLabel>
+                                      <div className="flex gap-2">
+                                          <FormField control={control} name={`temporarySpeedLimits.${index}.installDate`} render={({ field }) => (<FormItem><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-[140px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover></FormItem>)} />
+                                          <FormField control={control} name={`temporarySpeedLimits.${index}.installTime`} render={({ field }) => (<FormControl><Input placeholder="Time" {...field} className="w-[100px]" /></FormControl>)} />
+                                      </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                      <FormLabel>Date & Time TSL Removed</FormLabel>
+                                      <div className="flex gap-2">
+                                          <FormField control={control} name={`temporarySpeedLimits.${index}.removalDate`} render={({ field }) => (<FormItem><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-[140px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover></FormItem>)} />
+                                          <FormField control={control} name={`temporarySpeedLimits.${index}.removalTime`} render={({ field }) => (<FormControl><Input placeholder="Time" {...field} className="w-[100px]" /></FormControl>)} />
+                                      </div>
+                                  </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField control={control} name={`temporarySpeedLimits.${index}.placementFrom`} render={({ field }) => (<FormItem><FormLabel>Placement From (RP/House No.)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -611,11 +645,15 @@ export default function NewOnSiteRecordPage() {
                             size="sm"
                             onClick={() => appendTsl({
                                 streetName: '',
+                                installDate: new Date(),
+                                installTime: '',
+                                removalDate: undefined,
+                                removalTime: '',
                                 placementFrom: '',
                                 placementTo: '',
                                 tslSpeed: 0,
                                 lengthOfTsl: 0,
-                                dateTimeInstalled: '',
+                                dateTslRemainsInPlace: '',
                             })}
                         >
                             <PlusCircle className="mr-2 h-4 w-4" /> Add TSL
@@ -675,7 +713,3 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
-
-    
-
-    

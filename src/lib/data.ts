@@ -272,17 +272,17 @@ export type TmpCheckingProcess = {
 export type WorksiteMonitoring = {
   id?: string;
   checkType: 'Site Set-Up' | 'Site Check' | 'Unattended/Removal';
-  dateTime: Date;
+  date: Date;
+  time: string;
   signatureDataUrl: string;
   comments: string;
   isNextCheckRequired?: 'Yes' | 'No';
 };
 
-
 export type OnSiteRecord = {
   id: string;
   jobId: string;
-  jobDate: Timestamp;
+  jobDate: string;
   tmpNumber?: string;
   stmsInChargeId?: string;
   stmsSignatureDataUrl?: string;
@@ -296,6 +296,7 @@ export type OnSiteRecord = {
   delegations?: TtmDelegation[];
   worksiteMonitoring?: WorksiteMonitoring[];
   temporarySpeedLimits?: TemporarySpeedLimit[];
+  generalComments?: string;
   createdAt: Timestamp;
 }
 
@@ -322,11 +323,13 @@ export type TtmDelegation = {
 export type TemporarySpeedLimit = {
   id?: string;
   streetName: string;
-  dateTimeInstalled: Date;
+  installDate: Date;
+  installTime: string;
+  removalDate?: Date;
+  removalTime?: string;
   tslSpeed: number;
   placementFrom: string;
   placementTo: string;
   lengthOfTsl: number;
-  dateTslRemainsInPlace?: Date;
-  dateTimeTslRemoved?: Date;
+  dateTslRemainsInPlace?: string;
 };
