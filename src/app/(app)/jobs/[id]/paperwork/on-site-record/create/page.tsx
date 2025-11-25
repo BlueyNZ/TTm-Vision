@@ -34,8 +34,8 @@ import { cn } from "@/lib/utils";
 const handoverSchema = z.object({
   id: z.string().optional(),
   isExternal: z.boolean().default(false),
-  receivingStmsId: z.string().min(1, "A staff member must be selected."),
-  receivingStmsName: z.string(),
+  receivingStmsId: z.string().optional(),
+  receivingStmsName: z.string().min(1, "Receiving person's name is required."),
   receivingStmsNztaId: z.string().optional(),
   receivingStmsSignatureDataUrl: z.string().min(1, "Signature is required."),
   briefingCompleted: z.boolean().default(false).refine(val => val === true, {
@@ -359,23 +359,54 @@ export default function NewOnSiteRecordPage() {
               <div className="space-y-4">
                   <h3 className="font-semibold text-lg border-b pb-2">TTM STMS Handover</h3>
                   <div className="space-y-4">
-                      {handoverFields.map((field, index) => (
+                      {handoverFields.map((field, index) => {
+                        const isExternal = watch(`handovers.${index}.isExternal`);
+                        return (
                           <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
                               <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeHandover(index)}>
                                 <Trash className="h-4 w-4 text-destructive" />
                               </Button>
-                              <StaffSelector
-                                  staffList={staffList?.filter(s => s.role === 'STMS') || []}
-                                  onSelectStaff={(staff) => {
-                                      if (staff) {
-                                          setValue(`handovers.${index}.receivingStmsId`, staff.id, { shouldValidate: true });
-                                          setValue(`handovers.${index}.receivingStmsName`, staff.name);
-                                          setValue(`handovers.${index}.receivingStmsNztaId`, staff.nztaId || 'N/A');
-                                      }
-                                  }}
-                                  placeholder="Select receiving STMS..."
-                                  selectedStaff={staffList?.find(s => s.id === handovers?.[index]?.receivingStmsId)}
+
+                              <FormField
+                                control={control}
+                                name={`handovers.${index}.isExternal`}
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                        <FormControl>
+                                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                        </FormControl>
+                                        <FormLabel>Tick if Handover is to a person outside your company</FormLabel>
+                                    </FormItem>
+                                )}
                               />
+
+                              {isExternal ? (
+                                <FormField
+                                  control={control}
+                                  name={`handovers.${index}.receivingStmsName`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>External Person's Name</FormLabel>
+                                      <FormControl><Input placeholder="Enter name..." {...field} /></FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              ) : (
+                                <StaffSelector
+                                    staffList={staffList?.filter(s => s.role === 'STMS') || []}
+                                    onSelectStaff={(staff) => {
+                                        if (staff) {
+                                            setValue(`handovers.${index}.receivingStmsId`, staff.id, { shouldValidate: true });
+                                            setValue(`handovers.${index}.receivingStmsName`, staff.name);
+                                            setValue(`handovers.${index}.receivingStmsNztaId`, staff.nztaId || 'N/A');
+                                        }
+                                    }}
+                                    placeholder="Select receiving STMS..."
+                                    selectedStaff={staffList?.find(s => s.id === handovers?.[index]?.receivingStmsId)}
+                                />
+                              )}
+                              
                               {watch(`handovers.${index}.receivingStmsName`) && (
                                 <p className="text-sm text-muted-foreground px-1">NZTA ID: {watch(`handovers.${index}.receivingStmsNztaId`) || 'N/A'}</p>
                               )}
@@ -403,8 +434,9 @@ export default function NewOnSiteRecordPage() {
                                   )}
                               />
                           </div>
-                      ))}
-                      <Button type="button" variant="outline" size="sm" onClick={() => appendHandover({ receivingStmsId: '', receivingStmsName: '', briefingCompleted: false, receivingStmsSignatureDataUrl: '' })}>
+                        )
+                      })}
+                      <Button type="button" variant="outline" size="sm" onClick={() => appendHandover({ isExternal: false, receivingStmsId: '', receivingStmsName: '', briefingCompleted: false, receivingStmsSignatureDataUrl: '' })}>
                           <PlusCircle className="mr-2 h-4 w-4"/> Add Handover
                       </Button>
                   </div>
@@ -617,4 +649,5 @@ export default function NewOnSiteRecordPage() {
   );
 }
 
+    
     
