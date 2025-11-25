@@ -56,25 +56,21 @@ const getStatusColor = (status: Job['status']) => {
 };
 
 const allPaperworkLinks = [
-    { title: 'Single Crew Timesheet', href: 'single-crew-timesheet' },
-    { title: 'Truck Inspection', href: 'truck-inspection' },
-    { title: 'ESTOP Inspection', href: 'estop-inspection' },
-    { title: 'Stop/Go Briefing', href: 'stop-go-briefing' },
-    { title: 'TSL Decision Matrix', href: 'tsl-decision-matrix' },
-    { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm' },
+    { title: 'Timesheets', href: 'timesheets' },
+    { title: 'Truck Inspections', href: 'truck-inspections' },
     { title: 'Hazard ID', href: 'hazard-id' },
-    { title: 'Site Induction Signatures', href: 'site-induction-signatures' },
-    { title: 'Pre-Installation Process', href: 'pre-installation-process' },
-    { title: 'On-Site Record', href: 'new-on-site-record' },
+    { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm' },
+    { title: 'TMP Checking Process', href: 'pre-installation-process' },
+    { title: 'On-Site Record (CoPTTM)', href: 'on-site-record' },
     { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record' },
     { title: 'Job Note', href: 'job-note' },
-    { title: 'Site Audit (COPTTM SCR)', href: 'site-audit-copttm-scr' },
-    { title: 'Client Feedback', href: 'client-feedback' },
+    { title: 'Take Site Photos', href: '#' }, // Assuming this is not a page yet
     { title: 'Incident or Event Report', href: 'incident-or-event-report' },
+    { title: 'Site Audit (CoPTTM SCR)', href: 'site-audit-copttm-scr' },
 ];
 
 const tcPaperworkLinks = allPaperworkLinks.filter(link => 
-    ['Single Crew Timesheet', 'Truck Inspection', 'Incident or Event Report'].includes(link.title)
+    ['Timesheets', 'Truck Inspections', 'Incident or Event Report'].includes(link.title)
 );
 
 export default function DashboardPage() {
