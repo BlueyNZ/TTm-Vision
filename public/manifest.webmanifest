@@ -1,6 +1,6 @@
 {
   "name": "TTM Vision",
-  "short_name": "TTMVision",
+  "short_name": "TTM Vision",
   "description": "Simplified Traffic Management",
   "start_url": "/",
   "display": "standalone",
@@ -8,16 +8,14 @@
   "theme_color": "#f97316",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "https://lh3.googleusercontent.com/rd-gg-dl/ABS2GSlXPCKkQbNzY1yVdua9t2cI_mLa5pG-GyziVvd9ysPKzCQfJ6h5iko3t1DolVKJRV7Y7mHmSVsdptrwcmWLZdZz2Jj7861TLRoSewVaIvHX8C5YH87YoDUiWOlK3ZoBNOTwuNiu8rPYu3mFrn66Umvzzy6lmTsNh7C1FHyJfvr1c88sZnyhMgw3CRZTnEyEFLUH7-h-CseXkFfJJExkJOPhj3ifNZzxl4n88hmt53rRWG44RZ72zNtbw38QHAjRoZGlR1LTIs_R4Iia1dcbz9lTCEUuxHirdHVtpNUSS_wOJa4igSthHG-a8rhBgr1I59soKTuSNs9YeqAlsOxbaG3CjKsSEHT2pIMRx0Ql5M-DyA1ll_OYXKUhF6gI7Ey1gmpzT4nxo8hxVbZQplvmN2NDz14Wmxko0l5VeFozNdj8sKVVAoXq2HAy7G5WfMkXzxjuQHLvMl0C0WSzBSEF5qmfgBO-Ghh99j4638Wts9VVLc3-8eUU7H9kdqZKIWzQeRrXmdNnfiBw7Wjqp8anPTGy9o8ves8ePWftdSuTRBjTuUhtlayXKo4FiFosMZJWpFkOHuk5FR9nNKHY1T5rJHJM8yzug6Od-FkCkaDWulnpr-VCzyq5xOQEIqurAqmj1EMM0LcxeQZLtNd64ZilEuob4P27Wc-dNQpgVh65vZZGrnhlPCBwk-0r1zeUyKvo8TR_jPVpEbzBrLfxSGzeiBulfZ6aflrlC3K8VG0t7mm6JWPJnPEnI6GwVNxTOzOuB3D70q-28jpC33whVojpwb56hgUqVAP4AvB7XZyx_uGfw-5RKT_PpVRn0WvHKG6cSbZ1Z2tJfOCqzXqriGx9ghpoFTGJ8h9fBSFY4SJ6M3vqpGRs1zxI0lpz4QlgpHmcDcJoAwEdQlIfE7KnU8afrwnUCSlIjBnDcEL5YahxByTFLXxflupY_mKhPxaVMN1ulCvbdlnn4IfVHU8ptec8fZYFiLc0HkSP2FRxKttNmDF4XmbSekgD9GYTaJTvkwws7k1BEGJRty2W5WX8NgMp-uf1MPztx24IafeIQnxPaCX-wypz7jFYKR4vcQN9FBACjrKQglUx6c7Zx10y-pbYFStTqPxOYNj5RyoJwiosEVavWGuJDMs7njZPwVHiMghdXP8dTthswQ3brCQvJqhp3OkOQ-10gYPtEyGIzPFDJOVg9BvTgoFRZ74C5piJUHKqX-0Trg3IHduPutBBAHmTwi7TOykC28Bo0bNOI0qLcoHeEceUZRJtUC8K0D68bWD4gmLmDOqcdjtD_F5_HDOOP2JVjw05Tt0wMPTHNDt5G2X4dTJvT7rlsJ_UFObsSiHjAxLF=s192-rj",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "https://lh3.googleusercontent.com/rd-gg-dl/ABS2GSlXPCKkQbNzY1yVdua9t2cI_mLa5pG-GyziVvd9ysPKzCQfJ6h5iko3t1DolVKJRV7Y7mHmSVsdptrwcmWLZdZz2Jj7861TLRoSewVaIvHX8C5YH87YoDUiWOlK3ZoBNOTwuNiu8rPYu3mFrn66Umvzzy6lmTsNh7C1FHyJfvr1c88sZnyhMgw3CRZTnEyEFLUH7-h-CseXkFfJJExkJOPhj3ifNZzxl4n88hmt53rRWG44RZ72zNtbw38QHAjRoZGlR1LTIs_R4Iia1dcbz9lTCEUuxHirdHVtpNUSS_wOJa4igSthHG-a8rhBgr1I59soKTuSNs9YeqAlsOxbaG3CjKsSEHT2pIMRx0Ql5M-DyA1ll_OYXKUhF6gI7Ey1gmpzT4nxo8hxVbZQplvmN2NDz14Wmxko0l5VeFozNdj8sKVVAoXq2HAy7G5WfMkXzxjuQHLvMl0C0WSzBSEF5qmfgBO-Ghh99j4638Wts9VVLc3-8eUU7H9kdqZKIWzQeRrXmdNnfiBw7Wjqp8anPTGy9o8ves8ePWftdSuTRBjTuUhtlayXKo4FiFosMZJWpFkOHuk5FR9nNKHY1T5rJHJM8yzug6Od-FkCkaDWulnpr-VCzyq5xOQEIqurAqmj1EMM0LcxeQZLtNd64ZilEuob4P27Wc-dNQpgVh65vZZGrnhlPCBwk-0r1zeUyKvo8TR_jPVpEbzBrLfxSGzeiBulfZ6aflrlC3K8VG0t7mm6JWPJnPEnI6GwVNxTOzOuB3D70q-28jpC33whVojpwb56hgUqVAP4AvB7XZyx_uGfw-5RKT_PpVRn0WvHKG6cSbZ1Z2tJfOCqzXqriGx9ghpoFTGJ8h9fBSFY4SJ6M3vqpGRs1zxI0lpz4QlgpHmcDcJoAwEdQlIfE7KnU8afrwnUCSlIjBnDcEL5YahxByTFLXxflupY_mKhPxaVMN1ulCvbdlnn4IfVHU8ptec8fZYFiLc0HkSP2FRxKttNmDF4XmbSekgD9GYTaJTvkwws7k1BEGJRty2W5WX8NgMp-uf1MPztx24IafeIQnxPaCX-wypz7jFYKR4vcQN9FBACjrKQglUx6c7Zx10y-pbYFStTqPxOYNj5RyoJwiosEVavWGuJDMs7njZPwVHiMghdXP8dTthswQ3brCQvJqhp3OkOQ-10gYPtEyGIzPFDJOVg9BvTgoFRZ74C5piJUHKqX-0Trg3IHduPutBBAHmTwi7TOykC28Bo0bNOI0qLcoHeEceUZRJtUC8K0D68bWD4gmLmDOqcdjtD_F5_HDOOP2JVjw05Tt0wMPTHNDt5G2X4dTJvT7rlsJ_UFObsSiHjAxLF=s512-rj",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
