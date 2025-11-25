@@ -19,12 +19,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
 import { StaffSelector } from "@/components/staff/staff-selector";
 import { SignaturePad, SignaturePadRef } from "@/components/ui/signature-pad";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PlusCircle } from "lucide-react";
 
 
@@ -300,7 +298,7 @@ export default function PreInstallationProcessPage() {
                     {fields.map((field, index) => (
                         <div key={field.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
                             <div className="flex items-center gap-3">
-                                <Image src={field.signatureDataUrl} alt="Signature" width={100} height={40} className="bg-white rounded-sm" />
+                                <Image src={field.signatureDataUrl} alt="Signature" width={100} height={40} className="bg-white rounded-sm" style={{ objectFit: 'contain' }}/>
                                 <div>
                                     <p className="font-medium">{field.staffName}</p>
                                     <p className="text-xs text-muted-foreground">{field.qualification}</p>

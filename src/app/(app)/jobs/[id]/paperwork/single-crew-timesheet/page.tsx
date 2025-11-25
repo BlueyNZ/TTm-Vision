@@ -494,7 +494,7 @@ export default function SingleCrewTimesheetPage() {
                              </Dialog>
                               {signatureDataUrlValue && (
                                 <div className="p-4 border-dashed border-2 rounded-md flex justify-center items-center bg-muted/50">
-                                    <Image src={signatureDataUrlValue} alt="Staff signature" width={0} height={0} sizes="100vw" style={{ width: 'auto', height: '100px' }} className="bg-white shadow-sm"/>
+                                    <Image src={signatureDataUrlValue} alt="Staff signature" width={200} height={80} style={{ objectFit: 'contain' }} className="bg-white shadow-sm"/>
                                 </div>
                               )}
                            </div>
