@@ -43,7 +43,7 @@ const tmpCheckingProcessSchema = z.object({
   tmpType: z.enum(['GENERIC', 'SITE_SPECIFIC'], { required_error: "You must select a TMP type."}),
   locationDetails: sectionSchema.extend({
     correctRoadLevel: checkSchema,
-    trafficCountConfirmed: checkSchema,
+    trafficCountConfirmed: checkSchema.optional(),
   }),
   shape: sectionSchema.extend({
     intersections: checkSchema,
@@ -299,7 +299,16 @@ export default function PreInstallationProcessPage() {
                 </div>
             )}
             
-            <SectionCheck form={form} sectionName="locationDetails" title="Road Level" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'correctRoadLevel', label: 'Is this at the correct road level?' }, { name: 'trafficCountConfirmed', label: 'Does your traffic count confirm the traffic volume in the TMP?' } ]} />
+            <SectionCheck 
+                form={form} 
+                sectionName="locationDetails" 
+                title="Road Level" 
+                isSiteSpecific={tmpType === 'SITE_SPECIFIC'} 
+                checks={[
+                    { name: 'correctRoadLevel', label: 'Is this at the correct road level?' },
+                    ...(tmpType === 'SITE_SPECIFIC' ? [{ name: 'trafficCountConfirmed', label: 'Does your traffic count confirm the traffic volume in the TMP?' }] : [])
+                ].filter(Boolean) as { name: string; label: string }[]}
+            />
             <SectionCheck form={form} sectionName="shape" title="Shape" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'intersections', label: 'Intersections' }, { name: 'verticalCurves', label: 'Vertical Curves (hills)' }, { name: 'horizontalCurves', label: 'Horizontal Curves (corners)' }, { name: 'sufficientAdvanceWarning', label: 'Sufficient advance warning' } ]} />
             <SectionCheck form={form} sectionName="directionAndProtection" title="Direction and Protection" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'sufficientLength', label: 'Sufficient length to place the planned direction and protection' }, { name: 'sufficientWidth', label: 'Sufficient road width to place the planned direction and protection i.e. minimum lane width is 2.75m and protection' }, { name: 'adequateSightDistance', label: 'Adequate sight distance on both sides' }, { name: 'sufficientRoomForTtc', label: 'Sufficient room to accommodate required positive traffic control' } ]} />
             <SectionCheck form={form} sectionName="requiredSpeedRestrictions" title="Required Speed Restrictions" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'correctTsl', label: 'Has the correct TSL been selected for the work activity and worksite?' } ]} />
