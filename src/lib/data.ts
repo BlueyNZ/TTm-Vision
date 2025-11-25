@@ -224,7 +224,7 @@ export type TmpCheckingProcess = {
   // Checks
   locationDetails: {
     correctRoadLevel: ProcessCheck;
-    trafficCountConfirmed: ProcessCheck;
+    trafficCountConfirmed?: ProcessCheck;
     comment: string;
   };
   shape: {
@@ -295,38 +295,35 @@ export type OnSiteRecord = {
   handovers?: TtmHandover[];
   delegations?: TtmDelegation[];
   worksiteMonitoring?: WorksiteMonitoring[];
+  temporarySpeedLimits?: TemporarySpeedLimit[];
   createdAt: Timestamp;
 }
 
 export type TtmHandover = {
-  id: string;
-  onSiteRecordId: string;
+  id?: string;
   isExternal: boolean;
-  receivingStmsId: string;
+  receivingStmsId?: string;
+  receivingStmsName: string;
+  receivingStmsNztaId?: string;
   receivingStmsSignatureDataUrl: string;
-  timeSigned: Timestamp;
   briefingCompleted: boolean;
 };
 
 export type TtmDelegation = {
-  id: string;
-  onSiteRecordId: string;
+  id?: string;
   isExternal: boolean;
   delegatedPersonId: string;
+  delegatedPersonName: string;
+  delegatedPersonNztaId?: string;
   delegatedPersonSignatureDataUrl: string;
-  timeSigned: Timestamp;
   briefingCompleted: boolean;
 };
 
 export type TemporarySpeedLimit = {
-  id: string;
-  onSiteRecordId: string;
+  id?: string;
   streetName: string;
-  dateTimeInstalled: Timestamp;
-  tslSpeed: number;
-  placementFrom: string;
-  placementTo: string;
-  length: number;
-  removalDate?: Timestamp;
-  removalTime?: Timestamp;
+  rpOrHouseNo: string;
+  tslSetupDateTime: Date;
+  tslRemovalDateTime?: Date;
+  tslSiteDistance: number;
 };

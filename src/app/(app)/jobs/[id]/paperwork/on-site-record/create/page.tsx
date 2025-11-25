@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { Job, Staff, OnSiteRecord, TtmHandover, TtmDelegation, WorksiteMonitoring } from "@/lib/data";
+import { Job, Staff, OnSiteRecord, TtmHandover, TtmDelegation, WorksiteMonitoring, TemporarySpeedLimit } from "@/lib/data";
 import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs, setDoc } from "firebase/firestore";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle, PlusCircle, Trash, CheckCircle, Signature, CalendarIcon } from "lucide-react";
@@ -63,6 +63,15 @@ const worksiteMonitoringSchema = z.object({
   isNextCheckRequired: z.enum(['Yes', 'No']).optional(),
 });
 
+const temporarySpeedLimitSchema = z.object({
+  streetName: z.string().min(1, 'Street name is required.'),
+  rpOrHouseNo: z.string().min(1, 'RP/House No. is required.'),
+  tslSetupDateTime: z.date(),
+  tslRemovalDateTime: z.date().optional(),
+  tslSiteDistance: z.coerce.number().min(0, 'Distance must be a positive number.'),
+});
+
+
 const onSiteRecordSchema = z.object({
   jobId: z.string(),
   jobDate: z.date(),
@@ -76,6 +85,7 @@ const onSiteRecordSchema = z.object({
   handovers: z.array(handoverSchema).optional(),
   delegations: z.array(delegationSchema).optional(),
   worksiteMonitoring: z.array(worksiteMonitoringSchema).optional(),
+  temporarySpeedLimits: z.array(temporarySpeedLimitSchema).optional(),
 }).refine(data => {
     if (data.isStmsInChargeOfWorkingSpace) return true;
     return !!data.workingSpacePerson && !!data.workingSpaceContact && !!data.workingSpaceSignatureDataUrl;
@@ -157,6 +167,7 @@ export default function NewOnSiteRecordPage() {
       handovers: [],
       delegations: [],
       worksiteMonitoring: [{ checkType: 'Site Set-Up', dateTime: new Date(), signatureDataUrl: '', comments: '', isNextCheckRequired: 'Yes' }],
+      temporarySpeedLimits: [],
     },
   });
 
@@ -164,6 +175,7 @@ export default function NewOnSiteRecordPage() {
   const { fields: handoverFields, append: appendHandover, remove: removeHandover } = useFieldArray({ control, name: "handovers" });
   const { fields: delegationFields, append: appendDelegation, remove: removeDelegation } = useFieldArray({ control, name: "delegations" });
   const { fields: worksiteFields, append: appendWorksite, remove: removeWorksite } = useFieldArray({ control, name: "worksiteMonitoring" });
+  const { fields: tslFields, append: appendTsl, remove: removeTsl } = useFieldArray({ control, name: "temporarySpeedLimits" });
   
   const isStmsInChargeOfWorkingSpace = watch('isStmsInChargeOfWorkingSpace');
   const stmsSignature = watch('stmsSignatureDataUrl');
@@ -601,11 +613,36 @@ export default function NewOnSiteRecordPage() {
               </div>
               
               <div className="space-y-4">
-                  <h3 className="font-semibold text-lg border-b pb-2">Temporary Speed Limits Details</h3>
-                  <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                      <p>TSL management will be implemented here.</p>
-                      <Button type="button" variant="outline" size="sm" className="mt-2"><PlusCircle className="mr-2 h-4 w-4"/> Add TSL</Button>
-                  </div>
+                  <h3 className="font-semibold text-lg border-b pb-2">Temporary Speed Limit Details</h3>
+                   <div className="space-y-4">
+                        {tslFields.map((field, index) => (
+                            <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
+                                <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeTsl(index)}>
+                                    <Trash className="h-4 w-4 text-destructive" />
+                                </Button>
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.streetName`} render={({ field }) => (<FormItem><FormLabel>Street Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.rpOrHouseNo`} render={({ field }) => (<FormItem><FormLabel>RP / House No.</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.tslSetupDateTime`} render={({ field }) => (<FormItem><FormLabel>TSL Setup</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.tslRemovalDateTime`} render={({ field }) => (<FormItem><FormLabel>TSL Removal (Optional)</FormLabel><FormControl><DateTimePicker {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.tslSiteDistance`} render={({ field }) => (<FormItem><FormLabel>TSL to TSL Site Distance (m)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            </div>
+                        ))}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => appendTsl({
+                                streetName: '',
+                                rpOrHouseNo: '',
+                                tslSetupDateTime: new Date(),
+                                tslSiteDistance: 0,
+                            })}
+                        >
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add TSL
+                        </Button>
+                    </div>
               </div>
               
               <div className="space-y-4">
@@ -648,5 +685,3 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
-
-    
