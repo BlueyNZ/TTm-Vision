@@ -127,7 +127,7 @@ const DateTimePicker = ({ value, onChange, disabled }: { value?: Date, onChange:
     <div className="flex items-center gap-2">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className={cn("w-[180px] justify-start text-left font-normal", !date && "text-muted-foreground")} disabled={disabled}>
+          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")} disabled={disabled}>
             <CalendarIcon className="mr-2 h-4 w-4" />
             {date ? format(date, 'PPP') : 'Pick a date'}
           </Button>
@@ -727,3 +727,5 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
+
+    
