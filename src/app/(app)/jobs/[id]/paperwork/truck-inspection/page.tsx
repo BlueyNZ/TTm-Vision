@@ -367,7 +367,7 @@ export default function TruckInspectionPage() {
             toast({ title: "Inspection Submitted", description: "Your truck inspection has been recorded." });
         }
         
-        router.push(`/jobs/${data.jobId}/paperwork`);
+        router.push(`/paperwork/${data.jobId}`);
 
     } catch (error) {
         console.error("Error submitting inspection:", error);
@@ -619,4 +619,3 @@ export default function TruckInspectionPage() {
     </Card>
   );
 }
-

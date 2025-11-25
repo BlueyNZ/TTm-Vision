@@ -139,7 +139,7 @@ export default function HazardIdNzgttmPage() {
             title: "Hazard ID (NZGTTM) Submitted",
             description: `The form ${hazardIdNo} has been saved.`,
         });
-        router.push(`/jobs/${jobId}/paperwork`);
+        router.push(`/paperwork/${jobId}`);
     } catch (error) {
         console.error("Error submitting Hazard ID (NZGTTM):", error);
         toast({ title: "Submission Failed", description: "Could not submit form. Please try again.", variant: 'destructive' });
@@ -299,4 +299,3 @@ export default function HazardIdNzgttmPage() {
     </Card>
   );
 }
-

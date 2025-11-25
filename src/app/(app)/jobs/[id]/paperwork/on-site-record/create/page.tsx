@@ -228,7 +228,7 @@ export default function NewOnSiteRecordPage() {
 
 
   async function onSubmit(data: z.infer<typeof onSiteRecordSchema>) {
-    router.push(`/jobs/${jobId}/paperwork`);
+    router.push(`/paperwork/${jobId}`);
   }
 
   const isLoading = isJobLoading || isStaffLoading;
@@ -792,4 +792,3 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
-

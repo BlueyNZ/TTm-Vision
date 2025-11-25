@@ -221,7 +221,7 @@ export default function PreInstallationProcessPage() {
             title: "TMP Checking Process Submitted",
             description: "The form has been successfully saved.",
         });
-        router.push(`/jobs/${jobId}/paperwork`);
+        router.push(`/paperwork/${jobId}`);
 
     } catch (error) {
         console.error("Error submitting form:", error);
@@ -349,4 +349,3 @@ export default function PreInstallationProcessPage() {
     </Card>
   );
 }
-

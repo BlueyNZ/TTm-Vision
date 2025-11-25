@@ -245,7 +245,7 @@ export default function HazardIdCreatePage() {
             toast({ title: "Hazard ID Submitted", description: `Form ${hazardIdNo} has been saved.` });
         }
         
-        router.push(`/jobs/${jobId}/paperwork`);
+        router.push(`/paperwork/${jobId}`);
 
     } catch (error) {
         console.error("Error submitting Hazard ID:", error);
@@ -474,4 +474,3 @@ export default function HazardIdCreatePage() {
     </Card>
   );
 }
-
