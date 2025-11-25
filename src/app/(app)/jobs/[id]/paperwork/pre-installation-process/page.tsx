@@ -275,30 +275,6 @@ export default function PreInstallationProcessPage() {
               />
             </div>
             
-            {tmpType === 'SITE_SPECIFIC' && (
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg border-b pb-2">Location Details (Site Specific)</h3>
-                    <div className="rounded-lg border p-4 text-center text-muted-foreground bg-muted/30">
-                        <p>This section will be automatically populated with data when you add them using the "Add Location" button or if you have already added them via the On-Site Record, the location details will appear after saving the TMP Checking Process</p>
-                    </div>
-                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Street Name</TableHead>
-                                <TableHead>RP</TableHead>
-                                <TableHead>Suburb</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            <TableRow>
-                                <TableCell colSpan={3} className="text-center text-muted-foreground">No locations added.</TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
-                    <Button type="button" variant="outline" size="sm" disabled><PlusCircle className="mr-2 h-4 w-4" /> Add Location</Button>
-                </div>
-            )}
-            
             <SectionCheck 
                 form={form} 
                 sectionName="locationDetails" 
