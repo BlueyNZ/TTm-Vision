@@ -619,3 +619,4 @@ export default function TruckInspectionPage() {
     </Card>
   );
 }
+
