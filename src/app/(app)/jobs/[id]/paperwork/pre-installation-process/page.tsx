@@ -24,6 +24,9 @@ import { StaffSelector } from "@/components/staff/staff-selector";
 import { SignaturePad, SignaturePadRef } from "@/components/ui/signature-pad";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PlusCircle } from "lucide-react";
+
 
 const checkSchema = z.object({
   status: z.enum(['Yes', 'No', 'N/A']),
@@ -37,7 +40,7 @@ const tmpCheckingProcessSchema = z.object({
   jobId: z.string(),
   tmpNumber: z.string().min(1, "TMP Number is required."),
   tmdNumber: z.string().min(1, "TMD No(s) is required."),
-  tmpType: z.enum(['GENERIC', 'SITE SPECIFIC'], { required_error: "You must select a TMP type."}),
+  tmpType: z.enum(['GENERIC', 'SITE_SPECIFIC'], { required_error: "You must select a TMP type."}),
   locationDetails: sectionSchema.extend({
     correctRoadLevel: checkSchema,
     trafficCountConfirmed: checkSchema,
@@ -82,9 +85,10 @@ type SectionCheckProps = {
   sectionName: keyof z.infer<typeof tmpCheckingProcessSchema>;
   title: string;
   checks: { name: string; label: string }[];
+  isSiteSpecific?: boolean;
 };
 
-const SectionCheck = ({ form, sectionName, title, checks }: SectionCheckProps) => {
+const SectionCheck = ({ form, sectionName, title, checks, isSiteSpecific = false }: SectionCheckProps) => {
   return (
     <div className="space-y-4 rounded-lg border p-4">
       <h4 className="font-semibold">{title}</h4>
@@ -114,6 +118,9 @@ const SectionCheck = ({ form, sectionName, title, checks }: SectionCheckProps) =
           />
         ))}
       </div>
+       {isSiteSpecific && sectionName === 'shape' && (
+         <p className="text-sm text-muted-foreground p-1">Are the following catered for in the generic TMP?</p>
+      )}
       <FormField
         control={form.control}
         name={`${sectionName}.comment`}
@@ -169,6 +176,7 @@ export default function PreInstallationProcessPage() {
     name: "completedBy"
   });
 
+  const tmpType = form.watch('tmpType');
   const isLoading = isJobLoading || isStaffLoading;
 
   const handleOpenSignatureDialog = (staff: Staff | null) => {
@@ -258,7 +266,7 @@ export default function PreInstallationProcessPage() {
                     <FormControl>
                       <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="GENERIC" /></FormControl><FormLabel className="font-normal">Generic TMP</FormLabel></FormItem>
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="SITE SPECIFIC" /></FormControl><FormLabel className="font-normal">Site Specific TMP</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="SITE_SPECIFIC" /></FormControl><FormLabel className="font-normal">Site Specific TMP</FormLabel></FormItem>
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
@@ -266,14 +274,39 @@ export default function PreInstallationProcessPage() {
                 )}
               />
             </div>
+            
+            {tmpType === 'SITE_SPECIFIC' && (
+                <div className="space-y-4">
+                    <h3 className="font-semibold text-lg border-b pb-2">Location Details (Site Specific)</h3>
+                    <div className="rounded-lg border p-4 text-center text-muted-foreground bg-muted/30">
+                        <p>This section will be automatically populated with data when you add them using the "Add Location" button or if you have already added them via the On-Site Record, the location details will appear after saving the TMP Checking Process</p>
+                    </div>
+                     <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Street Name</TableHead>
+                                <TableHead>RP</TableHead>
+                                <TableHead>Suburb</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell colSpan={3} className="text-center text-muted-foreground">No locations added.</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                    <Button type="button" variant="outline" size="sm" disabled><PlusCircle className="mr-2 h-4 w-4" /> Add Location</Button>
+                </div>
+            )}
+            
+            <SectionCheck form={form} sectionName="locationDetails" title="Road Level" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'correctRoadLevel', label: 'Is this at the correct road level?' }, { name: 'trafficCountConfirmed', label: 'Does your traffic count confirm the traffic volume in the TMP?' } ]} />
+            <SectionCheck form={form} sectionName="shape" title="Shape" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'intersections', label: 'Intersections' }, { name: 'verticalCurves', label: 'Vertical Curves (hills)' }, { name: 'horizontalCurves', label: 'Horizontal Curves (corners)' }, { name: 'sufficientAdvanceWarning', label: 'Sufficient advance warning' } ]} />
+            <SectionCheck form={form} sectionName="directionAndProtection" title="Direction and Protection" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'sufficientLength', label: 'Sufficient length to place the planned direction and protection' }, { name: 'sufficientWidth', label: 'Sufficient road width to place the planned direction and protection i.e. minimum lane width is 2.75m and protection' }, { name: 'adequateSightDistance', label: 'Adequate sight distance on both sides' }, { name: 'sufficientRoomForTtc', label: 'Sufficient room to accommodate required positive traffic control' } ]} />
+            <SectionCheck form={form} sectionName="requiredSpeedRestrictions" title="Required Speed Restrictions" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'correctTsl', label: 'Has the correct TSL been selected for the work activity and worksite?' } ]} />
+            <SectionCheck form={form} sectionName="plantAndEquipment" title="Plant and equipment" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'plantFits', label: 'Will plant and equipment fit within the designated working space?' } ]} />
+            <SectionCheck form={form} sectionName="personalSafety" title="Personal safety" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'workersInWorkingSpace', label: 'Are all workers able to carry out their work within the designated working space?' } ]} />
+            <SectionCheck form={form} sectionName="layoutDiagrams" title="Layout diagrams" isSiteSpecific={tmpType === 'SITE_SPECIFIC'} checks={[ { name: 'diagramsMatch', label: 'Does the diagram(s) match the road environment at the site?' }, { name: 'manageHeavyVehicles', label: 'Will the installed TTM manage heavy vehicles passing through the worksite?' }, { name: 'changesRequired', label: 'Are any changes required to the TMD?' } ]} />
 
-            <SectionCheck form={form} sectionName="locationDetails" title="Location Details" checks={[ { name: 'correctRoadLevel', label: 'Is this at the correct road level?' }, { name: 'trafficCountConfirmed', label: 'Does your traffic count confirm the traffic volume in the TMP?' } ]} />
-            <SectionCheck form={form} sectionName="shape" title="Shape" checks={[ { name: 'intersections', label: 'Intersections' }, { name: 'verticalCurves', label: 'Vertical Curves (hills)' }, { name: 'horizontalCurves', label: 'Horizontal Curves (corners)' }, { name: 'sufficientAdvanceWarning', label: 'Sufficient advance warning' } ]} />
-            <SectionCheck form={form} sectionName="directionAndProtection" title="Direction and Protection" checks={[ { name: 'sufficientLength', label: 'Sufficient length to place the planned direction and protection' }, { name: 'sufficientWidth', label: 'Sufficient road width to place the planned direction and protection' }, { name: 'adequateSightDistance', label: 'Adequate sight distance on both sides' }, { name: 'sufficientRoomForTtc', label: 'Sufficient room to accommodate required positive traffic control' } ]} />
-            <SectionCheck form={form} sectionName="requiredSpeedRestrictions" title="Required Speed Restrictions" checks={[ { name: 'correctTsl', label: 'Has the correct TSL been selected for the work activity and worksite?' } ]} />
-            <SectionCheck form={form} sectionName="plantAndEquipment" title="Plant and equipment" checks={[ { name: 'plantFits', label: 'Will plant and equipment fit within the designated working space?' } ]} />
-            <SectionCheck form={form} sectionName="personalSafety" title="Personal safety" checks={[ { name: 'workersInWorkingSpace', label: 'Are all workers able to carry out their work within the designated working space?' } ]} />
-            <SectionCheck form={form} sectionName="layoutDiagrams" title="Layout diagrams" checks={[ { name: 'diagramsMatch', label: 'Does the diagram(s) match the road environment at the site?' }, { name: 'manageHeavyVehicles', label: 'Will the installed TTM manage heavy vehicles passing through the worksite?' }, { name: 'changesRequired', label: 'Are any changes required to the TMD?' } ]} />
 
             <div className="space-y-4">
                 <h3 className="font-semibold text-lg border-b pb-2">Completed By</h3>
