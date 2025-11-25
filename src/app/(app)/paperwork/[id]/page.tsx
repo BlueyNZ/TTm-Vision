@@ -1,4 +1,3 @@
-
 'use client';
 import { useParams, useRouter } from 'next/navigation';
 import { Job, Timesheet, TruckInspection, HazardId, HazardIdNzgttm, TmpCheckingProcess, OnSiteRecord } from '@/lib/data';
@@ -14,7 +13,7 @@ const paperworkLinks = [
     { title: 'Hazard ID', href: 'hazard-id', collection: 'hazard_ids' },
     { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm', collection: 'hazard_ids_nzgttm' },
     { title: 'TMP Checking Process', href: 'pre-installation-process', collection: 'tmp_checking_processes' },
-    { title: 'On-Site Record (CoPTTM)', href: 'new-on-site-record', collection: 'on_site_records' },
+    { title: 'On-Site Record (CoPTTM)', href: 'on-site-record', collection: 'on_site_records' },
     { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record' },
     { title: 'Job Note', href: 'job-note' },
     { title: 'Take Site Photos', href: '#' },
@@ -102,9 +101,11 @@ export default function PaperworkMenuPage() {
                         if (link.collection) {
                            statusText = `${count} submission${count === 1 ? '' : 's'}`;
                         }
+                        
+                        const targetHref = link.href === '#' ? '#' : `/jobs/${jobId}/paperwork/${link.href}`;
 
                         return (
-                            <Link href={link.href === '#' ? '#' : `/jobs/${jobId}/paperwork/${link.href}`} key={link.title} className="block">
+                            <Link href={targetHref} key={link.title} className="block">
                                 <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col justify-between gap-3 h-full">
                                     <div className="flex items-center gap-3">
                                         <FileText className="h-5 w-5 text-primary"/>
