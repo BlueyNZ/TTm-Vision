@@ -80,7 +80,7 @@ const temporarySpeedLimitSchema = z.object({
 
 const onSiteRecordSchema = z.object({
   jobId: z.string(),
-  jobDate: z.string().min(1, "Job date is required."),
+  jobDate: z.date(),
   tmpNumber: z.string().optional(),
   stmsInChargeId: z.string().min(1, "STMS in charge is required."),
   stmsSignatureDataUrl: z.string().min(1, "STMS signature is required."),
@@ -133,7 +133,7 @@ export default function NewOnSiteRecordPage() {
     resolver: zodResolver(onSiteRecordSchema),
     defaultValues: {
       jobId: jobId,
-      jobDate: "",
+      jobDate: new Date(),
       tmpNumber: "",
       isStmsInChargeOfWorkingSpace: false,
       stmsInChargeId: "",
@@ -252,7 +252,40 @@ export default function NewOnSiteRecordPage() {
                 <h3 className="font-semibold text-lg border-b pb-2">Job Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <p><span className="font-medium">Job No:</span> {job?.jobNumber}</p>
-                   <FormField control={form.control} name="jobDate" render={({ field }) => (<FormItem><FormLabel>Job Date</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                   <FormField
+                    control={form.control}
+                    name="jobDate"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Job Date</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                   <p className="md:col-span-2"><span className="font-medium">Client:</span> {job?.clientName}</p>
                   <p className="md:col-span-2"><span className="font-medium">Location:</span> {job?.location}</p>
                 </div>
@@ -480,95 +513,94 @@ export default function NewOnSiteRecordPage() {
               </div>
 
                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg border-b pb-2">Worksite Monitoring</h3>
-                  <div className="w-full overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="min-w-[150px]">Check Type</TableHead>
-                          <TableHead className="min-w-[280px]">Date &amp; Time</TableHead>
-                          <TableHead className="min-w-[150px]">Signature</TableHead>
-                          <TableHead className="min-w-[200px]">Comments</TableHead>
-                          <TableHead><span className="sr-only">Actions</span></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                    <h3 className="font-semibold text-lg border-b pb-2">Worksite Monitoring</h3>
+                    <div className="space-y-4">
                         {worksiteFields.map((field, index) => {
-                          const signatureDataUrl = watch(`worksiteMonitoring.${index}.signatureDataUrl`);
-                          return (
-                            <TableRow key={field.id}>
-                              <TableCell>
-                                <Input value={field.checkType} disabled className="bg-muted"/>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex gap-2">
-                                <FormField
-                                  control={control}
-                                  name={`worksiteMonitoring.${index}.date`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <Popover>
-                                        <PopoverTrigger asChild>
-                                          <FormControl>
-                                            <Button variant={"outline"} className={cn("w-[140px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                            </Button>
-                                          </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/>
-                                        </PopoverContent>
-                                      </Popover>
-                                    </FormItem>
-                                  )}
-                                />
-                                 <FormField
-                                  control={control}
-                                  name={`worksiteMonitoring.${index}.time`}
-                                  render={({ field }) => (
-                                    <FormControl><Input placeholder="Time" {...field} className="w-[100px]" /></FormControl>
-                                  )}
-                                />
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {signatureDataUrl ? (
-                                    <div className="flex items-center gap-2">
-                                        <Image src={signatureDataUrl} alt="Signature" width={100} height={40} style={{ objectFit: 'contain' }} className="bg-white rounded-sm border" />
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => setValue(`worksiteMonitoring.${index}.signatureDataUrl`, '', { shouldValidate: true })}>
-                                            <Trash className="h-4 w-4 text-destructive" />
+                        const signatureDataUrl = watch(`worksiteMonitoring.${index}.signatureDataUrl`);
+                        return (
+                            <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
+                                <div className="flex items-center justify-between">
+                                    <Input value={field.checkType} disabled className="bg-muted font-semibold w-fit"/>
+                                    {worksiteFields.length > 1 && (
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeWorksite(index)}>
+                                            <Trash className="h-4 w-4 text-destructive"/>
                                         </Button>
-                                    </div>
-                                ) : (
-                                    <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog({ type: 'worksite', index })}>
-                                        <Signature className="mr-2 h-4 w-4" />
-                                        Sign
-                                    </Button>
-                                )}
-                            </TableCell>
-                              <TableCell>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <FormField
+                                        control={control}
+                                        name={`worksiteMonitoring.${index}.date`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Date</FormLabel>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/>
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={control}
+                                        name={`worksiteMonitoring.${index}.time`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Time</FormLabel>
+                                                <FormControl><Input placeholder="e.g. 08:30" {...field} /></FormControl>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 <FormField
-                                  control={control}
-                                  name={`worksiteMonitoring.${index}.comments`}
-                                  render={({ field }) => (
-                                    <FormControl><Textarea {...field} /></FormControl>
-                                  )}
+                                    control={control}
+                                    name={`worksiteMonitoring.${index}.comments`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Comments</FormLabel>
+                                            <FormControl><Textarea {...field} /></FormControl>
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}
                                 />
-                              </TableCell>
-                              <TableCell>
-                                {worksiteFields.length > 1 && (
-                                  <Button type="button" variant="ghost" size="icon" onClick={() => removeWorksite(index)}>
-                                    <Trash className="h-4 w-4 text-destructive"/>
-                                  </Button>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          )
+                                <FormField
+                                    control={control}
+                                    name={`worksiteMonitoring.${index}.signatureDataUrl`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Signature</FormLabel>
+                                            {signatureDataUrl ? (
+                                                <div className="flex items-center gap-2">
+                                                    <Image src={signatureDataUrl} alt="Signature" width={150} height={50} style={{ objectFit: 'contain' }} className="bg-white rounded-sm border" />
+                                                    <Button type="button" variant="ghost" size="icon" onClick={() => setValue(`worksiteMonitoring.${index}.signatureDataUrl`, '', { shouldValidate: true })}>
+                                                        <Trash className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'worksite', index })}>
+                                                    <Signature className="mr-2 h-4 w-4" />
+                                                    Sign
+                                                </Button>
+                                            )}
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )
                         })}
-                      </TableBody>
-                    </Table>
-                  </div>
+                    </div>
                   {showAddCheckButton && (
                     <Button type="button" variant="outline" size="sm" onClick={handleAddWorksiteCheck}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Site Check
@@ -613,20 +645,42 @@ export default function NewOnSiteRecordPage() {
                                 </Button>
                                 <FormField control={control} name={`temporarySpeedLimits.${index}.streetName`} render={({ field }) => (<FormItem><FormLabel>Street Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                      <FormLabel>Date & Time Installed</FormLabel>
-                                      <div className="flex gap-2">
-                                          <FormField control={control} name={`temporarySpeedLimits.${index}.installDate`} render={({ field }) => (<FormItem><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-[140px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover></FormItem>)} />
-                                          <FormField control={control} name={`temporarySpeedLimits.${index}.installTime`} render={({ field }) => (<FormControl><Input placeholder="Time" {...field} className="w-[100px]" /></FormControl>)} />
-                                      </div>
-                                  </div>
-                                  <div className="space-y-2">
-                                      <FormLabel>Date & Time TSL Removed</FormLabel>
-                                      <div className="flex gap-2">
-                                          <FormField control={control} name={`temporarySpeedLimits.${index}.removalDate`} render={({ field }) => (<FormItem><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-[140px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover></FormItem>)} />
-                                          <FormField control={control} name={`temporarySpeedLimits.${index}.removalTime`} render={({ field }) => (<FormControl><Input placeholder="Time" {...field} className="w-[100px]" /></FormControl>)} />
-                                      </div>
-                                  </div>
+                                  <FormField
+                                    control={control}
+                                    name={`temporarySpeedLimits.${index}.installDate`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Date Installed</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-auto h-4 w-4 opacity-50" /></Button></FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                  />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.installTime`} render={({ field }) => (<FormItem><FormLabel>Time Installed</FormLabel><FormControl><Input placeholder="Time" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <FormField
+                                    control={control}
+                                    name={`temporarySpeedLimits.${index}.removalDate`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Date Removed</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-auto h-4 w-4 opacity-50" /></Button></FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                  />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.removalTime`} render={({ field }) => (<FormItem><FormLabel>Time Removed</FormLabel><FormControl><Input placeholder="Time" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField control={control} name={`temporarySpeedLimits.${index}.placementFrom`} render={({ field }) => (<FormItem><FormLabel>Placement From (RP/House No.)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -713,3 +767,5 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
+
+    
