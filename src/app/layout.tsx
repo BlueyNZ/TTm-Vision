@@ -7,7 +7,6 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 export const metadata: Metadata = {
   title: 'TTM Vision',
   description: 'Simplified Traffic Management',
-  manifest: '/manifest.webmanifest',
 };
 
 export default function RootLayout({
