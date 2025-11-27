@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { JobSelector } from "@/components/jobs/job-selector";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const checkStatusSchema = z.enum(['OK', 'Not OK', 'N/A']);
 
@@ -51,6 +52,16 @@ const mobileOpsSchema = z.object({
     radios: checkStatusSchema,
     signs: checkStatusSchema,
   }),
+  siteChecks: z.array(z.object({
+    time: z.string().min(1, "Time is required"),
+    distancesMaintained: z.boolean().default(false),
+    positioningMaintained: z.boolean().default(false),
+    boardsMaintained: z.boolean().default(false),
+    roadClear: z.boolean().default(false),
+    staticMaintained: z.boolean().default(false),
+    safetyZonesMaintained: z.boolean().default(false),
+    workingSpaceMaintained: z.boolean().default(false),
+  })).optional()
 });
 
 
@@ -109,11 +120,17 @@ export default function CreateMobileOpsRecordPage() {
         tma: 'OK',
         radios: 'OK',
         signs: 'OK',
-      }
+      },
+      siteChecks: []
     },
   });
 
   const { watch, setValue, control } = form;
+
+  const { fields: siteCheckFields, append: appendSiteCheck, remove: removeSiteCheck } = useFieldArray({
+    control,
+    name: "siteChecks",
+  });
   
   useEffect(() => {
     if (allJobs && jobId) {
@@ -168,13 +185,12 @@ export default function CreateMobileOpsRecordPage() {
         date: Timestamp.fromDate(data.date),
         stmsWarrantExpiry: data.stmsWarrantExpiry ? Timestamp.fromDate(data.stmsWarrantExpiry) : null,
         operationRecords: [], // Placeholder for future
-        siteChecks: [], // Placeholder for future
         comments: [], // Placeholder for future
         createdAt: serverTimestamp(),
       };
       await addDoc(collection(firestore, 'job_packs', jobId, 'on_site_records_mobile_ops'), payload);
       toast({ title: "Record Submitted Successfully" });
-      router.push(`/jobs/${jobId}/paperwork/`);
+      router.push(`/paperwork/${jobId}`);
     } catch (error) {
       console.error("Error submitting form:", error);
       toast({ variant: 'destructive', title: "Submission Failed" });
@@ -285,9 +301,41 @@ export default function CreateMobileOpsRecordPage() {
               </div>
 
               <div className="space-y-4">
-                  <h3 className="font-semibold text-lg border-b pb-2">Checks</h3>
-                  <p className="text-sm text-muted-foreground">This section will be automatically populated with data when you add them using the "Add Site Check" button under "Quick Links".</p>
-              </div>
+                    <div className="flex justify-between items-center border-b pb-2">
+                        <h3 className="font-semibold text-lg">Checks</h3>
+                        <Button type="button" variant="outline" size="sm" onClick={() => appendSiteCheck({ time: format(new Date(), 'h:mm a'), distancesMaintained: true, positioningMaintained: true, boardsMaintained: true, roadClear: true, staticMaintained: true, safetyZonesMaintained: true, workingSpaceMaintained: true })}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Check
+                        </Button>
+                    </div>
+                    {siteCheckFields.map((field, index) => (
+                        <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
+                             <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeSiteCheck(index)}>
+                                <Trash className="h-4 w-4 text-destructive" />
+                            </Button>
+                             <FormField
+                                control={control}
+                                name={`siteChecks.${index}.time`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Time</FormLabel>
+                                        <FormControl><Input placeholder="eg 10:30 AM" {...field} /></FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <div className="space-y-2">
+                                <FormField control={control} name={`siteChecks.${index}.distancesMaintained`} render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="text-sm font-normal">Distances between vehicles maintained</FormLabel></FormItem>)} />
+                                <FormField control={control} name={`siteChecks.${index}.positioningMaintained`} render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="text-sm font-normal">Lateral positioning of vehicles maintained</FormLabel></FormItem>)} />
+                                <FormField control={control} name={`siteChecks.${index}.boardsMaintained`} render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="text-sm font-normal">LAS/RD6/AWVMS/VMS/Horizontal arrowboards continue to operate correctly</FormLabel></FormItem>)} />
+                                <FormField control={control} name={`siteChecks.${index}.roadClear`} render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="text-sm font-normal">Road clear and available for planned work?</FormLabel></FormItem>)} />
+                                <FormField control={control} name={`siteChecks.${index}.staticMaintained`} render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="text-sm font-normal">Static equipment maintained?</FormLabel></FormItem>)} />
+                                <FormField control={control} name={`siteChecks.${index}.safetyZonesMaintained`} render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="text-sm font-normal">Safety zones maintained?</FormLabel></FormItem>)} />
+                                <FormField control={control} name={`siteChecks.${index}.workingSpaceMaintained`} render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="text-sm font-normal">Working space adequate and maintained?</FormLabel></FormItem>)} />
+                            </div>
+                        </div>
+                    ))}
+                     {siteCheckFields.length === 0 && <p className="text-sm text-center text-muted-foreground py-4">No site checks added.</p>}
+                </div>
+
 
               <div className="space-y-4">
                   <h3 className="font-semibold text-lg border-b pb-2">Comments</h3>

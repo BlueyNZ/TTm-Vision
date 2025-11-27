@@ -360,7 +360,16 @@ export type OnSiteRecordMobileOps = {
         signs: 'OK' | 'Not OK' | 'N/A';
     };
     operationRecords: { roadName: string; startPoint: string; endPoint: string; startTime: string; endTime: string }[];
-    siteChecks: { time: string; distancesMaintained: boolean; positioningMaintained: boolean; boardsMaintained: boolean; roadClear: boolean; staticMaintained: boolean; safetyZonesMaintained: boolean; workingSpaceMaintained: boolean; }[];
+    siteChecks: { 
+        time: string; 
+        distancesMaintained: boolean; 
+        positioningMaintained: boolean; 
+        boardsMaintained: boolean; 
+        roadClear: boolean; 
+        staticMaintained: boolean; 
+        safetyZonesMaintained: boolean; 
+        workingSpaceMaintained: boolean; 
+    }[];
     comments: string[];
     createdAt: Timestamp;
 }
