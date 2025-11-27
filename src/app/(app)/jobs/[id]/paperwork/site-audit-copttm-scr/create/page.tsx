@@ -153,13 +153,13 @@ const siteAuditSchema = z.object({
 // Scoring logic
 const scoringWeights = {
     signs: { missing: 5, position: 2, notVisible: 5, wrongSign: 5, condition: 4, permanentSign: 5, unapproved: 4, nonCompliantSupport: 2 },
-    mobile: { tailPilot: 30, leadPilot: 20, shadowVehicle: 26, 'TMA Missing': 26, AWVMS: 26 },
+    mobile: { tailPilot: 30, leadPilot: 20, shadowVehicle: 26, tmaMissing: 26, awvms: 26 },
     pedestrians: { inadequateProvision: 10, inadequateProvisionCyclists: 10 },
     delineation: { missingTaper: 26, taperTooShort: 15, trailingTaper: 5, spacingInTaper: 5, spacingAlongLanes: 3, missingDelineation: 10, condition: 2, nonApprovedDevice: 4, roadMarking: 30, siteAccess: 10 },
     miscellaneous: { workingInLiveLanes: 20, missingController: 20, safetyZoneCompromised: 10, highVisGarment: 5, marginalSurface: 15, unacceptableSurface: 30, barrierDefects: 10, unsafeTtm: 5, vmsMessage: 15, flashingBeacons: 3, parkingFeatures: 5, unsafeParking: 20, marginalItems: 1 },
 };
 
-function calculateSectionScore(sectionData: Record<string, { tally: number }> | undefined, weights: Record<string, number>): number {
+function calculateSectionScore(sectionData: Record<string, { tally: number }>, weights: Record<string, number>): number {
   if (!sectionData) {
     return 0;
   }
@@ -184,9 +184,9 @@ const ScoreSection = ({ form, sectionName, title, weights }: { form: any, sectio
     const score = calculateSectionScore(sectionData, weights);
     
     const formatLabel = (key: string) => {
-      if (key === key.toUpperCase()) return key;
-      if (key === 'tmaMissing') return 'TMA Missing';
-      return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        if (key === 'tmaMissing') return 'TMA Missing';
+        if (key === key.toUpperCase()) return key; // Handles AWVMS
+        return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
     };
 
 
@@ -325,6 +325,17 @@ export default function CreateSiteAuditPage() {
         }
     }, [formToEdit, staffList, reset]);
 
+    useEffect(() => {
+        if (auditor) {
+            setValue('auditorId', auditor.id, { shouldValidate: true });
+        }
+    }, [auditor, setValue]);
+
+    useEffect(() => {
+        if (stms) {
+            setValue('stmsId', stms.id, { shouldValidate: true });
+        }
+    }, [stms, setValue]);
 
     // Functions
     const handleOpenSignatureDialog = (target: 'auditor' | 'stms') => {
@@ -383,7 +394,7 @@ export default function CreateSiteAuditPage() {
 
     const isLoading = areJobsLoading || areStaffLoading || isFormLoading;
     if (isLoading) {
-        return <LoaderCircle className="h-8 w-8 animate-spin" />;
+        return <div className="flex justify-center items-center h-64"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
     }
 
     // Render
@@ -451,13 +462,11 @@ export default function CreateSiteAuditPage() {
                             </div>
                             
                             {/* Signatures */}
-                             <div className="space-y-4">
-                                <FormField control={form.control} name="scrLeftOnsite" render={({ field }) => <FormItem className="flex items-center gap-2 pt-2"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>SCR Left Onsite?</FormLabel></FormItem>} />
-                            </div>
+                            <FormField control={form.control} name="scrLeftOnsite" render={({ field }) => <FormItem className="flex items-center gap-2 pt-2"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>SCR Left Onsite?</FormLabel></FormItem>} />
                              <div className="grid md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     <h4 className="font-semibold">Audited/Reviewed By</h4>
-                                    <FormField control={form.control} name="auditorId" render={() => <FormItem><FormLabel>Auditor Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={auditor} onSelectStaff={setAuditor} /></FormItem>} />
+                                    <FormField control={form.control} name="auditorId" render={() => <FormItem><FormLabel>Auditor Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={auditor} onSelectStaff={setAuditor} /><FormMessage /></FormItem>} />
                                     <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog('auditor')}>
                                         <SignatureIcon className="mr-2 h-4 w-4"/>
                                         {watch('auditorSignatureUrl') ? 'Update Signature' : 'Sign as Auditor'}
