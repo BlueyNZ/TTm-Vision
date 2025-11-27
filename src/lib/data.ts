@@ -284,7 +284,7 @@ export type WorksiteMonitoring = {
 export type OnSiteRecord = {
   id: string;
   jobId: string;
-  jobDate: string;
+  jobDate: Date;
   tmpNumber?: string;
   stmsInChargeId?: string;
   stmsSignatureDataUrl?: string;
