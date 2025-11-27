@@ -14,11 +14,11 @@ const paperworkLinks = [
     { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm', collection: 'hazard_ids_nzgttm' },
     { title: 'TMP Checking Process', href: 'pre-installation-process', collection: 'tmp_checking_processes' },
     { title: 'On-Site Record (CoPTTM)', href: 'on-site-record', collection: 'on_site_records' },
-    { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record' },
-    { title: 'Job Note', href: 'job-note' },
-    { title: 'Take Site Photos', href: '#' },
-    { title: 'Incident or Event Report', href: 'incident-or-event-report' },
-    { title: 'Site Audit (CoPTTM SCR)', href: 'site-audit-copttm-scr' },
+    { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record', collection: 'mobile_ops_records' },
+    { title: 'Job Note', href: 'job-note', collection: 'job_notes' },
+    { title: 'Take Site Photos', href: '#', collection: 'site_photos' },
+    { title: 'Incident or Event Report', href: 'incident-or-event-report', collection: 'incident_reports' },
+    { title: 'Site Audit (CoPTTM SCR)', href: 'site-audit-copttm-scr', collection: 'site_audits' },
 ];
 
 export default function PaperworkMenuPage() {
@@ -98,7 +98,9 @@ export default function PaperworkMenuPage() {
                         const isCompleted = count > 0;
                         let statusText = "Not yet completed";
 
-                        if (link.collection) {
+                        if (link.collection && areTimesheetsLoading) { // check one of the loading states
+                            statusText = "Loading...";
+                        } else if (link.collection) {
                            statusText = `${count} submission${count === 1 ? '' : 's'}`;
                         }
                         
