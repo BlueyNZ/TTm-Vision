@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import { StaffSelector } from "@/components/staff/staff-selector";
 import { Calendar as CalendarIcon } from 'lucide-react';
 
@@ -237,7 +236,7 @@ export default function HazardIdCreatePage() {
 
         if (isEditMode && formId) {
             const formDocRef = doc(firestore, 'job_packs', jobId, 'hazard_ids', formId);
-            await setDoc(formDocRef, payload, { merge: true });
+            await setDoc(formDocRef, { ...payload, createdAt: formToEdit?.createdAt || Timestamp.now() }, { merge: true });
              toast({ title: "Hazard ID Updated", description: `Form ${hazardIdNo} has been updated.` });
         } else {
             const hazardCollectionRef = collection(firestore, 'job_packs', jobId, 'hazard_ids');

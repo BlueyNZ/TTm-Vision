@@ -4,8 +4,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { Job, Staff, HazardIdNzgttm } from "@/lib/data";
-import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
-import { useParams, useRouter } from "next/navigation";
+import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs, setDoc } from "firebase/firestore";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
@@ -59,23 +59,23 @@ const hazardIdNzgttmSchema = z.object({
 export default function HazardIdNzgttmPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const jobId = params.id as string;
+  const formId = searchParams.get('edit') || searchParams.get('view');
+  
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hazardIdNo, setHazardIdNo] = useState<string>('Loading...');
 
-  const jobRef = useMemoFirebase(() => {
-    if (!firestore || !jobId) return null;
-    return doc(firestore, 'job_packs', jobId);
-  }, [firestore, jobId]);
+  const jobRef = useMemoFirebase(() => (firestore && jobId) ? doc(firestore, 'job_packs', jobId) : null, [firestore, jobId]);
   const { data: job, isLoading: isJobLoading } = useDoc<Job>(jobRef);
 
-  const staffCollection = useMemoFirebase(() => {
-    if(!firestore) return null;
-    return collection(firestore, 'staff');
-  }, [firestore]);
+  const staffCollection = useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]);
   const { data: staffList, isLoading: isStaffListLoading } = useCollection<Staff>(staffCollection);
+
+  const formToEditRef = useMemoFirebase(() => (firestore && formId) ? doc(firestore, 'job_packs', jobId, 'hazard_ids_nzgttm', formId) : null, [firestore, jobId, formId]);
+  const { data: formToEdit, isLoading: isFormLoading } = useDoc<HazardIdNzgttm>(formToEditRef);
 
   const [selectedPerformer, setSelectedPerformer] = useState<Staff | null>(null);
 
@@ -100,7 +100,7 @@ export default function HazardIdNzgttmPage() {
 
   useEffect(() => {
     const fetchLatestHazardId = async () => {
-      if (!firestore) return;
+      if (!firestore || formId) return;
       const hazardFormsCollection = collection(firestore, `job_packs/${jobId}/hazard_ids_nzgttm`);
       const q = query(hazardFormsCollection, orderBy("createdAt", "desc"), limit(1));
       const querySnapshot = await getDocs(q);
@@ -113,7 +113,19 @@ export default function HazardIdNzgttmPage() {
       }
     };
     fetchLatestHazardId();
-  }, [firestore, jobId]);
+  }, [firestore, jobId, formId]);
+
+  useEffect(() => {
+    if (formToEdit && staffList) {
+      setHazardIdNo(formToEdit.hazardIdNo);
+      const performer = staffList.find(s => s.id === formToEdit.performedBy);
+      setSelectedPerformer(performer || null);
+      form.reset({
+        ...formToEdit,
+        performedAt: formToEdit.performedAt instanceof Timestamp ? formToEdit.performedAt.toDate() : new Date(formToEdit.performedAt),
+      });
+    }
+  }, [formToEdit, staffList, form]);
 
   useEffect(() => {
     if (selectedPerformer) {
@@ -121,26 +133,27 @@ export default function HazardIdNzgttmPage() {
     }
   }, [selectedPerformer, form]);
   
-  const isLoading = isJobLoading || isStaffListLoading;
+  const isLoading = isJobLoading || isStaffListLoading || isFormLoading;
 
   async function onSubmit(data: z.infer<typeof hazardIdNzgttmSchema>) {
     if (!firestore || !jobId) return;
     setIsSubmitting(true);
 
     try {
-        const hazardCollectionRef = collection(firestore, 'job_packs', jobId, 'hazard_ids_nzgttm');
         const payload = {
             ...data,
             hazardIdNo,
             performedAt: Timestamp.fromDate(data.performedAt),
-            createdAt: Timestamp.now(),
         };
-
-        await addDoc(hazardCollectionRef, payload);
-        toast({
-            title: "Hazard ID (NZGTTM) Submitted",
-            description: `The form ${hazardIdNo} has been saved.`,
-        });
+        
+        if (formId) {
+            const docRef = doc(firestore, 'job_packs', jobId, 'hazard_ids_nzgttm', formId);
+            await setDoc(docRef, { ...payload, createdAt: formToEdit?.createdAt || Timestamp.now() }, { merge: true });
+            toast({ title: "Hazard ID (NZGTTM) Updated" });
+        } else {
+            await addDoc(collection(firestore, 'job_packs', jobId, 'hazard_ids_nzgttm'), { ...payload, createdAt: Timestamp.now() });
+            toast({ title: "Hazard ID (NZGTTM) Submitted" });
+        }
         router.push(`/paperwork/${jobId}`);
     } catch (error) {
         console.error("Error submitting Hazard ID (NZGTTM):", error);
@@ -303,10 +316,10 @@ export default function HazardIdNzgttmPage() {
             </div>
           </CardContent>
           <CardFooter className="justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => router.push(`/paperwork/${jobId}`)}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
             <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                Submit Form
+                {formId ? 'Save Changes' : 'Submit Form'}
             </Button>
           </CardFooter>
         </form>

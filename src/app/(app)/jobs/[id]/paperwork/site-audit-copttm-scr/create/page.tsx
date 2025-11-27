@@ -79,8 +79,8 @@ const siteAuditSchema = z.object({
     tailPilot: auditScoreItemSchema,
     leadPilot: auditScoreItemSchema,
     shadowVehicle: auditScoreItemSchema,
-    'TMA Missing': auditScoreItemSchema,
-    AWVMS: auditScoreItemSchema,
+    tmaMissing: auditScoreItemSchema,
+    awvms: auditScoreItemSchema,
   }),
   pedestrians: z.object({
     inadequateProvision: auditScoreItemSchema,
@@ -153,13 +153,13 @@ const siteAuditSchema = z.object({
 // Scoring logic
 const scoringWeights = {
   signs: { missing: 5, position: 2, notVisible: 5, wrongSign: 5, condition: 4, permanentSign: 5, unapproved: 4, nonCompliantSupport: 2 },
-  mobile: { tailPilot: 30, leadPilot: 20, shadowVehicle: 26, 'TMA Missing': 26, AWVMS: 26 },
+  mobile: { tailPilot: 30, leadPilot: 20, shadowVehicle: 26, tmaMissing: 26, awvms: 26 },
   pedestrians: { inadequateProvision: 10, inadequateProvisionCyclists: 10 },
   delineation: { missingTaper: 26, taperTooShort: 15, trailingTaper: 5, spacingInTaper: 5, spacingAlongLanes: 3, missingDelineation: 10, condition: 2, nonApprovedDevice: 4, roadMarking: 30, siteAccess: 10 },
   miscellaneous: { workingInLiveLanes: 20, missingController: 20, safetyZoneCompromised: 10, highVisGarment: 5, marginalSurface: 15, unacceptableSurface: 30, barrierDefects: 10, unsafeTtm: 5, vmsMessage: 15, flashingBeacons: 3, parkingFeatures: 5, unsafeParking: 20, marginalItems: 1 },
 };
 
-function calculateSectionScore(sectionData: Record<string, { tally: number }>, weights: Record<string, number>): number {
+function calculateSectionScore(sectionData: Record<string, { tally: number }> | undefined, weights: Record<string, number>): number {
   if (!sectionData) {
     return 0;
   }
@@ -184,11 +184,10 @@ const ScoreSection = ({ form, sectionName, title, weights }: { form: any, sectio
     const score = calculateSectionScore(sectionData, weights);
     
     const formatLabel = (key: string) => {
-      // If the key is all uppercase (like an acronym), return it as is.
       if (key === key.toUpperCase()) {
         return key;
       }
-      // Otherwise, convert camelCase to Title Case.
+      if (key === 'tmaMissing') return 'TMA Missing';
       return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
     };
 
@@ -257,14 +256,14 @@ export default function CreateSiteAuditPage() {
         resolver: zodResolver(siteAuditSchema),
         defaultValues: {
             signs: { missing: {tally: 0}, position: {tally: 0}, notVisible: {tally: 0}, wrongSign: {tally: 0}, condition: {tally: 0}, permanentSign: {tally: 0}, unapproved: {tally: 0}, nonCompliantSupport: {tally: 0} },
-            mobile: { tailPilot: {tally: 0}, leadPilot: {tally: 0}, shadowVehicle: {tally: 0}, 'TMA Missing': {tally: 0}, AWVMS: {tally: 0} },
+            mobile: { tailPilot: {tally: 0}, leadPilot: {tally: 0}, shadowVehicle: {tally: 0}, tmaMissing: {tally: 0}, awvms: {tally: 0} },
             pedestrians: { inadequateProvision: {tally: 0}, inadequateProvisionCyclists: {tally: 0} },
             delineation: { missingTaper: {tally: 0}, taperTooShort: {tally: 0}, trailingTaper: {tally: 0}, spacingInTaper: {tally: 0}, spacingAlongLanes: {tally: 0}, missingDelineation: {tally: 0}, condition: {tally: 0}, nonApprovedDevice: {tally: 0}, roadMarking: {tally: 0}, siteAccess: {tally: 0} },
             miscellaneous: { workingInLiveLanes: {tally: 0}, missingController: {tally: 0}, safetyZoneCompromised: {tally: 0}, highVisGarment: {tally: 0}, marginalSurface: {tally: 0}, unacceptableSurface: {tally: 0}, barrierDefects: {tally: 0}, unsafeTtm: {tally: 0}, vmsMessage: {tally: 0}, flashingBeacons: {tally: 0}, parkingFeatures: {tally: 0}, unsafeParking: {tally: 0}, marginalItems: {tally: 0} },
         },
     });
     
-    const { control, watch, setValue, getValues } = form;
+    const { control, watch, setValue, getValues, reset } = form;
     const { fields: photoFields, append: appendPhoto, remove: removePhoto } = useFieldArray({ control, name: "photos" });
 
     // Calculate Scores
@@ -315,6 +314,20 @@ export default function CreateSiteAuditPage() {
         }
     }, [allJobs, jobId, setValue]);
     
+    useEffect(() => {
+        if(formToEdit && staffList) {
+            const auditorData = staffList.find(s => s.id === formToEdit.auditorId);
+            const stmsData = staffList.find(s => s.id === formToEdit.stmsId);
+            setAuditor(auditorData || null);
+            setStms(stmsData || null);
+            const dataWithDates = { ...formToEdit };
+            if (dataWithDates.auditDate instanceof Timestamp) dataWithDates.auditDate = dataWithDates.auditDate.toDate();
+            if (dataWithDates.investigation?.dateAssigned instanceof Timestamp) dataWithDates.investigation.dateAssigned = dataWithDates.investigation.dateAssigned.toDate();
+            reset(dataWithDates as z.infer<typeof siteAuditSchema>);
+        }
+    }, [formToEdit, staffList, reset]);
+
+
     // Functions
     const handleOpenSignatureDialog = (target: 'auditor' | 'stms') => {
         setSignatureTarget(target);
@@ -338,10 +351,39 @@ export default function CreateSiteAuditPage() {
     // Omitted file upload and getCurrentLocation for brevity, assume they work
 
     async function onSubmit(data: z.infer<typeof siteAuditSchema>) {
-        // Submit logic
+        if(!firestore || !jobId) return;
+        setIsSubmitting(true);
+        
+        try {
+            const payload = {
+                ...data,
+                auditorName: auditor?.name,
+                stmsName: stms?.name,
+                auditDate: Timestamp.fromDate(data.auditDate),
+                investigation: {
+                    ...data.investigation,
+                    dateAssigned: data.investigation?.dateAssigned ? Timestamp.fromDate(data.investigation.dateAssigned) : undefined
+                }
+            };
+            
+            if(formId){
+                const docRef = doc(firestore, 'job_packs', jobId, 'site_audits', formId);
+                await setDoc(docRef, { ...payload, createdAt: formToEdit?.createdAt || Timestamp.now() }, { merge: true });
+                toast({ title: "Audit Updated" });
+            } else {
+                await addDoc(collection(firestore, 'job_packs', jobId, 'site_audits'), { ...payload, createdAt: Timestamp.now() });
+                toast({ title: "Audit Submitted" });
+            }
+            router.push(`/jobs/${jobId}/paperwork/site-audit-copttm-scr`);
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Submission Failed", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
-    const isLoading = areJobsLoading || areStaffLoading;
+    const isLoading = areJobsLoading || areStaffLoading || isFormLoading;
     if (isLoading) {
         return <LoaderCircle className="h-8 w-8 animate-spin" />;
     }
