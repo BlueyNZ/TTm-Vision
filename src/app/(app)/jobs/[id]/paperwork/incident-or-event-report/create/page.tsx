@@ -182,9 +182,7 @@ export default function CreateIncidentReportPage() {
   }, [selectedStms, setValue]);
 
   useEffect(() => {
-      if(assignedInvestigator) {
-          setValue('investigation.assignedToId', assignedInvestigator.id);
-      }
+    setValue('investigation.assignedToId', assignedInvestigator?.id);
   }, [assignedInvestigator, setValue]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,12 +219,19 @@ export default function CreateIncidentReportPage() {
             createdAt: serverTimestamp(),
             attachments: data.attachments || [],
         };
+        
+        if (payload.investigation) {
+            if (payload.investigation.dateAssigned) {
+                payload.investigation.dateAssigned = Timestamp.fromDate(payload.investigation.dateAssigned);
+            } else {
+                delete payload.investigation.dateAssigned;
+            }
 
-        if (payload.investigation && payload.investigation.dateAssigned) {
-            payload.investigation.dateAssigned = Timestamp.fromDate(payload.investigation.dateAssigned);
-        } else if (payload.investigation) {
-            payload.investigation.dateAssigned = undefined; 
+            if (!payload.investigation.assignedToId) {
+                payload.investigation.assignedToId = null;
+            }
         }
+
 
         await addDoc(collection(firestore, 'job_packs', jobId, 'incident_reports'), payload);
         toast({ title: "Incident Report Submitted" });
@@ -315,7 +320,7 @@ export default function CreateIncidentReportPage() {
             <div>
                 <div className="flex justify-between items-center mb-2"><h4 className="font-semibold text-base">TMA Vehicles</h4><Button type="button" variant="outline" size="sm" onClick={() => appendTma({ truckId: '', lane: ''})}><PlusCircle className="mr-2 h-4 w-4" /> Add</Button></div>
                 {tmaFields.map((field, index) => (
-                     <div key={field.id} className="flex items-end gap-2 mb-2 p-2 border rounded-md"><FormField control={form.control} name={`tmaVehicles.${index}.truckId`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Vehicle Name</FormLabel><TruckSelector trucks={trucks || []} onSelectTruck={(truck) => setValue(`tmaVehicles.${index}.truckId`, truck?.id || '')} /><FormMessage /></FormItem>)} /><FormField control={form.control} name={`tmaVehicles.${index}.lane`} render={({ field }) => (<FormItem className="w-1/4"><FormLabel>Which Lane</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /><Button type="button" variant="ghost" size="icon" onClick={() => removeTma(index)}><Trash2 className="h-4 w-4 text-destructive"/></Button></div>
+                     <div key={field.id} className="flex items-end gap-2 mb-2 p-2 border rounded-md"><FormField control={form.control} name={`tmaVehicles.${index}.truckId`} render={() => (<FormItem className="flex-1"><FormLabel>Vehicle Name</FormLabel><TruckSelector trucks={trucks || []} onSelectTruck={(truck) => setValue(`tmaVehicles.${index}.truckId`, truck?.id || '')} /><FormMessage /></FormItem>)} /><FormField control={form.control} name={`tmaVehicles.${index}.lane`} render={({ field }) => (<FormItem className="w-1/4"><FormLabel>Which Lane</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /><Button type="button" variant="ghost" size="icon" onClick={() => removeTma(index)}><Trash2 className="h-4 w-4 text-destructive"/></Button></div>
                 ))}
             </div>
             
