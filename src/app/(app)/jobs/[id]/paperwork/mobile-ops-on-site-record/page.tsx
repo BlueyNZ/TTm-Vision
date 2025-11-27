@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { Job, MobileOpsRecord } from '@/lib/data';
+import { Job, OnSiteRecordMobileOps } from '@/lib/data';
 import { collection, doc, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -60,7 +60,7 @@ export default function JobMobileOpsRecordsPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [itemToDelete, setItemToDelete] = useState<MobileOpsRecord | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<OnSiteRecordMobileOps | null>(null);
 
   const jobRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
@@ -69,22 +69,22 @@ export default function JobMobileOpsRecordsPage() {
 
   const mobileOpsRecordsRef = useMemoFirebase(() => {
     if (!firestore || !jobId) return null;
-    return collection(firestore, 'job_packs', jobId, 'mobile_ops_records');
+    return collection(firestore, 'job_packs', jobId, 'on_site_records_mobile_ops');
   }, [firestore, jobId]);
 
   const { data: job, isLoading: isJobLoading } = useDoc<Job>(jobRef);
-  const { data: mobileOpsRecords, isLoading: areItemsLoading } = useCollection<MobileOpsRecord>(mobileOpsRecordsRef);
+  const { data: mobileOpsRecords, isLoading: areItemsLoading } = useCollection<OnSiteRecordMobileOps>(mobileOpsRecordsRef);
 
   const isLoading = isJobLoading || areItemsLoading;
 
   const handleDelete = () => {
     if (!firestore || !itemToDelete) return;
 
-    deleteDocumentNonBlocking(doc(firestore, 'job_packs', jobId, 'mobile_ops_records', itemToDelete.id));
+    deleteDocumentNonBlocking(doc(firestore, 'job_packs', jobId, 'on_site_records_mobile_ops', itemToDelete.id));
 
     toast({
         variant: "destructive",
-        title: "Mobile Ops Record Deleted",
+        title: "On-Site Record (Mobile) Deleted",
         description: `The record from ${format(itemToDelete.date.toDate(), 'PPP')} has been deleted.`,
     });
     setItemToDelete(null);
@@ -95,15 +95,15 @@ export default function JobMobileOpsRecordsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Mobile Ops On-Site Record Submissions</CardTitle>
+            <CardTitle>On-Site Record (Mobile) Submissions</CardTitle>
             <CardDescription>
-              All submitted Mobile Ops records for job {job?.jobNumber || '...'}.
+              All submitted mobile ops records for job {job?.jobNumber || '...'}.
             </CardDescription>
           </div>
           <Button asChild>
             <Link href={`/jobs/${jobId}/paperwork/mobile-ops-on-site-record/create`}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              New Mobile Ops Record
+              New Record
             </Link>
           </Button>
         </CardHeader>
@@ -118,7 +118,7 @@ export default function JobMobileOpsRecordsPage() {
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>STMS</TableHead>
-                   <TableHead>Vehicle Rego</TableHead>
+                  <TableHead>TMP Ref</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -129,7 +129,7 @@ export default function JobMobileOpsRecordsPage() {
                     <TableRow key={item.id}>
                       <TableCell>{format(recordDate, 'PPP')}</TableCell>
                       <TableCell className="font-medium">{item.stmsName}</TableCell>
-                       <TableCell>{item.vehicleRego}</TableCell>
+                      <TableCell>{item.tmpReference}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -164,9 +164,9 @@ export default function JobMobileOpsRecordsPage() {
           ) : (
             <div className="text-center py-10 text-muted-foreground">
               <FileText className="mx-auto h-12 w-12" />
-              <p className="mt-4 font-semibold">No Mobile Ops Records Submitted</p>
+              <p className="mt-4 font-semibold">No Records Submitted</p>
               <p>
-                Click "New Mobile Ops Record" to submit the first one for this job.
+                Click "New Record" to submit the first one for this job.
               </p>
             </div>
           )}
@@ -177,7 +177,7 @@ export default function JobMobileOpsRecordsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this Mobile Ops record.
+              This action cannot be undone. This will permanently delete this record.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

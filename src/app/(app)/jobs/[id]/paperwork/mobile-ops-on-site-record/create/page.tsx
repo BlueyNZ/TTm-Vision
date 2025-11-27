@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useCollection } from "@/firebase";
-import { Job, Staff, MobileOpsRecord } from "@/lib/data";
+import { Job, Staff, OnSiteRecordMobileOps } from "@/lib/data";
 import { doc, Timestamp, addDoc, collection, setDoc, serverTimestamp } from "firebase/firestore";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle, Trash, CheckCircle, Signature as SignatureIcon, PlusCircle, Calendar as CalendarIcon } from "lucide-react";
@@ -20,202 +20,161 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, differenceInMinutes, isValid } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { StaffSelector } from "@/components/staff/staff-selector";
 import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { JobSelector } from "@/components/jobs/job-selector";
+import { Label } from "@/components/ui/label";
+
+const checkStatusSchema = z.enum(['OK', 'Not OK', 'N/A']);
 
 const mobileOpsSchema = z.object({
   jobId: z.string(),
+  tmpReference: z.string().min(1, 'TMP reference is required.'),
   date: z.date(),
   stmsId: z.string().min(1, "STMS is required."),
   stmsName: z.string(),
-  vehicleRego: z.string().min(1, "Vehicle registration is required."),
-  startTime: z.string().regex(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s(AM|PM)$/i, "Invalid time format (e.g., 8:00 AM)"),
-  finishTime: z.string().regex(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s(AM|PM)$/i, "Invalid time format (e.g., 5:00 PM)"),
-  vehicleChecks: z.object({
-    lights: z.boolean().default(false),
-    arrowBoard: z.boolean().default(false),
-    beacon: z.boolean().default(false),
-    ppe: z.boolean().default(false),
-    firstAid: z.boolean().default(false),
-  }).refine(data => Object.values(data).every(Boolean), { message: "All vehicle checks must be completed."}),
-  siteChecks: z.object({
-    allStaffInducted: z.boolean().default(false),
-    toolboxTalk: z.boolean().default(false),
-    emergencyProcedures: z.boolean().default(false),
-  }).refine(data => Object.values(data).every(Boolean), { message: "All site checks must be confirmed."}),
-  operatorSignatures: z.array(z.object({
-    staffId: z.string(),
-    staffName: z.string(),
-    signatureDataUrl: z.string(),
-  })).min(1, "At least one operator must sign."),
-  stmsSignatureDataUrl: z.string().min(1, "STMS signature is required."),
+  stmsWarrantType: z.string().optional(),
+  stmsTtmId: z.string().optional(),
+  stmsWarrantExpiry: z.date().optional(),
+  stmsSignature: z.string().min(1, 'STMS signature is required.'),
+  stmsSignatureTime: z.string().min(1, 'Time is required.'),
+  preStartCheckTime: z.string().min(1, 'Time is required.'),
+  preStartSignature: z.string().min(1, 'Pre-start signature is required.'),
+  checks: z.object({
+    highVis: checkStatusSchema,
+    beacons: checkStatusSchema,
+    boards: checkStatusSchema,
+    tma: checkStatusSchema,
+    radios: checkStatusSchema,
+    signs: checkStatusSchema,
+  }),
 });
 
-const vehicleCheckItems = [
-  { id: 'lights', label: 'Lights checked' },
-  { id: 'arrowBoard', label: 'Arrow board checked' },
-  { id: 'beacon', label: 'Beacon checked' },
-  { id: 'ppe', label: 'PPE checked' },
-  { id: 'firstAid', label: 'First aid kit checked' },
-];
 
-const siteCheckItems = [
-  { id: 'allStaffInducted', label: 'All staff inducted onto site' },
-  { id: 'toolboxTalk', label: 'Toolbox talk completed' },
-  { id: 'emergencyProcedures', label: 'Emergency procedures communicated' },
-]
+const CheckItem = ({ form, name, label }: { form: any, name: string, label: string }) => (
+    <div className="flex items-center justify-between rounded-md border p-4">
+        <p className="font-medium text-sm">{label}</p>
+        <FormField
+            control={form.control}
+            name={`checks.${name}`}
+            render={({ field }) => (
+                <FormItem>
+                    <FormControl>
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex items-center space-x-4">
+                            <FormItem className="flex items-center space-x-1.5"><FormControl><RadioGroupItem value="OK" /></FormControl><FormLabel className="text-xs font-normal">OK</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-1.5"><FormControl><RadioGroupItem value="Not OK" /></FormControl><FormLabel className="text-xs font-normal">Not OK</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-1.5"><FormControl><RadioGroupItem value="N/A" /></FormControl><FormLabel className="text-xs font-normal">N/A</FormLabel></FormItem>
+                        </RadioGroup>
+                    </FormControl>
+                </FormItem>
+            )}
+        />
+    </div>
+);
 
-function parse12HourTime(timeStr: string): { hours: number; minutes: number } | null {
-  const match = timeStr.match(/^(0?[1-9]|1[0-2]):([0-5][0-9])\s([AP]M)$/i);
-  if (!match) return null;
-  let [, hoursStr, minutesStr, ampm] = match;
-  let hours = parseInt(hoursStr, 10);
-  const minutes = parseInt(minutesStr, 10);
-  if (ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
-  if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
-  return { hours, minutes };
-}
 
 export default function CreateMobileOpsRecordPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
   const jobId = params.id as string;
-  const editId = searchParams.get('edit');
-  const viewId = searchParams.get('view');
-  const formId = editId || viewId;
-  const isEditMode = !!editId;
-  const isViewMode = !!viewId;
-  
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
+  const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
+  const [signatureTarget, setSignatureTarget] = useState<'stms' | 'preStart' | null>(null);
+  const signaturePadRef = useRef<SignaturePadRef>(null);
 
-  const jobRef = useMemoFirebase(() => (firestore && jobId) ? doc(firestore, 'job_packs', jobId) : null, [firestore, jobId]);
-  const formRef = useMemoFirebase(() => (firestore && jobId && formId) ? doc(firestore, 'job_packs', jobId, 'mobile_ops_records', formId) : null, [firestore, jobId, formId]);
+  const { data: allJobs, isLoading: areJobsLoading } = useCollection<Job>(useMemoFirebase(() => firestore ? collection(firestore, 'job_packs') : null, [firestore]));
+  const { data: staffList, isLoading: areStaffLoading } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]));
   
-  const { data: job, isLoading: isJobLoading } = useDoc<Job>(jobRef);
-  const { data: formToEdit, isLoading: isFormLoading } = useDoc<MobileOpsRecord>(formRef);
-  
-  const staffCollection = useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]);
-  const { data: staffList, isLoading: isStaffLoading } = useCollection<Staff>(staffCollection);
-
   const form = useForm<z.infer<typeof mobileOpsSchema>>({
     resolver: zodResolver(mobileOpsSchema),
     defaultValues: {
       jobId: jobId,
       date: new Date(),
-      stmsId: "",
-      stmsName: "",
-      vehicleRego: "",
-      startTime: "",
-      finishTime: "",
-      vehicleChecks: { lights: false, arrowBoard: false, beacon: false, ppe: false, firstAid: false },
-      siteChecks: { allStaffInducted: false, toolboxTalk: false, emergencyProcedures: false },
-      operatorSignatures: [],
-      stmsSignatureDataUrl: "",
+      tmpReference: "",
+      stmsSignature: "",
+      stmsSignatureTime: "",
+      preStartCheckTime: "",
+      preStartSignature: "",
+      checks: {
+        highVis: 'OK',
+        beacons: 'OK',
+        boards: 'OK',
+        tma: 'OK',
+        radios: 'OK',
+        signs: 'OK',
+      }
     },
   });
 
   const { watch, setValue, control } = form;
-  const { fields: operatorFields, append: appendOperator, remove: removeOperator } = useFieldArray({ control, name: "operatorSignatures" });
   
-  const signaturePadRef = useRef<SignaturePadRef>(null);
-  const [signatureTarget, setSignatureTarget] = useState<'stms' | { type: 'operator', staff: Staff } | null>(null);
-  const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
-
-  const startTime = watch('startTime');
-  const finishTime = watch('finishTime');
-  const date = watch('date');
-
-  const totalTime = useMemo(() => {
-    const parsedStart = parse12HourTime(startTime);
-    const parsedFinish = parse12HourTime(finishTime);
-    if (!parsedStart || !parsedFinish || !date || !isValid(date)) return "0h 0m";
-
-    const startDate = new Date(date);
-    startDate.setHours(parsedStart.hours, parsedStart.minutes, 0, 0);
-
-    const finishDate = new Date(date);
-    finishDate.setHours(parsedFinish.hours, parsedFinish.minutes, 0, 0);
-
-    if (finishDate <= startDate) finishDate.setDate(finishDate.getDate() + 1);
-
-    const netMinutes = differenceInMinutes(finishDate, startDate);
-    if (netMinutes < 0) return "0h 0m";
-    const hours = Math.floor(netMinutes / 60);
-    const minutes = netMinutes % 60;
-    return `${hours}h ${minutes}m`;
-  }, [startTime, finishTime, date]);
-
   useEffect(() => {
-    if (formToEdit && staffList) {
-      const stms = staffList.find(s => s.id === formToEdit.stmsId);
-      setSelectedStms(stms || null);
-      form.reset({
-        ...formToEdit,
-        date: formToEdit.date.toDate(),
-      });
+    if (allJobs && jobId) {
+      const job = allJobs.find(j => j.id === jobId);
+      if(job) setSelectedJob(job);
     }
-  }, [formToEdit, staffList, form]);
+  }, [allJobs, jobId]);
 
   useEffect(() => {
     if (selectedStms) {
       setValue('stmsId', selectedStms.id);
       setValue('stmsName', selectedStms.name);
+      // Logic to find and set warrant details
+      const stmsCert = selectedStms.certifications.find(c => c.name.startsWith('STMS'));
+      if (stmsCert) {
+        setValue('stmsWarrantType', stmsCert.name);
+        const expiry = stmsCert.expiryDate instanceof Timestamp ? stmsCert.expiryDate.toDate() : new Date(stmsCert.expiryDate);
+        setValue('stmsWarrantExpiry', expiry);
+      }
+      setValue('stmsTtmId', selectedStms.nztaId || '');
     }
   }, [selectedStms, setValue]);
 
-  const handleOpenSignatureDialog = (target: 'stms' | { type: 'operator', staff: Staff }) => {
+  const handleOpenSignatureDialog = (target: 'stms' | 'preStart') => {
     setSignatureTarget(target);
     setIsSignatureDialogOpen(true);
   };
 
   const handleConfirmSignature = () => {
-    if (signaturePadRef.current && !signaturePadRef.current.isEmpty() && signatureTarget) {
-      const signatureDataUrl = signaturePadRef.current.toDataURL();
+    if (signaturePadRef.current && !signaturePadRef.current.isEmpty()) {
+      const signature = signaturePadRef.current.toDataURL();
       if (signatureTarget === 'stms') {
-        setValue('stmsSignatureDataUrl', signatureDataUrl, { shouldValidate: true });
-      } else if (signatureTarget.type === 'operator') {
-        const { staff } = signatureTarget;
-        // Check if already signed
-        const existingSignatureIndex = operatorFields.findIndex(op => op.staffId === staff.id);
-        if (existingSignatureIndex === -1) {
-          appendOperator({ staffId: staff.id, staffName: staff.name, signatureDataUrl });
-        }
+        setValue('stmsSignature', signature, { shouldValidate: true });
+        setValue('stmsSignatureTime', format(new Date(), 'h:mm a'));
+      } else if (signatureTarget === 'preStart') {
+        setValue('preStartSignature', signature, { shouldValidate: true });
+        setValue('preStartCheckTime', format(new Date(), 'h:mm a'));
       }
       setIsSignatureDialogOpen(false);
-      setSignatureTarget(null);
-      signaturePadRef.current.clear();
     } else {
-      toast({ title: "Signature Required", description: "Please provide a signature.", variant: "destructive" });
+      toast({ title: 'Signature Required', variant: 'destructive' });
     }
   };
+
 
   async function onSubmit(data: z.infer<typeof mobileOpsSchema>) {
     if (!firestore) return;
     setIsSubmitting(true);
     try {
-      const payload: Omit<MobileOpsRecord, 'id' | 'createdAt'> = {
+      const payload = {
         ...data,
         date: Timestamp.fromDate(data.date),
-        totalTime,
-        stmsId: selectedStms!.id,
-        stmsName: selectedStms!.name,
+        stmsWarrantExpiry: data.stmsWarrantExpiry ? Timestamp.fromDate(data.stmsWarrantExpiry) : null,
+        operationRecords: [], // Placeholder for future
+        siteChecks: [], // Placeholder for future
+        comments: [], // Placeholder for future
+        createdAt: serverTimestamp(),
       };
-
-      if (isEditMode && formId) {
-        await setDoc(doc(firestore, 'job_packs', jobId, 'mobile_ops_records', formId), { ...payload, createdAt: formToEdit?.createdAt || serverTimestamp() }, { merge: true });
-        toast({ title: "Record Updated" });
-      } else {
-        await addDoc(collection(firestore, 'job_packs', jobId, 'mobile_ops_records'), { ...payload, createdAt: serverTimestamp() });
-        toast({ title: "Record Submitted" });
-      }
-      router.push(`/paperwork/${jobId}`);
+      await addDoc(collection(firestore, 'job_packs', jobId, 'on_site_records_mobile_ops'), payload);
+      toast({ title: "Record Submitted Successfully" });
+      router.push(`/jobs/${jobId}/paperwork/`);
     } catch (error) {
       console.error("Error submitting form:", error);
       toast({ variant: 'destructive', title: "Submission Failed" });
@@ -223,173 +182,140 @@ export default function CreateMobileOpsRecordPage() {
       setIsSubmitting(false);
     }
   }
-
-  const isLoading = isJobLoading || isStaffLoading || isFormLoading;
+  
+  const isLoading = areJobsLoading || areStaffLoading;
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-64"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
   }
-
+  
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Mobile Ops On-Site Record</CardTitle>
-          <CardDescription>For Job: {job?.jobNumber} at {job?.location}</CardDescription>
+          <CardTitle>New On Site Record Mobile Operations</CardTitle>
+          <CardDescription>On-site record must be completed and retained with the applied TMP for 12 months.</CardDescription>
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-8">
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Record Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")} disabled={isViewMode}>
-                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus disabled={isViewMode}/>
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField control={control} name="stmsId" render={() => (
-                    <FormItem>
-                      <FormLabel>STMS</FormLabel>
-                      <StaffSelector staffList={staffList?.filter(s => s.role === 'STMS') || []} selectedStaff={selectedStms} onSelectStaff={setSelectedStms} placeholder="Select STMS..." disabled={isViewMode} />
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
-                <FormField control={control} name="vehicleRego" render={({ field }) => (<FormItem><FormLabel>Vehicle Rego</FormLabel><FormControl><Input {...field} disabled={isViewMode}/></FormControl><FormMessage /></FormItem>)} />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField control={control} name="startTime" render={({ field }) => (<FormItem><FormLabel>Start Time</FormLabel><FormControl><Input placeholder="e.g. 8:00 AM" {...field} disabled={isViewMode}/></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name="finishTime" render={({ field }) => (<FormItem><FormLabel>Finish Time</FormLabel><FormControl><Input placeholder="e.g. 5:00 PM" {...field} disabled={isViewMode}/></FormControl><FormMessage /></FormItem>)} />
-                    <FormItem><FormLabel>Total Time</FormLabel><div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm">{totalTime}</div></FormItem>
-                </div>
+                  <h3 className="font-semibold text-lg border-b pb-2">Job Details</h3>
+                  <JobSelector jobs={allJobs || []} selectedJob={selectedJob} onSelectJob={(job) => {
+                      setSelectedJob(job);
+                      setValue('jobId', job?.id || '');
+                  }} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border bg-muted/30 p-4">
+                      <div>
+                          <p className="text-sm font-medium text-muted-foreground">Client Name</p>
+                          <p className="text-sm">{selectedJob?.clientName || 'N/A'}</p>
+                      </div>
+                      <div>
+                          <p className="text-sm font-medium text-muted-foreground">Job Site Location</p>
+                          <p className="text-sm">{selectedJob?.location || 'N/A'}</p>
+                      </div>
+                  </div>
               </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Vehicle Checks</h3>
-                 <FormField control={control} name="vehicleChecks" render={() => (
-                    <FormItem>
-                      {vehicleCheckItems.map(item => (
-                        <FormField key={item.id} control={control} name={`vehicleChecks.${item.id as keyof typeof mobileOpsSchema.shape.vehicleChecks.shape}`} render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isViewMode}/></FormControl>
-                            <FormLabel className="font-normal">{item.label}</FormLabel>
-                          </FormItem>
-                        )} />
-                      ))}
-                      <FormMessage />
-                    </FormItem>
-                 )} />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField control={form.control} name="tmpReference" render={({ field }) => (<FormItem><FormLabel>TMP or generic plan reference</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="date" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Today's Date</FormLabel>
+                    <Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover>
+                    <FormMessage />
+                  </FormItem>
+                )} />
               </div>
               
               <Separator />
 
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Site Checks</h3>
-                 <FormField control={control} name="siteChecks" render={() => (
-                    <FormItem>
-                      {siteCheckItems.map(item => (
-                        <FormField key={item.id} control={control} name={`siteChecks.${item.id as keyof typeof mobileOpsSchema.shape.siteChecks.shape}`} render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isViewMode}/></FormControl>
-                            <FormLabel className="font-normal">{item.label}</FormLabel>
-                          </FormItem>
-                        )} />
-                      ))}
-                      <FormMessage />
-                    </FormItem>
-                 )} />
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Operator Signatures</h3>
-                <div className="space-y-2">
-                    {operatorFields.map((field, index) => (
-                        <div key={field.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                            <div className="flex items-center gap-3">
-                                <Image src={field.signatureDataUrl} alt="Signature" width={100} height={40} className="bg-white rounded-sm" style={{ objectFit: 'contain' }}/>
-                                <p className="font-medium">{field.staffName}</p>
-                            </div>
-                            {!isViewMode && <Button variant="ghost" size="icon" onClick={() => removeOperator(index)}><Trash className="h-4 w-4 text-destructive" /></Button>}
-                        </div>
-                    ))}
-                </div>
-                {!isViewMode && (
-                    <>
-                        <FormLabel>Add Operator Signature</FormLabel>
-                        <StaffSelector 
-                            staffList={staffList || []}
-                            onSelectStaff={(staff) => staff && handleOpenSignatureDialog({ type: 'operator', staff })}
-                            placeholder="Select operator to sign..."
-                            disabledIds={operatorFields.map(f => f.staffId)}
-                        />
-                    </>
+                <h3 className="font-semibold text-lg border-b pb-2">STMS in Charge of Worksite</h3>
+                <StaffSelector staffList={staffList?.filter(s => s.role === 'STMS') || []} selectedStaff={selectedStms} onSelectStaff={setSelectedStms} placeholder="Select STMS..." />
+                {selectedStms && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <FormItem><Label>NZTA warrant</Label><Input value={watch('stmsWarrantType') || ''} disabled /></FormItem>
+                    <FormItem><Label>TTM ID Number</Label><Input value={watch('stmsTtmId') || ''} disabled /></FormItem>
+                    <FormItem><Label>NZTA warrant expiry date</Label><Input value={watch('stmsWarrantExpiry') ? format(watch('stmsWarrantExpiry')!, 'dd/MM/yyyy') : ''} disabled /></FormItem>
+                  </div>
                 )}
-                <FormMessage>{form.formState.errors.operatorSignatures?.message || form.formState.errors.operatorSignatures?.root?.message}</FormMessage>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                    <FormField control={form.control} name="stmsSignature" render={() => (
+                      <FormItem>
+                        <FormLabel>STMS Signature</FormLabel>
+                        <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog('stms')}>{watch('stmsSignature') ? "Update Signature" : "Sign Off"}</Button>
+                         {watch('stmsSignature') && <div className="p-2 border rounded-md bg-muted/50 flex justify-center"><Image src={watch('stmsSignature')} alt="STMS Signature" width={200} height={80} style={{ objectFit: 'contain' }} className="bg-white" /></div>}
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormItem><Label>Time</Label><Input value={watch('stmsSignatureTime')} disabled /></FormItem>
+                 </div>
               </div>
-
+              
               <Separator />
 
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">STMS Sign Off</h3>
-                <FormField control={control} name="stmsSignatureDataUrl" render={({ field }) => (
-                    <FormItem>
-                        <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog('stms')} disabled={isViewMode}>
-                            <SignatureIcon className="mr-2 h-4 w-4" />
-                            {field.value ? "Update STMS Signature" : "Sign as STMS"}
-                        </Button>
-                        {field.value && <div className="p-2 border rounded-md bg-muted/50 flex justify-center"><Image src={field.value} alt="STMS Signature" width={200} height={80} style={{ objectFit: 'contain' }} className="bg-white" /></div>}
+                <h3 className="font-semibold text-lg border-b pb-2">In Charge STMS Pre-start Check</h3>
+                <CheckItem form={form} name="highVis" label="High-visibility garments are fit for purpose, in an acceptable condition and worn correctly?" />
+                <CheckItem form={form} name="beacons" label="Vehicle Xenon (or LED)/Beacons are fit for purpose?" />
+                <CheckItem form={form} name="boards" label="LAS/RD6/AWVMS/VMS/Horizontal arrow boards are fit for purpose?" />
+                <CheckItem form={form} name="tma" label="TMAs are fit for purpose" />
+                <CheckItem form={form} name="radios" label="Two-way radios available, operating OK and batteries are fully charged" />
+                <CheckItem form={form} name="signs" label="Correct signs for work operation are fitted to all vehicles and are fit for purpose" />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end pt-4">
+                    <FormItem><Label>Time the check was completed</Label><Input value={watch('preStartCheckTime')} disabled /></FormItem>
+                    <FormField control={form.control} name="preStartSignature" render={() => (
+                      <FormItem>
+                        <FormLabel>In charge STMS signature</FormLabel>
+                        <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog('preStart')}>{watch('preStartSignature') ? "Update Signature" : "Sign Off"}</Button>
+                         {watch('preStartSignature') && <div className="p-2 border rounded-md bg-muted/50 flex justify-center"><Image src={watch('preStartSignature')} alt="Pre-start Signature" width={200} height={80} style={{ objectFit: 'contain' }} className="bg-white" /></div>}
                         <FormMessage />
-                    </FormItem>
-                )} />
+                      </FormItem>
+                    )} />
+                </div>
               </div>
+              
+              <Separator />
+              
+              <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">Operation Records</h3>
+                  <p className="text-sm text-muted-foreground">This section will be automatically populated with data when you add them using the "Add Ops Record" button under "Quick Links".</p>
+              </div>
+
+              <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">Checks</h3>
+                  <p className="text-sm text-muted-foreground">This section will be automatically populated with data when you add them using the "Add Site Check" button under "Quick Links".</p>
+              </div>
+
+              <div className="space-y-4">
+                  <h3 className="font-semibold text-lg border-b pb-2">Comments</h3>
+                  <p className="text-sm text-muted-foreground">This section will be automatically populated with data when you add them using the "Add Comment" button under "Quick Links".</p>
+              </div>
+
+
             </CardContent>
             <CardFooter className="justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => router.back()}>Back</Button>
-              {!isViewMode && 
-                <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                    {isEditMode ? "Save Changes" : "Submit Record"}
-                </Button>
-              }
+              <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                  Submit
+              </Button>
             </CardFooter>
           </form>
         </Form>
       </Card>
       
-      <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
+       <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Provide Signature</DialogTitle>
-            <DialogDescription>
-                Sign in the box below to confirm your check.
-            </DialogDescription>
           </DialogHeader>
           <div className="py-4"><SignaturePad ref={signaturePadRef} /></div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => signaturePadRef.current?.clear()}>Clear</Button>
-            <Button type="button" onClick={handleConfirmSignature}>Confirm Signature</Button>
+            <Button type="button" onClick={handleConfirmSignature}>Confirm</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

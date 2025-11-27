@@ -1,4 +1,5 @@
 
+
 import { Timestamp } from "firebase/firestore";
 
 export type Client = {
@@ -80,7 +81,7 @@ export type Job = {
   contactNumber?: string;
   tmpUrl?: string;
   wapUrl?: string;
-  mobileOpsRecords?: MobileOpsRecord[];
+  mobileOpsRecords?: OnSiteRecordMobileOps[];
 };
 
 export type Timesheet = {
@@ -336,32 +337,33 @@ export type TemporarySpeedLimit = {
   dateTslRemainsInPlace?: string;
 };
 
-export type MobileOpsRecord = {
+export type OnSiteRecordMobileOps = {
     id: string;
     jobId: string;
+    tmpReference: string;
     date: Timestamp;
     stmsId: string;
     stmsName: string;
-    vehicleRego: string;
-    startTime: string;
-    finishTime: string;
-    totalTime: string;
-    vehicleChecks: {
-      lights: boolean;
-      arrowBoard: boolean;
-      beacon: boolean;
-      ppe: boolean;
-      firstAid: boolean;
+    stmsWarrantType: string;
+    stmsTtmId: string;
+    stmsWarrantExpiry: Timestamp;
+    stmsSignature: string;
+    stmsSignatureTime: string;
+    preStartCheckTime: string;
+    preStartSignature: string;
+    checks: {
+        highVis: 'OK' | 'Not OK' | 'N/A';
+        beacons: 'OK' | 'Not OK' | 'N/A';
+        boards: 'OK' | 'Not OK' | 'N/A';
+        tma: 'OK' | 'Not OK' | 'N/A';
+        radios: 'OK' | 'Not OK' | 'N/A';
+        signs: 'OK' | 'Not OK' | 'N/A';
     };
-    siteChecks: {
-      allStaffInducted: boolean;
-      toolboxTalk: boolean;
-      emergencyProcedures: boolean;
-    };
-    operatorSignatures: { staffId: string; staffName: string; signatureDataUrl: string }[];
-    stmsSignatureDataUrl: string;
+    operationRecords: { roadName: string; startPoint: string; endPoint: string; startTime: string; endTime: string }[];
+    siteChecks: { time: string; distancesMaintained: boolean; positioningMaintained: boolean; boardsMaintained: boolean; roadClear: boolean; staticMaintained: boolean; safetyZonesMaintained: boolean; workingSpaceMaintained: boolean; }[];
+    comments: string[];
     createdAt: Timestamp;
-};
+}
 
 export type JobNote = {
     id: string;

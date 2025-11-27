@@ -1,3 +1,4 @@
+
 'use client';
 import { useParams, useRouter } from 'next/navigation';
 import { Job, Timesheet, TruckInspection, HazardId, HazardIdNzgttm, TmpCheckingProcess, OnSiteRecord } from '@/lib/data';
@@ -16,9 +17,9 @@ const paperworkLinks = [
     { title: 'Hazard ID (NZGTTM)', href: '/jobs/[id]/paperwork/hazard-id-nzgttm', collection: 'hazard_ids_nzgttm' },
     { title: 'TMP Checking Process', href: '/jobs/[id]/paperwork/pre-installation-process', collection: 'tmp_checking_processes' },
     { title: 'On-Site Record (CoPTTM)', href: '/jobs/[id]/paperwork/on-site-record', collection: 'on_site_records' },
-    { title: 'Mobile Ops On-Site Record', href: '/jobs/[id]/paperwork/mobile-ops-on-site-record', collection: 'mobile_ops_records' },
+    { title: 'On-Site Record (Mobile)', href: '/jobs/[id]/paperwork/mobile-ops-on-site-record', collection: 'on_site_records_mobile_ops' },
     { title: 'Job Note', href: '/jobs/[id]/paperwork/job-note', collection: 'job_notes' },
-    { title: 'Take Site Photos', href: '#', collection: 'site_photos', status: 'not_implemented' },
+    { title: 'Take Site Photos', href: '/jobs/[id]/paperwork/site-photos', collection: 'site_photos' },
     { title: 'Incident or Event Report', href: '/jobs/[id]/paperwork/incident-or-event-report', collection: 'incident_reports' },
     { title: 'Site Audit (CoPTTM SCR)', href: '/jobs/[id]/paperwork/site-audit-copttm-scr', collection: 'site_audits' },
 ];
@@ -42,7 +43,7 @@ export default function PaperworkMenuPage() {
     const hazardIdsNzgttmRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'hazard_ids_nzgttm') : null, [firestore, jobId]);
     const tmpCheckingProcessesRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'tmp_checking_processes') : null, [firestore, jobId]);
     const onSiteRecordsRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'on_site_records') : null, [firestore, jobId]);
-    const mobileOpsRecordsRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'mobile_ops_records') : null, [firestore, jobId]);
+    const mobileOpsRecordsRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'on_site_records_mobile_ops') : null, [firestore, jobId]);
     const jobNotesRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'job_notes') : null, [firestore, jobId]);
     const sitePhotosRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'site_photos') : null, [firestore, jobId]);
     const incidentReportsRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'incident_reports') : null, [firestore, jobId]);
@@ -91,7 +92,7 @@ export default function PaperworkMenuPage() {
         hazard_ids_nzgttm: hazardIdsNzgttm,
         tmp_checking_processes: tmpCheckingProcesses,
         on_site_records: onSiteRecords,
-        mobile_ops_records: mobileOpsRecords,
+        on_site_records_mobile_ops: mobileOpsRecords,
         job_notes: jobNotes,
         site_photos: sitePhotos,
         incident_reports: incidentReports,
