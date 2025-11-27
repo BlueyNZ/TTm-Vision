@@ -26,9 +26,10 @@ interface JobSelectorProps {
     selectedJob?: Job | null;
     onSelectJob: (job: Job | null) => void;
     placeholder?: string;
+    disabled?: boolean;
 }
 
-export function JobSelector({ jobs, selectedJob, onSelectJob, placeholder = "Select job..."}: JobSelectorProps) {
+export function JobSelector({ jobs, selectedJob, onSelectJob, placeholder = "Select job...", disabled = false }: JobSelectorProps) {
   const [open, setOpen] = React.useState(false)
   
   const handleSelect = (currentValue: string) => {
@@ -50,7 +51,7 @@ export function JobSelector({ jobs, selectedJob, onSelectJob, placeholder = "Sel
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between"
-          disabled={isLoading}
+          disabled={isLoading || disabled}
         >
           {isLoading ? (
             <div className="flex items-center">
@@ -58,9 +59,11 @@ export function JobSelector({ jobs, selectedJob, onSelectJob, placeholder = "Sel
                 <span>Loading Jobs...</span>
             </div>
           ) : selectedJob ? (
-            <div className="flex items-center gap-2">
-                 <Briefcase className="h-4 w-4" />
-                {selectedJob.jobNumber} - {selectedJob.location}
+            <div className="flex items-center gap-2 overflow-hidden">
+                 <Briefcase className="h-4 w-4 flex-shrink-0" />
+                 <span className="truncate">
+                    {selectedJob.jobNumber} - {selectedJob.location}
+                 </span>
             </div>
           ) : (
             placeholder
@@ -74,7 +77,7 @@ export function JobSelector({ jobs, selectedJob, onSelectJob, placeholder = "Sel
             if (!job) return 0;
             if (job.jobNumber.toLowerCase().includes(search.toLowerCase())) return 1;
             if (job.location.toLowerCase().includes(search.toLowerCase())) return 1;
-            if (job.clientName.toLowerCase().includes(search.toLowerCase())) return 1;
+            if (job.clientName && job.clientName.toLowerCase().includes(search.toLowerCase())) return 1;
             return 0;
         }}>
           <CommandInput placeholder="Search by Job No, Location, or Client..." />
