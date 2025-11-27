@@ -406,19 +406,46 @@ export type SitePhoto = {
 }
 
 export type IncidentReport = {
-    id: string;
-    jobId: string;
-    incidentDate: Timestamp;
-    incidentTime: string;
-    location: string;
-    description: string;
-    personsInvolved: string;
-    witnesses: string;
-    actionsTaken: string;
-    reportedBy: string;
-    reportedById: string;
-    createdAt: Timestamp;
+  id: string;
+  jobId: string;
+  incidentReferenceNo: string;
+  copptmReference?: string;
+  incidentDate: Timestamp;
+  incidentTime: string;
+  reportingCompany: string;
+  reportedBy: string; // name
+  reportedById: string; // id
+  stmsId: string;
+  stmsName: string;
+  roadLocation: string;
+  descriptionOfEvents: string;
+  incidentType: string;
+  operationType: 'Static' | 'Mobile' | 'Semi-static' | 'Shoulder' | 'Unattended';
+  phaseOfOperation: 'Install' | 'Static' | 'Mobile' | 'Semi-Static' | 'Removal';
+  damageTo: ('Vehicles' | 'Plant' | 'TTM equipment')[];
+  injuries: {
+    roadWorkers: { minor: number; notifiable: number; fatal: number };
+    roadUsers: { minor: number; notifiable: number; fatal: number };
+  };
+  roadUserVehicles: { type: string; rego: string }[];
+  tmaVehicles: { truckId: string; lane: string }[];
+  policeAttended: boolean;
+  policeOfficerDetails?: string;
+  furtherInformation?: string;
+  attachments: Attachment[];
+  investigation: {
+    assignedToId?: string;
+    dateAssigned?: Timestamp;
+    status?: string;
+    summary?: string;
+    potentialConsequence?: string;
+    canHappenAgain?: string;
+    classification?: string;
+    rootCause?: string;
+  };
+  createdAt: Timestamp;
 }
+
 
 export type SiteAudit = {
     id: string;

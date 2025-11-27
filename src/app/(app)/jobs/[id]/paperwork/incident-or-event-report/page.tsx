@@ -83,7 +83,7 @@ export default function IncidentReportsPage() {
     toast({
         variant: "destructive",
         title: "Incident Report Deleted",
-        description: `The report has been deleted.`,
+        description: `The report ${itemToDelete.incidentReferenceNo} has been deleted.`,
     });
     setItemToDelete(null);
   };
@@ -114,6 +114,7 @@ export default function IncidentReportsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Ref No.</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Reported By</TableHead>
@@ -122,11 +123,12 @@ export default function IncidentReportsPage() {
               </TableHeader>
               <TableBody>
                 {reports.map((item) => {
-                  const createdAt = item.createdAt instanceof Timestamp ? item.createdAt.toDate() : new Date(item.createdAt);
+                  const incidentDate = item.incidentDate instanceof Timestamp ? item.incidentDate.toDate() : new Date(item.incidentDate);
                   return (
                     <TableRow key={item.id}>
-                      <TableCell>{format(createdAt, 'PPP')}</TableCell>
-                      <TableCell className="font-medium">{item.location}</TableCell>
+                      <TableCell className="font-medium">{item.incidentReferenceNo}</TableCell>
+                      <TableCell>{format(incidentDate, 'PPP')}</TableCell>
+                      <TableCell>{item.roadLocation}</TableCell>
                       <TableCell>{item.reportedBy}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
