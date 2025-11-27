@@ -274,7 +274,7 @@ export type TmpCheckingProcess = {
 export type WorksiteMonitoring = {
   id?: string;
   checkType: 'Site Set-Up' | 'Site Check' | 'Unattended/Removal';
-  date: Date;
+  date: Date | string;
   time: string;
   signatureDataUrl: string;
   comments: string;
@@ -325,9 +325,9 @@ export type TtmDelegation = {
 export type TemporarySpeedLimit = {
   id?: string;
   streetName: string;
-  installDate: Date;
+  installDate: Date | string;
   installTime: string;
-  removalDate?: Date;
+  removalDate?: Date | string;
   removalTime?: string;
   tslSpeed: number;
   placementFrom: string;
@@ -362,3 +362,49 @@ export type MobileOpsRecord = {
     stmsSignatureDataUrl: string;
     createdAt: Timestamp;
 };
+
+export type JobNote = {
+    id: string;
+    jobId: string;
+    note: string;
+    createdBy: string;
+    createdById: string;
+    createdAt: Timestamp;
+}
+
+export type SitePhoto = {
+    id: string;
+    jobId: string;
+    photoUrl: string;
+    description: string;
+    takenBy: string;
+    takenById: string;
+    createdAt: Timestamp;
+}
+
+export type IncidentReport = {
+    id: string;
+    jobId: string;
+    incidentDate: Timestamp;
+    incidentTime: string;
+    location: string;
+    description: string;
+    personsInvolved: string;
+    witnesses: string;
+    actionsTaken: string;
+    reportedBy: string;
+    reportedById: string;
+    createdAt: Timestamp;
+}
+
+export type SiteAudit = {
+    id: string;
+    jobId: string;
+    auditDate: Timestamp;
+    auditorName: string;
+    auditorId: string;
+    summary: string;
+    correctiveActions: string;
+    signatureDataUrl: string;
+    createdAt: Timestamp;
+}
