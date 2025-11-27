@@ -153,7 +153,7 @@ const siteAuditSchema = z.object({
 // Scoring logic
 const scoringWeights = {
   signs: { missing: 5, position: 2, notVisible: 5, wrongSign: 5, condition: 4, permanentSign: 5, unapproved: 4, nonCompliantSupport: 2 },
-  mobile: { tailPilot: 30, leadPilot: 20, shadowVehicle: 26, 'tmaMissing': 26, 'awvms': 26 },
+  mobile: { tailPilot: 30, leadPilot: 20, shadowVehicle: 26, tmaMissing: 26, awvms: 26 },
   pedestrians: { inadequateProvision: 10, inadequateProvisionCyclists: 10 },
   delineation: { missingTaper: 26, taperTooShort: 15, trailingTaper: 5, spacingInTaper: 5, spacingAlongLanes: 3, missingDelineation: 10, condition: 2, nonApprovedDevice: 4, roadMarking: 30, siteAccess: 10 },
   miscellaneous: { workingInLiveLanes: 20, missingController: 20, safetyZoneCompromised: 10, highVisGarment: 5, marginalSurface: 15, unacceptableSurface: 30, barrierDefects: 10, unsafeTtm: 5, vmsMessage: 15, flashingBeacons: 3, parkingFeatures: 5, unsafeParking: 20, marginalItems: 1 },
@@ -391,91 +391,102 @@ export default function CreateSiteAuditPage() {
 
     // Render
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>New Site Audit</CardTitle>
-                <CardDescription>SITE CONDITION RATING FULL FORM (NOV 2018 EDITION)</CardDescription>
-            </CardHeader>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <CardContent className="space-y-6">
-                        {/* Job Details */}
-                        <div className="space-y-4">
-                            <h3 className="font-semibold text-lg border-b pb-2">Job Details</h3>
-                            <JobSelector jobs={allJobs || []} selectedJob={selectedJob} onSelectJob={job => setSelectedJob(job)} />
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                               <FormField control={form.control} name="auditNumber" render={({ field }) => <FormItem><FormLabel>Audit No</FormLabel><Input {...field} disabled /></FormItem>} />
-                               <FormField
-                                control={form.control}
-                                name="auditType"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Audit Type</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="--None--" />
-                                        </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="Audit/Partial Review or Short Form">Audit/Partial Review or Short Form</SelectItem>
-                                            <SelectItem value="CARWAP Only">CARWAP Only</SelectItem>
-                                            <SelectItem value="Full Audit/Review">Full Audit/Review</SelectItem>
-                                            <SelectItem value="On-Site Record Only">On-Site Record Only</SelectItem>
-                                            <SelectItem value="Other Checks Only">Other Checks Only</SelectItem>
-                                            <SelectItem value="STMS Only">STMS Only</SelectItem>
-                                            <SelectItem value="STMS Self Audit">STMS Self Audit</SelectItem>
-                                            <SelectItem value="TMP Only">TMP Only</SelectItem>
-                                            <SelectItem value="TSL/Audit Review">TSL/Audit Review</SelectItem>
-                                            <SelectItem value="TTM Only">TTM Only</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                               <FormField control={form.control} name="auditDate" render={({ field }) => <FormItem><FormLabel>Date & Time</FormLabel><Popover><PopoverTrigger asChild><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP p") : "Pick a date"}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover></FormItem>} />
+        <>
+            <Card>
+                <CardHeader>
+                    <CardTitle>New Site Audit</CardTitle>
+                    <CardDescription>SITE CONDITION RATING FULL FORM (NOV 2018 EDITION)</CardDescription>
+                </CardHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <CardContent className="space-y-6">
+                            {/* Job Details */}
+                            <div className="space-y-4">
+                                <h3 className="font-semibold text-lg border-b pb-2">Job Details</h3>
+                                <JobSelector jobs={allJobs || []} selectedJob={selectedJob} onSelectJob={job => setSelectedJob(job)} />
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <FormField control={form.control} name="auditNumber" render={({ field }) => <FormItem><FormLabel>Audit No</FormLabel><Input {...field} disabled /></FormItem>} />
+                                <FormField
+                                    control={form.control}
+                                    name="auditType"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Audit Type</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="--None--" />
+                                            </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="Audit/Partial Review or Short Form">Audit/Partial Review or Short Form</SelectItem>
+                                                <SelectItem value="CARWAP Only">CARWAP Only</SelectItem>
+                                                <SelectItem value="Full Audit/Review">Full Audit/Review</SelectItem>
+                                                <SelectItem value="On-Site Record Only">On-Site Record Only</SelectItem>
+                                                <SelectItem value="Other Checks Only">Other Checks Only</SelectItem>
+                                                <SelectItem value="STMS Only">STMS Only</SelectItem>
+                                                <SelectItem value="STMS Self Audit">STMS Self Audit</SelectItem>
+                                                <SelectItem value="TMP Only">TMP Only</SelectItem>
+                                                <SelectItem value="TSL/Audit Review">TSL/Audit Review</SelectItem>
+                                                <SelectItem value="TTM Only">TTM Only</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                    />
+                                <FormField control={form.control} name="auditDate" render={({ field }) => <FormItem><FormLabel>Date & Time</FormLabel><Popover><PopoverTrigger asChild><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP p") : "Pick a date"}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover></FormItem>} />
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Scoring Sections */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                           <ScoreSection form={form} sectionName="signs" title="A: Signs" weights={scoringWeights.signs} />
-                           <ScoreSection form={form} sectionName="mobile" title="B: Mobile & Semi-Static" weights={scoringWeights.mobile} />
-                           <ScoreSection form={form} sectionName="pedestrians" title="C: Pedestrians / Cyclists" weights={scoringWeights.pedestrians} />
-                           <ScoreSection form={form} sectionName="delineation" title="D: Delineation" weights={scoringWeights.delineation} />
-                           <ScoreSection form={form} sectionName="miscellaneous" title="E: Miscellaneous" weights={scoringWeights.miscellaneous} />
-                        </div>
-                        
-                        <div className="p-4 border rounded-lg bg-muted">
-                            <p className="font-bold text-lg">Final Score: {totalScore}</p>
-                            <p className="font-semibold">{finalRating}</p>
-                        </div>
-                        
-                        {/* Signatures */}
-                         <div className="grid md:grid-cols-2 gap-6">
-                           <div className="space-y-4">
-                             <h4 className="font-semibold">Audited/Reviewed By</h4>
-                             <FormField control={form.control} name="auditorId" render={() => <FormItem><FormLabel>Auditor Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={auditor} onSelectStaff={setAuditor} /></FormItem>} />
-                             <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog('auditor')}>Sign</Button>
-                             {watch('auditorSignatureUrl') && <Image src={watch('auditorSignatureUrl')!} alt="Auditor Signature" width={200} height={80}/>}
-                           </div>
-                           <div className="space-y-4">
-                              <h4 className="font-semibold">STMS Details</h4>
-                              <FormField control={form.control} name="stmsId" render={() => <FormItem><FormLabel>STMS Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={stms} onSelectStaff={setStms} /></FormItem>} />
-                              <FormField control={form.control} name="scrLeftOnsite" render={({ field }) => <FormItem className="flex items-center gap-2"><Checkbox checked={field.value} onCheckedChange={field.onChange} /><FormLabel>SCR Left Onsite?</FormLabel></FormItem>} />
-                              <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog('stms')}>Sign</Button>
-                              {watch('stmsSignatureUrl') && <Image src={watch('stmsSignatureUrl')!} alt="STMS Signature" width={200} height={80}/>}
-                           </div>
-                         </div>
-                        
-                    </CardContent>
-                    <CardFooter className="justify-end gap-2">
-                        <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>Submit</Button>
-                    </CardFooter>
-                </form>
-            </Form>
+                            {/* Scoring Sections */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <ScoreSection form={form} sectionName="signs" title="A: Signs" weights={scoringWeights.signs} />
+                            <ScoreSection form={form} sectionName="mobile" title="B: Mobile & Semi-Static" weights={scoringWeights.mobile} />
+                            <ScoreSection form={form} sectionName="pedestrians" title="C: Pedestrians / Cyclists" weights={scoringWeights.pedestrians} />
+                            <ScoreSection form={form} sectionName="delineation" title="D: Delineation" weights={scoringWeights.delineation} />
+                            <ScoreSection form={form} sectionName="miscellaneous" title="E: Miscellaneous" weights={scoringWeights.miscellaneous} />
+                            </div>
+                            
+                            <div className="p-4 border rounded-lg bg-muted">
+                                <p className="font-bold text-lg">Final Score: {totalScore}</p>
+                                <p className="font-semibold">{finalRating}</p>
+                            </div>
+                            
+                            {/* Signatures */}
+                            <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <h4 className="font-semibold">Audited/Reviewed By</h4>
+                                <FormField control={form.control} name="auditorId" render={() => <FormItem><FormLabel>Auditor Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={auditor} onSelectStaff={setAuditor} /></FormItem>} />
+                                <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog('auditor')}>
+                                    <SignatureIcon className="mr-2 h-4 w-4"/>
+                                    {watch('auditorSignatureUrl') ? 'Update Signature' : 'Sign as Auditor'}
+                                </Button>
+                                {watch('auditorSignatureUrl') && <Image src={watch('auditorSignatureUrl')!} alt="Auditor Signature" width={200} height={80}/>}
+                            </div>
+                            <div className="space-y-4">
+                                <h4 className="font-semibold">STMS Details</h4>
+                                <FormField control={form.control} name="stmsId" render={() => <FormItem><FormLabel>STMS Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={stms} onSelectStaff={setStms} /></FormItem>} />
+                                <FormField control={form.control} name="scrLeftOnsite" render={({ field }) => <FormItem className="flex items-center gap-2"><Checkbox checked={field.value} onCheckedChange={field.onChange} /><FormLabel>SCR Left Onsite?</FormLabel></FormItem>} />
+                                <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog('stms')}>
+                                    <SignatureIcon className="mr-2 h-4 w-4"/>
+                                    {watch('stmsSignatureUrl') ? 'Update Signature' : 'Sign as STMS'}
+                                </Button>
+                                {watch('stmsSignatureUrl') && <Image src={watch('stmsSignatureUrl')!} alt="STMS Signature" width={200} height={80}/>}
+                            </div>
+                            </div>
+                            
+                        </CardContent>
+                        <CardFooter className="justify-end gap-2">
+                            <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin"/>}
+                                Submit
+                            </Button>
+                        </CardFooter>
+                    </form>
+                </Form>
+            </Card>
 
             <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
                 <DialogContent>
@@ -492,6 +503,8 @@ export default function CreateSiteAuditPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </Card>
+        </>
     );
 }
+
+    
