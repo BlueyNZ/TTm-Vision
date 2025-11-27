@@ -30,7 +30,7 @@ const photoSchema = z.object({
 });
 
 const sitePhotosSchema = z.object({
-  jobId: z.string(),
+  jobId: z.string().min(1, "A job must be selected."),
   photos: z.array(photoSchema).max(4),
 });
 
@@ -106,6 +106,8 @@ export default function CreateSitePhotoPage() {
     setIsSubmitting(true);
     setIsUploading(true);
 
+    const targetJobId = data.jobId;
+
     try {
         const uploadedPhotos: { url: string; comment: string }[] = [];
 
@@ -113,7 +115,7 @@ export default function CreateSitePhotoPage() {
             if (photo.file && photo.dataUrl) {
                  const fileName = `site_photo_${Date.now()}_${photo.file.name}`;
                  const uploadResult = await uploadFile({
-                    filePath: `jobs/${jobId}/site_photos/${fileName}`,
+                    filePath: `jobs/${targetJobId}/site_photos/${fileName}`,
                     fileData: photo.dataUrl,
                     fileName: fileName,
                     fileType: photo.file.type
@@ -129,15 +131,15 @@ export default function CreateSitePhotoPage() {
 
         if (uploadedPhotos.length > 0) {
             const payload: Omit<SitePhoto, 'id'> = {
-                jobId: data.jobId,
+                jobId: targetJobId,
                 photos: uploadedPhotos,
                 submittedBy: currentUserStaff.name,
                 submittedById: currentUserStaff.id,
                 createdAt: Timestamp.now(),
             };
-            await addDoc(collection(firestore, 'job_packs', jobId, 'site_photos'), payload);
+            await addDoc(collection(firestore, 'job_packs', targetJobId, 'site_photos'), payload);
             toast({ title: "Photos Submitted Successfully" });
-            router.push(`/jobs/${jobId}/paperwork/site-photos`);
+            router.push(`/paperwork/${targetJobId}`);
         } else {
              toast({ title: "No New Photos", description: "No new photos were uploaded.", variant: 'default' });
         }
@@ -169,7 +171,7 @@ export default function CreateSitePhotoPage() {
                 <h3 className="font-semibold text-lg border-b pb-2">Job Details</h3>
                 <JobSelector jobs={allJobs || []} selectedJob={selectedJob} onSelectJob={(job) => {
                     setSelectedJob(job);
-                    setValue('jobId', job?.id || '');
+                    setValue('jobId', job?.id || '', { shouldValidate: true });
                 }} />
                 {selectedJob && (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 rounded-lg border bg-muted/30 p-4 text-sm">

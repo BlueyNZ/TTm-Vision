@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { Job, Staff, TmpCheckingProcess } from "@/lib/data";
-import { doc, Timestamp, addDoc, collection } from "firebase/firestore";
+import { doc, Timestamp, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { LoaderCircle, Trash, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -209,13 +209,12 @@ export default function PreInstallationProcessPage() {
     if (!firestore || !jobId) return;
     setIsSubmitting(true);
     try {
-        const payload: Omit<TmpCheckingProcess, 'id' | 'createdAt'> & { createdAt: Timestamp } = {
+        const payload: Omit<TmpCheckingProcess, 'id' | 'createdAt'> = {
             ...data,
             completedBy: data.completedBy.map(signer => ({...signer, dateSigned: Timestamp.fromDate(signer.dateSigned)})),
-            createdAt: Timestamp.now(),
         };
 
-        await addDoc(collection(firestore, 'job_packs', jobId, 'tmp_checking_processes'), payload);
+        await addDoc(collection(firestore, 'job_packs', jobId, 'tmp_checking_processes'), { ...payload, createdAt: serverTimestamp() });
 
         toast({
             title: "TMP Checking Process Submitted",

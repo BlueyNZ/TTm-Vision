@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { Job, Staff, HazardId } from "@/lib/data";
-import { doc, Timestamp, addDoc, collection, setDoc, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { doc, Timestamp, addDoc, collection, setDoc, serverTimestamp, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle, Trash, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { StaffSelector } from "@/components/staff/staff-selector";
 import { Calendar as CalendarIcon } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
 
 const hazardSchema = z.object({
   present: z.enum(['Yes', 'No']),
@@ -236,11 +237,11 @@ export default function HazardIdCreatePage() {
 
         if (isEditMode && formId) {
             const formDocRef = doc(firestore, 'job_packs', jobId, 'hazard_ids', formId);
-            await setDoc(formDocRef, { ...payload, createdAt: formToEdit?.createdAt || Timestamp.now() }, { merge: true });
+            await setDoc(formDocRef, { ...payload, createdAt: formToEdit?.createdAt || serverTimestamp() }, { merge: true });
              toast({ title: "Hazard ID Updated", description: `Form ${hazardIdNo} has been updated.` });
         } else {
             const hazardCollectionRef = collection(firestore, 'job_packs', jobId, 'hazard_ids');
-            await addDoc(hazardCollectionRef, { ...payload, createdAt: Timestamp.now() });
+            await addDoc(hazardCollectionRef, { ...payload, createdAt: serverTimestamp() });
             toast({ title: "Hazard ID Submitted", description: `Form ${hazardIdNo} has been saved.` });
         }
         

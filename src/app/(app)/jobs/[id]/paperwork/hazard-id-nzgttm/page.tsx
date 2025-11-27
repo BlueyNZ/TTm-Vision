@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { Job, Staff, HazardIdNzgttm } from "@/lib/data";
-import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs, setDoc } from "firebase/firestore";
+import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs, setDoc, serverTimestamp } from "firebase/firestore";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -148,10 +148,10 @@ export default function HazardIdNzgttmPage() {
         
         if (formId) {
             const docRef = doc(firestore, 'job_packs', jobId, 'hazard_ids_nzgttm', formId);
-            await setDoc(docRef, { ...payload, createdAt: formToEdit?.createdAt || Timestamp.now() }, { merge: true });
+            await setDoc(docRef, { ...payload, createdAt: formToEdit?.createdAt || serverTimestamp() }, { merge: true });
             toast({ title: "Hazard ID (NZGTTM) Updated" });
         } else {
-            await addDoc(collection(firestore, 'job_packs', jobId, 'hazard_ids_nzgttm'), { ...payload, createdAt: Timestamp.now() });
+            await addDoc(collection(firestore, 'job_packs', jobId, 'hazard_ids_nzgttm'), { ...payload, createdAt: serverTimestamp() });
             toast({ title: "Hazard ID (NZGTTM) Submitted" });
         }
         router.push(`/paperwork/${jobId}`);
