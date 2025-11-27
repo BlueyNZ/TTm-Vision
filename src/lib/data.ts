@@ -396,10 +396,12 @@ export type JobNote = {
 export type SitePhoto = {
     id: string;
     jobId: string;
-    photoUrl: string;
-    description: string;
-    takenBy: string;
-    takenById: string;
+    photos: {
+      url: string;
+      comment: string;
+    }[];
+    submittedBy: string;
+    submittedById: string;
     createdAt: Timestamp;
 }
 
