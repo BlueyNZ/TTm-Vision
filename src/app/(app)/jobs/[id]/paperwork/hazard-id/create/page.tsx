@@ -29,12 +29,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 const hazardSchema = z.object({
   present: z.enum(['Yes', 'No']),
-  control: z.string().optional(),
+  control: z.string().optional().default(''),
 });
 
 const siteHazardSchema = z.object({
-  description: z.string().optional(),
-  control: z.string().optional(),
+  description: z.string().optional().default(''),
+  control: z.string().optional().default(''),
 });
 
 const ppeItems = [
@@ -72,12 +72,12 @@ const hazardIdSchema = z.object({
     visibility: hazardSchema,
   }),
   siteSpecificHazards: z.array(siteHazardSchema).optional(),
-  siteAccessExit: z.string().optional(),
-  safetyZones: z.string().optional(),
-  evacuationPoints: z.string().optional(),
-  adjustmentsToSite: z.string().optional(),
-  nearestMedicalCentre: z.string().optional(),
-  other: z.string().optional(),
+  siteAccessExit: z.string().optional().default(''),
+  safetyZones: z.string().optional().default(''),
+  evacuationPoints: z.string().optional().default(''),
+  adjustmentsToSite: z.string().optional().default(''),
+  nearestMedicalCentre: z.string().optional().default(''),
+  other: z.string().optional().default(''),
   requiredPpe: z.array(z.string()).optional(),
 });
 
@@ -177,6 +177,12 @@ export default function HazardIdCreatePage() {
         visibility: { present: 'No' },
       },
       siteSpecificHazards: [{ description: '', control: '' }],
+      siteAccessExit: '',
+      safetyZones: '',
+      evacuationPoints: '',
+      adjustmentsToSite: '',
+      nearestMedicalCentre: '',
+      other: '',
       requiredPpe: [],
     },
   });
@@ -474,3 +480,4 @@ export default function HazardIdCreatePage() {
     </Card>
   );
 }
+
