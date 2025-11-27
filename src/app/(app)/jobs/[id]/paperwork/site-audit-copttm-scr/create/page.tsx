@@ -467,12 +467,13 @@ export default function CreateSiteAuditPage() {
                                 <div className="space-y-4">
                                     <h4 className="font-semibold">STMS Details</h4>
                                     <FormField control={form.control} name="stmsId" render={() => <FormItem><FormLabel>STMS Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={stms} onSelectStaff={setStms} /></FormItem>} />
-                                    <FormField control={form.control} name="scrLeftOnsite" render={({ field }) => <FormItem className="flex items-center gap-2 pt-6"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>SCR Left Onsite?</FormLabel></FormItem>} />
+                                    
                                     <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog('stms')}>
                                         <SignatureIcon className="mr-2 h-4 w-4"/>
                                         {watch('stmsSignatureUrl') ? 'Update Signature' : 'Sign as STMS'}
                                     </Button>
                                     {watch('stmsSignatureUrl') && <Image src={watch('stmsSignatureUrl')!} alt="STMS Signature" width={200} height={80} className="rounded-md border bg-white"/>}
+                                    <FormField control={form.control} name="scrLeftOnsite" render={({ field }) => <FormItem className="flex items-center gap-2 pt-2"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>SCR Left Onsite?</FormLabel></FormItem>} />
                                 </div>
                             </div>
                             
@@ -506,4 +507,3 @@ export default function CreateSiteAuditPage() {
         </>
     );
 }
-
