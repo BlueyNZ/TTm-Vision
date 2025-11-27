@@ -52,6 +52,7 @@ const hazardIdNzgttmSchema = z.object({
   other: z.string().optional(),
   requiredPpe: z.array(z.string()).optional(),
   otherPpe: z.string().optional(),
+  otherPpeDescription: z.string().optional(),
 });
 
 
@@ -93,6 +94,7 @@ export default function HazardIdNzgttmPage() {
       other: "",
       requiredPpe: [],
       otherPpe: "",
+      otherPpeDescription: "",
     },
   });
 
@@ -177,7 +179,7 @@ export default function HazardIdNzgttmPage() {
           <CardContent className="space-y-8">
             
             <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Job &amp; Personnel Details</h3>
+                <h3 className="font-semibold text-lg border-b pb-2">Job & Personnel Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <FormField
                         control={form.control}
@@ -274,21 +276,34 @@ export default function HazardIdNzgttmPage() {
                         </FormItem>
                     )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="otherPpe"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Other PPE?</FormLabel>
-                            <FormControl><Input placeholder="Specify any other required PPE..." {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                    />
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                        control={form.control}
+                        name="otherPpe"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Other PPE?</FormLabel>
+                                <FormControl><Input placeholder="Specify any other required PPE..." {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    <FormField
+                        control={form.control}
+                        name="otherPpeDescription"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Other PPE Description</FormLabel>
+                                <FormControl><Input placeholder="Describe the other PPE..." {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                </div>
             </div>
           </CardContent>
           <CardFooter className="justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={() => router.push(`/paperwork/${jobId}`)}>Cancel</Button>
             <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                 Submit Form

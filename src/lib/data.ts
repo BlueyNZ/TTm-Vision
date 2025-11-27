@@ -206,6 +206,7 @@ export type HazardIdNzgttm = {
   other?: string;
   requiredPpe?: string[];
   otherPpe?: string;
+  otherPpeDescription?: string;
   createdAt: Timestamp;
 };
 
