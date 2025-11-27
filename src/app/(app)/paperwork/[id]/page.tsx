@@ -6,19 +6,21 @@ import { useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase
 import { doc, collection } from 'firebase/firestore';
 import { LoaderCircle, FileText, Circle } from 'lucide-react';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const paperworkLinks = [
-    { title: 'Timesheets', href: 'timesheets', collection: 'timesheets' },
-    { title: 'Truck Inspections', href: 'truck-inspections', collection: 'truck_inspections' },
-    { title: 'Hazard ID', href: 'hazard-id', collection: 'hazard_ids' },
-    { title: 'Hazard ID (NZGTTM)', href: 'hazard-id-nzgttm', collection: 'hazard_ids_nzgttm' },
-    { title: 'TMP Checking Process', href: 'pre-installation-process', collection: 'tmp_checking_processes' },
-    { title: 'On-Site Record (CoPTTM)', href: 'on-site-record', collection: 'on_site_records' },
-    { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record', collection: 'mobile_ops_records' },
-    { title: 'Job Note', href: 'job-note', collection: 'job_notes' },
-    { title: 'Take Site Photos', href: 'site-photos', collection: 'site_photos' },
-    { title: 'Incident or Event Report', href: 'incident-or-event-report', collection: 'incident_reports' },
-    { title: 'Site Audit (CoPTTM SCR)', href: 'site-audit-copttm-scr', collection: 'site_audits' },
+    { title: 'Timesheets', href: '/jobs/[id]/paperwork/timesheets', collection: 'timesheets' },
+    { title: 'Truck Inspections', href: '/jobs/[id]/paperwork/truck-inspections', collection: 'truck_inspections' },
+    { title: 'Hazard ID', href: '/jobs/[id]/paperwork/hazard-id', collection: 'hazard_ids' },
+    { title: 'Hazard ID (NZGTTM)', href: '/jobs/[id]/paperwork/hazard-id-nzgttm', collection: 'hazard_ids_nzgttm' },
+    { title: 'TMP Checking Process', href: '/jobs/[id]/paperwork/pre-installation-process', collection: 'tmp_checking_processes' },
+    { title: 'On-Site Record (CoPTTM)', href: '/jobs/[id]/paperwork/on-site-record', collection: 'on_site_records' },
+    { title: 'Mobile Ops On-Site Record', href: '/jobs/[id]/paperwork/mobile-ops-on-site-record', collection: 'mobile_ops_records' },
+    { title: 'Job Note', href: '/jobs/[id]/paperwork/job-note', collection: 'job_notes' },
+    { title: 'Take Site Photos', href: '#', collection: 'site_photos', status: 'not_implemented' },
+    { title: 'Incident or Event Report', href: '/jobs/[id]/paperwork/incident-or-event-report', collection: 'incident_reports' },
+    { title: 'Site Audit (CoPTTM SCR)', href: '/jobs/[id]/paperwork/site-audit-copttm-scr', collection: 'site_audits' },
 ];
 
 export default function PaperworkMenuPage() {
@@ -118,21 +120,30 @@ export default function PaperworkMenuPage() {
                            statusText = `${count} submission${count === 1 ? '' : 's'}`;
                         }
                         
-                        const targetHref = `/jobs/${jobId}/paperwork/${link.href}`;
+                        const targetHref = link.href.replace('[id]', jobId);
+                        const isNotImplemented = link.status === 'not_implemented';
+
+                        const Wrapper = isNotImplemented ? 'div' : Link;
+                        const wrapperProps = isNotImplemented ? {} : { href: targetHref };
 
                         return (
-                            <Link href={targetHref} key={link.title} className="block">
-                                <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col justify-between gap-3 h-full">
-                                    <div className="flex items-center gap-3">
-                                        <FileText className="h-5 w-5 text-primary"/>
-                                        <span className="font-medium">{link.title}</span>
+                            <Wrapper {...wrapperProps} key={link.title} className={cn(!isNotImplemented && "block")}>
+                                <div className={cn("p-4 border rounded-lg transition-colors flex flex-col justify-between gap-3 h-full", isNotImplemented ? "bg-muted/50 cursor-not-allowed" : "hover:bg-muted/50")}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <FileText className="h-5 w-5 text-primary"/>
+                                            <span className="font-medium">{link.title}</span>
+                                        </div>
+                                        {isNotImplemented && (
+                                            <Badge variant="outline" className="text-xs bg-yellow-400/20 text-yellow-400 font-semibold border-yellow-500">Not Implemented</Badge>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <Circle className={isCompleted ? "fill-success" : "fill-muted-foreground"}/>
-                                        <span>{statusText}</span>
+                                        <Circle className={cn(isCompleted ? "fill-success" : "fill-muted-foreground", isNotImplemented && "fill-yellow-500")} />
+                                        <span>{isNotImplemented ? "Feature coming soon" : statusText}</span>
                                     </div>
                                 </div>
-                            </Link>
+                            </Wrapper>
                         );
                     })}
                 </div>
