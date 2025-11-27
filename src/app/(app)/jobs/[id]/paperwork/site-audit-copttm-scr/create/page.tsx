@@ -6,7 +6,7 @@ import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { Job, SiteAudit, Staff, Attachment } from "@/lib/data";
 import { doc, Timestamp, addDoc, collection, setDoc, serverTimestamp, query, getDocs, orderBy, limit } from "firebase/firestore";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { LoaderCircle, Calendar as CalendarIcon, Signature as SignatureIcon, Trash, Upload, FileText, MapPin, LocateFixed, Eye } from "lucide-react";
+import { LoaderCircle, Calendar as CalendarIcon, Signature as SignatureIcon, Trash2 as Trash, Upload, FileText, MapPin, LocateFixed, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -157,6 +157,9 @@ const scoringWeights = {
 };
 
 function calculateSectionScore(sectionData: Record<string, { tally: number }>, weights: Record<string, number>): number {
+  if (!sectionData) {
+    return 0;
+  }
   return Object.keys(sectionData).reduce((total, key) => {
     const item = sectionData[key];
     const weight = weights[key] || 0;
@@ -197,7 +200,7 @@ const ScoreSection = ({ form, sectionName, title, weights }: { form: any, sectio
                             )}
                         />
                         <div className="text-center font-medium">
-                            {sectionData[key]?.tally * weight}
+                            {sectionData?.[key]?.tally * weight}
                         </div>
                     </React.Fragment>
                  ))}
@@ -232,7 +235,7 @@ export default function CreateSiteAuditPage() {
     // Data fetching
     const { data: allJobs, isLoading: areJobsLoading } = useCollection<Job>(useMemoFirebase(() => firestore ? collection(firestore, 'job_packs') : null, [firestore]));
     const { data: staffList, isLoading: areStaffLoading } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]));
-    const { data: formToEdit, isLoading: isFormLoading } = useDoc<SiteAudit>(useMemoFirebase(() => (firestore && jobId) ? doc(firestore, 'job_packs', jobId, 'site_audits', params.id as string) : null, [firestore, jobId, params.id]));
+    const { data: formToEdit, isLoading: isFormLoading } = useDoc<SiteAudit>(useMemoFirebase(() => (firestore && jobId) ? doc(firestore, 'job_packs', jobId, params.id as string) : null, [firestore, jobId, params.id]));
     
     // Form setup
     const form = useForm<z.infer<typeof siteAuditSchema>>({
@@ -365,14 +368,14 @@ export default function CreateSiteAuditPage() {
                              <h4 className="font-semibold">Audited/Reviewed By</h4>
                              <FormField control={form.control} name="auditorId" render={() => <FormItem><FormLabel>Auditor Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={auditor} onSelectStaff={setAuditor} /></FormItem>} />
                              <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog('auditor')}>Sign</Button>
-                             {watch('auditorSignatureUrl') && <Image src={watch('auditorSignatureUrl')} alt="Auditor Signature" width={200} height={80}/>}
+                             {watch('auditorSignatureUrl') && <Image src={watch('auditorSignatureUrl')!} alt="Auditor Signature" width={200} height={80}/>}
                            </div>
                            <div className="space-y-4">
                               <h4 className="font-semibold">STMS Details</h4>
                               <FormField control={form.control} name="stmsId" render={() => <FormItem><FormLabel>STMS Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={stms} onSelectStaff={setStms} /></FormItem>} />
                               <FormField control={form.control} name="scrLeftOnsite" render={({ field }) => <FormItem className="flex items-center gap-2"><Checkbox checked={field.value} onCheckedChange={field.onChange} /><FormLabel>SCR Left Onsite?</FormLabel></FormItem>} />
                               <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog('stms')}>Sign</Button>
-                              {watch('stmsSignatureUrl') && <Image src={watch('stmsSignatureUrl')} alt="STMS Signature" width={200} height={80}/>}
+                              {watch('stmsSignatureUrl') && <Image src={watch('stmsSignatureUrl')!} alt="STMS Signature" width={200} height={80}/>}
                            </div>
                          </div>
                         
@@ -397,3 +400,5 @@ export default function CreateSiteAuditPage() {
         </Card>
     );
 }
+
+    
