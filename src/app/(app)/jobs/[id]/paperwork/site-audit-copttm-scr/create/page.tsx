@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -140,8 +141,10 @@ const siteAuditSchema = z.object({
   comments: z.string().optional(),
   actionsToBeTaken: z.string().optional(),
   auditorId: z.string().min(1, "Auditor must be selected."),
+  auditorName: z.string().optional(),
   auditorSignatureUrl: z.string().min(1, "Auditor signature is required."),
   stmsId: z.string().optional(),
+  stmsName: z.string().optional(),
   stmsSignatureUrl: z.string().optional(),
   scrLeftOnsite: z.boolean().default(false),
 });
@@ -162,7 +165,7 @@ function calculateSectionScore(sectionData: Record<string, { tally: number }>, w
   return Object.keys(sectionData).reduce((total, key) => {
     const item = sectionData[key];
     const weight = weights[key] || 0;
-    return total + (item.tally * weight);
+    return total + ((item?.tally || 0) * weight);
   }, 0);
 }
 
@@ -199,7 +202,7 @@ const ScoreSection = ({ form, sectionName, title, weights }: { form: any, sectio
                             )}
                         />
                         <div className="text-center font-medium">
-                            {sectionData?.[key]?.tally * weight}
+                            {isNaN(sectionData?.[key]?.tally * weight) ? 0 : sectionData?.[key]?.tally * weight}
                         </div>
                     </React.Fragment>
                  ))}
@@ -236,7 +239,7 @@ export default function CreateSiteAuditPage() {
     // Data fetching
     const { data: allJobs, isLoading: areJobsLoading } = useCollection<Job>(useMemoFirebase(() => firestore ? collection(firestore, 'job_packs') : null, [firestore]));
     const { data: staffList, isLoading: areStaffLoading } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]));
-    const { data: formToEdit, isLoading: isFormLoading } = useDoc<SiteAudit>(useMemoFirebase(() => (firestore && jobId && formId) ? doc(firestore, 'job_packs', jobId, 'site_audits', formId) : null, [firestore, jobId, formId]));
+    const { data: formToEdit, isLoading: isFormLoading } = useDoc<SiteAudit>(useMemoFirebase(() => (firestore && jobId && formId) ? doc(firestore, `job_packs/${jobId}/site_audits/${formId}`) : null, [firestore, jobId, formId]));
     
     // Form setup
     const form = useForm<z.infer<typeof siteAuditSchema>>({
