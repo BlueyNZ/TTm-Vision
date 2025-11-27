@@ -114,20 +114,22 @@ export default function JobNotesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Created By</TableHead>
-                  <TableHead>Note</TableHead>
+                  <TableHead>Date Raised</TableHead>
+                  <TableHead>Raised By</TableHead>
+                  <TableHead>Note Type</TableHead>
+                  <TableHead>Description</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {jobNotes.map((item) => {
-                  const createdAt = item.createdAt instanceof Timestamp ? item.createdAt.toDate() : new Date(item.createdAt);
+                  const dateRaised = item.dateRaised instanceof Timestamp ? item.dateRaised.toDate() : new Date(item.dateRaised);
                   return (
                     <TableRow key={item.id}>
-                      <TableCell>{format(createdAt, 'PPP')}</TableCell>
-                      <TableCell className="font-medium">{item.createdBy}</TableCell>
-                      <TableCell className="truncate max-w-xs">{item.note}</TableCell>
+                      <TableCell>{format(dateRaised, 'PPP')}</TableCell>
+                      <TableCell className="font-medium">{item.raisedBy}</TableCell>
+                       <TableCell>{item.noteType}</TableCell>
+                      <TableCell className="truncate max-w-xs">{item.description}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

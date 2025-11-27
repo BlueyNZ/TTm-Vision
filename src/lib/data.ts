@@ -374,14 +374,24 @@ export type OnSiteRecordMobileOps = {
     createdAt: Timestamp;
 }
 
+export type Attachment = {
+  name: string;
+  url: string;
+};
+
 export type JobNote = {
     id: string;
     jobId: string;
-    note: string;
-    createdBy: string;
-    createdById: string;
+    noteType: 'General' | 'Safety' | 'Client Request' | 'Variation';
+    description: string;
+    updates?: string;
+    attachments: Attachment[];
+    raisedBy: string;
+    raisedById: string;
+    dateRaised: Timestamp;
     createdAt: Timestamp;
-}
+};
+
 
 export type SitePhoto = {
     id: string;
