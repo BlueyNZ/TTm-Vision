@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -12,7 +11,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -217,8 +216,10 @@ export default function CreateSiteAuditPage() {
     // Hooks
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
     const jobId = params.id as string;
+    const formId = searchParams.get('edit') || searchParams.get('view');
     const firestore = useFirestore();
     const signaturePadRef = useRef<SignaturePadRef>(null);
 
@@ -235,7 +236,7 @@ export default function CreateSiteAuditPage() {
     // Data fetching
     const { data: allJobs, isLoading: areJobsLoading } = useCollection<Job>(useMemoFirebase(() => firestore ? collection(firestore, 'job_packs') : null, [firestore]));
     const { data: staffList, isLoading: areStaffLoading } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]));
-    const { data: formToEdit, isLoading: isFormLoading } = useDoc<SiteAudit>(useMemoFirebase(() => (firestore && jobId) ? doc(firestore, 'job_packs', jobId, params.id as string) : null, [firestore, jobId, params.id]));
+    const { data: formToEdit, isLoading: isFormLoading } = useDoc<SiteAudit>(useMemoFirebase(() => (firestore && jobId && formId) ? doc(firestore, 'job_packs', jobId, 'site_audits', formId) : null, [firestore, jobId, formId]));
     
     // Form setup
     const form = useForm<z.infer<typeof siteAuditSchema>>({
@@ -400,5 +401,3 @@ export default function CreateSiteAuditPage() {
         </Card>
     );
 }
-
-    
