@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -114,18 +113,22 @@ export default function SiteAuditsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Audit No.</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Auditor</TableHead>
+                  <TableHead>Final Score</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {audits.map((item) => {
-                  const createdAt = item.createdAt instanceof Timestamp ? item.createdAt.toDate() : new Date(item.createdAt);
+                  const auditDate = item.auditDate instanceof Timestamp ? item.auditDate.toDate() : new Date(item.auditDate);
                   return (
                     <TableRow key={item.id}>
-                      <TableCell>{format(createdAt, 'PPP')}</TableCell>
-                      <TableCell className="font-medium">{item.auditorName}</TableCell>
+                      <TableCell className="font-medium">{item.auditNumber}</TableCell>
+                      <TableCell>{format(auditDate, 'PPP')}</TableCell>
+                      <TableCell>{item.auditorName}</TableCell>
+                      <TableCell>{item.finalScore}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
