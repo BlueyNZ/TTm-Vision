@@ -182,6 +182,16 @@ function getRating(score: number): string {
 const ScoreSection = ({ form, sectionName, title, weights }: { form: any, sectionName: string, title: string, weights: Record<string, number> }) => {
     const sectionData = form.watch(sectionName);
     const score = calculateSectionScore(sectionData, weights);
+    
+    const formatLabel = (key: string) => {
+      // If the key is all uppercase (like an acronym), return it as is.
+      if (key === key.toUpperCase()) {
+        return key;
+      }
+      // Otherwise, convert camelCase to Title Case.
+      return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    };
+
 
     return (
         <div className="space-y-3">
@@ -193,7 +203,7 @@ const ScoreSection = ({ form, sectionName, title, weights }: { form: any, sectio
                  {Object.entries(weights).map(([key, weight]) => (
                     <React.Fragment key={key}>
                         <label htmlFor={`${sectionName}.${key}.tally`}>
-                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} <span className="text-muted-foreground text-xs">(w: {weight})</span>
+                          {formatLabel(key)} <span className="text-muted-foreground text-xs">(w: {weight})</span>
                         </label>
                         <FormField
                             control={form.control}
@@ -246,7 +256,11 @@ export default function CreateSiteAuditPage() {
     const form = useForm<z.infer<typeof siteAuditSchema>>({
         resolver: zodResolver(siteAuditSchema),
         defaultValues: {
-            // ... default values from schema
+            signs: { missing: {tally: 0}, position: {tally: 0}, notVisible: {tally: 0}, wrongSign: {tally: 0}, condition: {tally: 0}, permanentSign: {tally: 0}, unapproved: {tally: 0}, nonCompliantSupport: {tally: 0} },
+            mobile: { tailPilot: {tally: 0}, leadPilot: {tally: 0}, shadowVehicle: {tally: 0}, 'TMA Missing': {tally: 0}, AWVMS: {tally: 0} },
+            pedestrians: { inadequateProvision: {tally: 0}, inadequateProvisionCyclists: {tally: 0} },
+            delineation: { missingTaper: {tally: 0}, taperTooShort: {tally: 0}, trailingTaper: {tally: 0}, spacingInTaper: {tally: 0}, spacingAlongLanes: {tally: 0}, missingDelineation: {tally: 0}, condition: {tally: 0}, nonApprovedDevice: {tally: 0}, roadMarking: {tally: 0}, siteAccess: {tally: 0} },
+            miscellaneous: { workingInLiveLanes: {tally: 0}, missingController: {tally: 0}, safetyZoneCompromised: {tally: 0}, highVisGarment: {tally: 0}, marginalSurface: {tally: 0}, unacceptableSurface: {tally: 0}, barrierDefects: {tally: 0}, unsafeTtm: {tally: 0}, vmsMessage: {tally: 0}, flashingBeacons: {tally: 0}, parkingFeatures: {tally: 0}, unsafeParking: {tally: 0}, marginalItems: {tally: 0} },
         },
     });
     
@@ -405,4 +419,3 @@ export default function CreateSiteAuditPage() {
         </Card>
     );
 }
-
