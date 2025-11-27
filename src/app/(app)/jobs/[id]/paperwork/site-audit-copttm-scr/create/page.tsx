@@ -153,7 +153,7 @@ const siteAuditSchema = z.object({
 // Scoring logic
 const scoringWeights = {
     signs: { missing: 5, position: 2, notVisible: 5, wrongSign: 5, condition: 4, permanentSign: 5, unapproved: 4, nonCompliantSupport: 2 },
-    mobile: { tailPilot: 30, leadPilot: 20, shadowVehicle: 26, tmaMissing: 26, awvms: 26 },
+    mobile: { tailPilot: 30, leadPilot: 20, shadowVehicle: 26, 'TMA Missing': 26, AWVMS: 26 },
     pedestrians: { inadequateProvision: 10, inadequateProvisionCyclists: 10 },
     delineation: { missingTaper: 26, taperTooShort: 15, trailingTaper: 5, spacingInTaper: 5, spacingAlongLanes: 3, missingDelineation: 10, condition: 2, nonApprovedDevice: 4, roadMarking: 30, siteAccess: 10 },
     miscellaneous: { workingInLiveLanes: 20, missingController: 20, safetyZoneCompromised: 10, highVisGarment: 5, marginalSurface: 15, unacceptableSurface: 30, barrierDefects: 10, unsafeTtm: 5, vmsMessage: 15, flashingBeacons: 3, parkingFeatures: 5, unsafeParking: 20, marginalItems: 1 },
@@ -166,7 +166,8 @@ function calculateSectionScore(sectionData: Record<string, { tally: number }>, w
   return Object.keys(sectionData).reduce((total, key) => {
     const item = sectionData[key];
     const weight = weights[key] || 0;
-    return total + ((item?.tally || 0) * weight);
+    const value = item?.tally || 0;
+    return total + (value * weight);
   }, 0);
 }
 
@@ -185,7 +186,8 @@ const ScoreSection = ({ form, sectionName, title, weights }: { form: any, sectio
     
     const formatLabel = (key: string) => {
         if (key === 'tmaMissing') return 'TMA Missing';
-        if (key === key.toUpperCase()) return key; // Handles AWVMS
+        if (key === 'awvms') return 'AWVMS';
+        if (key === key.toUpperCase()) return key;
         return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
     };
 
@@ -330,7 +332,7 @@ export default function CreateSiteAuditPage() {
             setValue('auditorId', auditor.id, { shouldValidate: true });
         }
     }, [auditor, setValue]);
-
+    
     useEffect(() => {
         if (stms) {
             setValue('stmsId', stms.id, { shouldValidate: true });
@@ -461,7 +463,6 @@ export default function CreateSiteAuditPage() {
                                 <p className="font-semibold">{finalRating}</p>
                             </div>
                             
-                            {/* Signatures */}
                             <FormField control={form.control} name="scrLeftOnsite" render={({ field }) => <FormItem className="flex items-center gap-2 pt-2"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>SCR Left Onsite?</FormLabel></FormItem>} />
                              <div className="grid md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
@@ -515,4 +516,3 @@ export default function CreateSiteAuditPage() {
         </>
     );
 }
-
