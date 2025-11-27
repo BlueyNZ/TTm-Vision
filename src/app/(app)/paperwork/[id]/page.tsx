@@ -16,7 +16,7 @@ const paperworkLinks = [
     { title: 'On-Site Record (CoPTTM)', href: 'on-site-record', collection: 'on_site_records' },
     { title: 'Mobile Ops On-Site Record', href: 'mobile-ops-on-site-record', collection: 'mobile_ops_records' },
     { title: 'Job Note', href: 'job-note', collection: 'job_notes' },
-    { title: 'Take Site Photos', href: '#', collection: 'site_photos' },
+    { title: 'Take Site Photos', href: 'site-photos', collection: 'site_photos' },
     { title: 'Incident or Event Report', href: 'incident-or-event-report', collection: 'incident_reports' },
     { title: 'Site Audit (CoPTTM SCR)', href: 'site-audit-copttm-scr', collection: 'site_audits' },
 ];
@@ -40,17 +40,26 @@ export default function PaperworkMenuPage() {
     const hazardIdsNzgttmRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'hazard_ids_nzgttm') : null, [firestore, jobId]);
     const tmpCheckingProcessesRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'tmp_checking_processes') : null, [firestore, jobId]);
     const onSiteRecordsRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'on_site_records') : null, [firestore, jobId]);
-
+    const mobileOpsRecordsRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'mobile_ops_records') : null, [firestore, jobId]);
+    const jobNotesRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'job_notes') : null, [firestore, jobId]);
+    const sitePhotosRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'site_photos') : null, [firestore, jobId]);
+    const incidentReportsRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'incident_reports') : null, [firestore, jobId]);
+    const siteAuditsRef = useMemoFirebase(() => firestore ? collection(firestore, 'job_packs', jobId, 'site_audits') : null, [firestore, jobId]);
 
     const { data: timesheets, isLoading: areTimesheetsLoading } = useCollection<Timesheet>(timesheetsRef);
-    const { data: truckInspections, isLoading: areInspectionsLoading } = useCollection<TruckInspection>(truckInspectionsRef);
-    const { data: hazardIds, isLoading: areHazardIdsLoading } = useCollection<HazardId>(hazardIdsRef);
-    const { data: hazardIdsNzgttm, isLoading: areHazardIdsNzgttmLoading } = useCollection<HazardIdNzgttm>(hazardIdsNzgttmRef);
-    const { data: tmpCheckingProcesses, isLoading: areTmpCheckingProcessesLoading } = useCollection<TmpCheckingProcess>(tmpCheckingProcessesRef);
-    const { data: onSiteRecords, isLoading: areOnSiteRecordsLoading } = useCollection<OnSiteRecord>(onSiteRecordsRef);
+    const { data: truckInspections, isLoading: areInspectionsLoading } = useCollection(truckInspectionsRef);
+    const { data: hazardIds, isLoading: areHazardIdsLoading } = useCollection(hazardIdsRef);
+    const { data: hazardIdsNzgttm, isLoading: areHazardIdsNzgttmLoading } = useCollection(hazardIdsNzgttmRef);
+    const { data: tmpCheckingProcesses, isLoading: areTmpCheckingProcessesLoading } = useCollection(tmpCheckingProcessesRef);
+    const { data: onSiteRecords, isLoading: areOnSiteRecordsLoading } = useCollection(onSiteRecordsRef);
+    const { data: mobileOpsRecords, isLoading: areMobileOpsRecordsLoading } = useCollection(mobileOpsRecordsRef);
+    const { data: jobNotes, isLoading: areJobNotesLoading } = useCollection(jobNotesRef);
+    const { data: sitePhotos, isLoading: areSitePhotosLoading } = useCollection(sitePhotosRef);
+    const { data: incidentReports, isLoading: areIncidentReportsLoading } = useCollection(incidentReportsRef);
+    const { data: siteAudits, isLoading: areSiteAuditsLoading } = useCollection(siteAuditsRef);
 
 
-    const isLoading = isJobLoading || areTimesheetsLoading || areInspectionsLoading || areHazardIdsLoading || areHazardIdsNzgttmLoading || areTmpCheckingProcessesLoading || areOnSiteRecordsLoading;
+    const isLoading = isJobLoading || areTimesheetsLoading || areInspectionsLoading || areHazardIdsLoading || areHazardIdsNzgttmLoading || areTmpCheckingProcessesLoading || areOnSiteRecordsLoading || areMobileOpsRecordsLoading || areJobNotesLoading || areSitePhotosLoading || areIncidentReportsLoading || areSiteAuditsLoading;
 
     if (isLoading) {
         return (
@@ -74,12 +83,17 @@ export default function PaperworkMenuPage() {
     }
 
     const collectionDataMap: { [key: string]: any[] | undefined } = {
-        timesheets: timesheets,
+        timesheets,
         truck_inspections: truckInspections,
         hazard_ids: hazardIds,
         hazard_ids_nzgttm: hazardIdsNzgttm,
         tmp_checking_processes: tmpCheckingProcesses,
         on_site_records: onSiteRecords,
+        mobile_ops_records: mobileOpsRecords,
+        job_notes: jobNotes,
+        site_photos: sitePhotos,
+        incident_reports: incidentReports,
+        site_audits: siteAudits,
     };
 
     return (
@@ -98,13 +112,13 @@ export default function PaperworkMenuPage() {
                         const isCompleted = count > 0;
                         let statusText = "Not yet completed";
 
-                        if (link.collection && areTimesheetsLoading) { // check one of the loading states
+                        if (isLoading) {
                             statusText = "Loading...";
                         } else if (link.collection) {
                            statusText = `${count} submission${count === 1 ? '' : 's'}`;
                         }
                         
-                        const targetHref = link.href === '#' ? '#' : `/jobs/${jobId}/paperwork/${link.href}`;
+                        const targetHref = `/jobs/${jobId}/paperwork/${link.href}`;
 
                         return (
                             <Link href={targetHref} key={link.title} className="block">
