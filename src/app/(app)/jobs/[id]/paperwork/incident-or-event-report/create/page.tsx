@@ -43,7 +43,7 @@ const toBase64 = (file: File): Promise<string> =>
 const incidentReportSchema = z.object({
   jobId: z.string().min(1, "A job must be selected."),
   incidentReferenceNo: z.string(),
-  copptmReference: z.string().optional(),
+  copptmReference: z.string().optional().default(''),
   incidentDate: z.date({ required_error: "Incident date is required."}),
   incidentTime: z.string().min(1, "Incident time is required."),
   reportingCompany: z.string().min(1, "Reporting company is required."),
@@ -61,18 +61,18 @@ const incidentReportSchema = z.object({
   roadUserVehicles: z.array(z.object({ type: z.string().min(1), rego: z.string().min(1) })).optional(),
   tmaVehicles: z.array(z.object({ truckId: z.string().min(1), lane: z.string().min(1) })).optional(),
   policeAttended: z.boolean().default(false),
-  policeOfficerDetails: z.string().optional(),
-  furtherInformation: z.string().optional(),
+  policeOfficerDetails: z.string().optional().default(''),
+  furtherInformation: z.string().optional().default(''),
   attachments: z.array(z.object({ name: z.string(), url: z.string() })).optional(),
   investigation: z.object({
-    assignedToId: z.string().optional(),
+    assignedToId: z.string().optional().default(''),
     dateAssigned: z.date().optional(),
-    status: z.string().optional(),
-    summary: z.string().optional(),
-    potentialConsequence: z.string().optional(),
-    canHappenAgain: z.string().optional(),
-    classification: z.string().optional(),
-    rootCause: z.string().optional(),
+    status: z.string().optional().default('--None--'),
+    summary: z.string().optional().default(''),
+    potentialConsequence: z.string().optional().default('--None--'),
+    canHappenAgain: z.string().optional().default('--None--'),
+    classification: z.string().optional().default('--None--'),
+    rootCause: z.string().optional().default('--None--'),
   }).optional(),
 });
 
@@ -124,7 +124,7 @@ export default function CreateIncidentReportPage() {
       policeOfficerDetails: "",
       furtherInformation: "",
       attachments: [],
-      investigation: { status: "--None--", potentialConsequence: "--None--", canHappenAgain: "--None--", classification: "--None--", rootCause: "--None--" }
+      investigation: { status: "--None--", potentialConsequence: "--None--", canHappenAgain: "--None--", classification: "--None--", rootCause: "--None--", summary: "", assignedToId: "" }
     },
   });
 
@@ -182,7 +182,9 @@ export default function CreateIncidentReportPage() {
   }, [selectedStms, setValue]);
 
   useEffect(() => {
-    setValue('investigation.assignedToId', assignedInvestigator?.id);
+    if (assignedInvestigator) {
+      setValue('investigation.assignedToId', assignedInvestigator.id);
+    }
   }, [assignedInvestigator, setValue]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -339,7 +341,7 @@ export default function CreateIncidentReportPage() {
             <Separator />
             <h3 className="font-semibold text-lg border-b pb-2">Incident & Event Assignment</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="investigation.assignedToId" render={() => (<FormItem><FormLabel>Assigned To</FormLabel><StaffSelector staffList={staffList || []} onSelectStaff={setAssignedInvestigator} /><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="investigation.assignedToId" render={() => (<FormItem><FormLabel>Assigned To</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={assignedInvestigator} onSelectStaff={setAssignedInvestigator} /><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="investigation.dateAssigned" render={({ field }) => (<FormItem><FormLabel>Date Assigned</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover><FormMessage /></FormItem>)} />
             </div>
             <FormField control={form.control} name="investigation.status" render={({ field }) => (<FormItem><FormLabel>Investigation Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="--None--" /></SelectTrigger></FormControl><SelectContent><SelectItem value="--None--">--None--</SelectItem><SelectItem value="Open">Open</SelectItem><SelectItem value="Closed">Closed</SelectItem></SelectContent></Select></FormItem>)} />
@@ -364,5 +366,7 @@ export default function CreateIncidentReportPage() {
     </Card>
   );
 }
+
+    
 
     
