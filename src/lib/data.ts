@@ -80,6 +80,7 @@ export type Job = {
   contactNumber?: string;
   tmpUrl?: string;
   wapUrl?: string;
+  mobileOpsRecords?: MobileOpsRecord[];
 };
 
 export type Timesheet = {
@@ -333,4 +334,31 @@ export type TemporarySpeedLimit = {
   placementTo: string;
   lengthOfTsl: number;
   dateTslRemainsInPlace?: string;
+};
+
+export type MobileOpsRecord = {
+    id: string;
+    jobId: string;
+    date: Timestamp;
+    stmsId: string;
+    stmsName: string;
+    vehicleRego: string;
+    startTime: string;
+    finishTime: string;
+    totalTime: string;
+    vehicleChecks: {
+      lights: boolean;
+      arrowBoard: boolean;
+      beacon: boolean;
+      ppe: boolean;
+      firstAid: boolean;
+    };
+    siteChecks: {
+      allStaffInducted: boolean;
+      toolboxTalk: boolean;
+      emergencyProcedures: boolean;
+    };
+    operatorSignatures: { staffId: string; staffName: string; signatureDataUrl: string }[];
+    stmsSignatureDataUrl: string;
+    createdAt: Timestamp;
 };
