@@ -169,6 +169,24 @@ export default function CreateIncidentReportPage() {
     }
   }, [allJobs, jobId, staffList, setValue]);
 
+  useEffect(() => {
+      if(selectedReporter) {
+          setValue('reportedById', selectedReporter.id);
+      }
+  }, [selectedReporter, setValue]);
+
+  useEffect(() => {
+      if(selectedStms) {
+          setValue('stmsId', selectedStms.id);
+      }
+  }, [selectedStms, setValue]);
+
+  useEffect(() => {
+      if(assignedInvestigator) {
+          setValue('investigation.assignedToId', assignedInvestigator.id);
+      }
+  }, [assignedInvestigator, setValue]);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !jobId) return;
@@ -309,7 +327,7 @@ export default function CreateIncidentReportPage() {
             <Separator />
             <h3 className="font-semibold text-lg border-b pb-2">Incident & Event Assignment</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="investigation.assignedToId" render={() => (<FormItem><FormLabel>Assigned To</FormLabel><StaffSelector staffList={staffList || []} onSelectStaff={(staff) => setValue(`investigation.assignedToId`, staff?.id || '')} /><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="investigation.assignedToId" render={() => (<FormItem><FormLabel>Assigned To</FormLabel><StaffSelector staffList={staffList || []} onSelectStaff={setAssignedInvestigator} /><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="investigation.dateAssigned" render={({ field }) => (<FormItem><FormLabel>Date Assigned</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover><FormMessage /></FormItem>)} />
             </div>
             <FormField control={form.control} name="investigation.status" render={({ field }) => (<FormItem><FormLabel>Investigation Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="--None--" /></SelectTrigger></FormControl><SelectContent><SelectItem value="--None--">--None--</SelectItem><SelectItem value="Open">Open</SelectItem><SelectItem value="Closed">Closed</SelectItem></SelectContent></Select></FormItem>)} />
