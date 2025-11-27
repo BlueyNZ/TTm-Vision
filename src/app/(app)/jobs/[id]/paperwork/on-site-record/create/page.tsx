@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { Job, Staff, OnSiteRecord, TtmHandover, TtmDelegation, WorksiteMonitoring, TemporarySpeedLimit } from "@/lib/data";
-import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs, setDoc } from "firebase/firestore";
+import { doc, Timestamp, addDoc, collection, query, orderBy, limit, getDocs, setDoc, serverTimestamp } from "firebase/firestore";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle, PlusCircle, Trash, CheckCircle, Signature, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -112,10 +112,17 @@ type SignatureTarget =
 export default function NewOnSiteRecordPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const jobId = params.id as string;
   const firestore = useFirestore();
   const signaturePadRef = useRef<SignaturePadRef>(null);
+
+  const editId = searchParams.get('edit');
+  const viewId = searchParams.get('view');
+  const formId = editId || viewId;
+  const isEditMode = !!editId;
+  const isViewMode = !!viewId;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
@@ -126,6 +133,9 @@ export default function NewOnSiteRecordPage() {
 
   const staffCollection = useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]);
   const { data: staffList, isLoading: isStaffLoading } = useCollection<Staff>(staffCollection);
+
+  const formToEditRef = useMemoFirebase(() => (firestore && formId) ? doc(firestore, 'job_packs', jobId, 'on_site_records', formId) : null, [firestore, jobId, formId]);
+  const { data: formToEdit, isLoading: isFormLoading } = useDoc<OnSiteRecord>(formToEditRef);
 
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
 
@@ -149,7 +159,7 @@ export default function NewOnSiteRecordPage() {
     },
   });
 
-  const { watch, setValue, control, trigger, getValues } = form;
+  const { watch, setValue, control, trigger, getValues, reset } = form;
   const { fields: handoverFields, append: appendHandover, remove: removeHandover } = useFieldArray({ control, name: "handovers" });
   const { fields: delegationFields, append: appendDelegation, remove: removeDelegation } = useFieldArray({ control, name: "delegations" });
   const { fields: worksiteFields, append: appendWorksite, remove: removeWorksite } = useFieldArray({ control, name: "worksiteMonitoring" });
@@ -162,6 +172,30 @@ export default function NewOnSiteRecordPage() {
   const delegations = watch('delegations');
   const worksiteMonitoring = watch('worksiteMonitoring');
 
+
+  useEffect(() => {
+    if (formToEdit && staffList) {
+        const stms = staffList.find(s => s.id === formToEdit.stmsInChargeId);
+        setSelectedStms(stms || null);
+        
+        const convertedData = {
+          ...formToEdit,
+          jobDate: formToEdit.jobDate instanceof Timestamp ? formToEdit.jobDate.toDate() : new Date(formToEdit.jobDate),
+          handovers: formToEdit.handovers?.map(h => ({...h})) || [],
+          delegations: formToEdit.delegations?.map(d => ({...d})) || [],
+          worksiteMonitoring: formToEdit.worksiteMonitoring?.map(w => ({
+              ...w,
+              date: w.date instanceof Timestamp ? w.date.toDate() : new Date(w.date),
+          })) || [],
+          temporarySpeedLimits: formToEdit.temporarySpeedLimits?.map(t => ({
+              ...t,
+              installDate: t.installDate instanceof Timestamp ? t.installDate.toDate() : new Date(t.installDate),
+              removalDate: t.removalDate instanceof Timestamp ? t.removalDate.toDate() : (t.removalDate ? new Date(t.removalDate) : undefined),
+          })) || [],
+        };
+        reset(convertedData);
+    }
+  }, [formToEdit, staffList, reset]);
 
   useEffect(() => {
     if (selectedStms) {
@@ -228,10 +262,43 @@ export default function NewOnSiteRecordPage() {
 
 
   async function onSubmit(data: z.infer<typeof onSiteRecordSchema>) {
-    router.push(`/paperwork/${jobId}`);
+     if (!firestore || !jobId) return;
+
+    setIsSubmitting(true);
+    try {
+        const payload = {
+            ...data,
+            jobDate: Timestamp.fromDate(data.jobDate),
+            worksiteMonitoring: data.worksiteMonitoring?.map(w => ({
+                ...w,
+                date: Timestamp.fromDate(w.date),
+            })),
+            temporarySpeedLimits: data.temporarySpeedLimits?.map(t => ({
+                ...t,
+                installDate: Timestamp.fromDate(t.installDate),
+                removalDate: t.removalDate ? Timestamp.fromDate(t.removalDate) : undefined,
+            }))
+        };
+
+        if (isEditMode && formId) {
+            const docRef = doc(firestore, 'job_packs', jobId, 'on_site_records', formId);
+            await setDoc(docRef, { ...payload, createdAt: formToEdit?.createdAt || serverTimestamp() }, { merge: true });
+            toast({ title: "On-Site Record Updated" });
+        } else {
+            const collectionRef = collection(firestore, 'job_packs', jobId, 'on_site_records');
+            await addDoc(collectionRef, { ...payload, createdAt: serverTimestamp() });
+            toast({ title: "On-Site Record Submitted" });
+        }
+        router.push(`/paperwork/${jobId}`);
+    } catch (error) {
+        console.error("Error submitting form: ", error);
+        toast({ title: "Submission Failed", description: "An error occurred.", variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
+    }
   }
 
-  const isLoading = isJobLoading || isStaffLoading;
+  const isLoading = isJobLoading || isStaffLoading || (formId && isFormLoading);
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-64"><LoaderCircle className="h-8 w-8 animate-spin" /></div>;
@@ -241,7 +308,7 @@ export default function NewOnSiteRecordPage() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>On Site Record (CoPTTM)</CardTitle>
+          <CardTitle>{isViewMode ? "View" : isEditMode ? "Edit" : "New"} On Site Record (CoPTTM)</CardTitle>
           <CardDescription>Edition 4, July 2020</CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -266,6 +333,7 @@ export default function NewOnSiteRecordPage() {
                                     "w-full pl-3 text-left font-normal",
                                     !field.value && "text-muted-foreground"
                                 )}
+                                disabled={isViewMode}
                                 >
                                 {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -278,6 +346,7 @@ export default function NewOnSiteRecordPage() {
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 initialFocus
+                                disabled={isViewMode}
                             />
                             </PopoverContent>
                         </Popover>
@@ -288,7 +357,7 @@ export default function NewOnSiteRecordPage() {
                   <p className="md:col-span-2"><span className="font-medium">Client:</span> {job?.clientName}</p>
                   <p className="md:col-span-2"><span className="font-medium">Location:</span> {job?.location}</p>
                 </div>
-                <FormField control={form.control} name="tmpNumber" render={({ field }) => (<FormItem><FormLabel>TMP Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="tmpNumber" render={({ field }) => (<FormItem><FormLabel>TMP Number</FormLabel><FormControl><Input {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
               </div>
 
               <div className="space-y-4">
@@ -304,6 +373,7 @@ export default function NewOnSiteRecordPage() {
                                   selectedStaff={selectedStms}
                                   onSelectStaff={setSelectedStms}
                                   placeholder="Select STMS..."
+                                  disabled={isViewMode}
                               />
                               {selectedStms && (
                                   <p className="text-sm text-muted-foreground">NZTA ID: {selectedStms.nztaId || 'N/A'}</p>
@@ -317,7 +387,7 @@ export default function NewOnSiteRecordPage() {
                       name="stmsSignatureDataUrl"
                       render={() => (
                           <FormItem>
-                            <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'stms'})}>
+                            <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'stms'})} disabled={isViewMode}>
                               <Signature className="mr-2 h-4 w-4" />
                               {stmsSignature ? "Update Signature" : "Sign as STMS in Charge"}
                             </Button>
@@ -339,6 +409,7 @@ export default function NewOnSiteRecordPage() {
                               <Checkbox
                               checked={field.value}
                               onCheckedChange={field.onChange}
+                              disabled={isViewMode}
                               />
                           </FormControl>
                           <div className="space-y-1 leading-none">
@@ -351,14 +422,14 @@ export default function NewOnSiteRecordPage() {
                   />
                   {!isStmsInChargeOfWorkingSpace && (
                       <div className="space-y-4 p-4 border rounded-md">
-                          <FormField control={control} name="workingSpacePerson" render={({ field }) => (<FormItem><FormLabel>Person responsible for working space</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                          <FormField control={control} name="workingSpaceContact" render={({ field }) => (<FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField control={control} name="workingSpacePerson" render={({ field }) => (<FormItem><FormLabel>Person responsible for working space</FormLabel><FormControl><Input {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
+                          <FormField control={control} name="workingSpaceContact" render={({ field }) => (<FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
                           <FormField
                               control={control}
                               name="workingSpaceSignatureDataUrl"
                               render={() => (
                                 <FormItem>
-                                  <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'workingSpace'})}>
+                                  <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'workingSpace'})} disabled={isViewMode}>
                                     <Signature className="mr-2 h-4 w-4" />
                                     {workingSpaceSignature ? "Update Signature" : "Sign for Working Space"}
                                   </Button>
@@ -378,9 +449,9 @@ export default function NewOnSiteRecordPage() {
                         const isExternal = watch(`handovers.${index}.isExternal`);
                         return (
                           <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
-                              <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeHandover(index)}>
+                              {!isViewMode && <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeHandover(index)}>
                                 <Trash className="h-4 w-4 text-destructive" />
-                              </Button>
+                              </Button>}
 
                               <FormField
                                 control={control}
@@ -388,7 +459,7 @@ export default function NewOnSiteRecordPage() {
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                                         <FormControl>
-                                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                            <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isViewMode} />
                                         </FormControl>
                                         <FormLabel>Tick if Handover is to a person outside your company</FormLabel>
                                     </FormItem>
@@ -402,7 +473,7 @@ export default function NewOnSiteRecordPage() {
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Name</FormLabel>
-                                      <FormControl><Input placeholder="Enter name..." {...field} /></FormControl>
+                                      <FormControl><Input placeholder="Enter name..." {...field} disabled={isViewMode} /></FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
@@ -425,6 +496,7 @@ export default function NewOnSiteRecordPage() {
                                           }}
                                           placeholder="Select receiving STMS..."
                                           selectedStaff={staffList?.find(s => s.id === handovers?.[index]?.receivingStmsId)}
+                                          disabled={isViewMode}
                                       />
                                       <FormMessage/>
                                     </FormItem>
@@ -435,7 +507,7 @@ export default function NewOnSiteRecordPage() {
                               {watch(`handovers.${index}.receivingStmsName`) && !isExternal && (
                                 <p className="text-sm text-muted-foreground px-1">NZTA ID: {watch(`handovers.${index}.receivingStmsNztaId`) || 'N/A'}</p>
                               )}
-                              <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'handover', index })}>
+                              <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'handover', index })} disabled={isViewMode}>
                                 <Signature className="mr-2 h-4 w-4" />
                                 {watch(`handovers.${index}.receivingStmsSignatureDataUrl`) ? "Update Signature" : "Sign for Handover"}
                               </Button>
@@ -450,7 +522,7 @@ export default function NewOnSiteRecordPage() {
                                   render={({ field }) => (
                                       <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
                                       <FormControl>
-                                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                          <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isViewMode} />
                                       </FormControl>
                                       <div className="space-y-1 leading-none">
                                           <FormLabel>Tick to confirm handover briefing completed (To be completed by the receiving STMS)</FormLabel>
@@ -461,9 +533,9 @@ export default function NewOnSiteRecordPage() {
                           </div>
                         )
                       })}
-                      <Button type="button" variant="outline" size="sm" onClick={() => appendHandover({ isExternal: false, receivingStmsId: '', receivingStmsName: '', briefingCompleted: false, receivingStmsSignatureDataUrl: '' })}>
+                      {!isViewMode && <Button type="button" variant="outline" size="sm" onClick={() => appendHandover({ isExternal: false, receivingStmsId: '', receivingStmsName: '', briefingCompleted: false, receivingStmsSignatureDataUrl: '' })}>
                           <PlusCircle className="mr-2 h-4 w-4"/> Add Handover
-                      </Button>
+                      </Button>}
                   </div>
               </div>
               
@@ -472,9 +544,9 @@ export default function NewOnSiteRecordPage() {
                    <div className="space-y-4">
                       {delegationFields.map((field, index) => (
                           <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
-                              <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeDelegation(index)}>
+                              {!isViewMode && <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeDelegation(index)}>
                                 <Trash className="h-4 w-4 text-destructive" />
-                              </Button>
+                              </Button>}
                               <FormField
                                 control={form.control}
                                 name={`delegations.${index}.delegatedPersonId`}
@@ -492,6 +564,7 @@ export default function NewOnSiteRecordPage() {
                                         }}
                                         placeholder="Select person to delegate to..."
                                         selectedStaff={staffList?.find(s => s.id === delegations?.[index]?.delegatedPersonId)}
+                                        disabled={isViewMode}
                                     />
                                     <FormMessage/>
                                   </FormItem>
@@ -500,7 +573,7 @@ export default function NewOnSiteRecordPage() {
                                {watch(`delegations.${index}.delegatedPersonName`) && (
                                 <p className="text-sm text-muted-foreground px-1">NZTA ID: {watch(`delegations.${index}.delegatedPersonNztaId`) || 'N/A'}</p>
                               )}
-                              <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'delegation', index })}>
+                              <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'delegation', index })} disabled={isViewMode}>
                                 <Signature className="mr-2 h-4 w-4" />
                                 {watch(`delegations.${index}.delegatedPersonSignatureDataUrl`) ? "Update Signature" : "Sign for Delegation"}
                               </Button>
@@ -515,7 +588,7 @@ export default function NewOnSiteRecordPage() {
                                   render={({ field }) => (
                                       <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
                                       <FormControl>
-                                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                          <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isViewMode} />
                                       </FormControl>
                                       <div className="space-y-1 leading-none">
                                           <FormLabel>Tick to confirm handover briefing completed</FormLabel>
@@ -525,9 +598,9 @@ export default function NewOnSiteRecordPage() {
                               />
                           </div>
                       ))}
-                      <Button type="button" variant="outline" size="sm" onClick={() => appendDelegation({ isExternal: false, delegatedPersonId: '', delegatedPersonName: '', briefingCompleted: false, delegatedPersonSignatureDataUrl: '' })}>
+                      {!isViewMode && <Button type="button" variant="outline" size="sm" onClick={() => appendDelegation({ isExternal: false, delegatedPersonId: '', delegatedPersonName: '', briefingCompleted: false, delegatedPersonSignatureDataUrl: '' })}>
                           <PlusCircle className="mr-2 h-4 w-4"/> Add Delegation
-                      </Button>
+                      </Button>}
                   </div>
               </div>
 
@@ -540,7 +613,7 @@ export default function NewOnSiteRecordPage() {
                             <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
                                 <div className="flex items-center justify-between">
                                     <Input value={field.checkType} disabled className="bg-muted font-semibold w-fit"/>
-                                    {worksiteFields.length > 1 && (
+                                    {!isViewMode && worksiteFields.length > 1 && (
                                         <Button type="button" variant="ghost" size="icon" onClick={() => removeWorksite(index)}>
                                             <Trash className="h-4 w-4 text-destructive"/>
                                         </Button>
@@ -556,15 +629,13 @@ export default function NewOnSiteRecordPage() {
                                                 <Popover>
                                                     <PopoverTrigger asChild>
                                                     <FormControl>
-                                                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")} disabled={isViewMode}>
                                                         {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                         </Button>
                                                     </FormControl>
                                                     </PopoverTrigger>
-                                                    <PopoverContent className="w-auto p-0" align="start">
-                                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/>
-                                                    </PopoverContent>
+                                                    <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus disabled={isViewMode}/></PopoverContent>
                                                 </Popover>
                                                 <FormMessage/>
                                             </FormItem>
@@ -576,7 +647,7 @@ export default function NewOnSiteRecordPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Time</FormLabel>
-                                                <FormControl><Input placeholder="e.g. 08:30" {...field} /></FormControl>
+                                                <FormControl><Input placeholder="e.g. 08:30" {...field} disabled={isViewMode} /></FormControl>
                                                 <FormMessage/>
                                             </FormItem>
                                         )}
@@ -588,7 +659,7 @@ export default function NewOnSiteRecordPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Comments</FormLabel>
-                                            <FormControl><Textarea {...field} /></FormControl>
+                                            <FormControl><Textarea {...field} disabled={isViewMode} /></FormControl>
                                             <FormMessage/>
                                         </FormItem>
                                     )}
@@ -602,12 +673,12 @@ export default function NewOnSiteRecordPage() {
                                             {signatureDataUrl ? (
                                                 <div className="flex items-center gap-2">
                                                     <Image src={signatureDataUrl} alt="Signature" width={150} height={50} style={{ objectFit: 'contain' }} className="bg-white rounded-sm border" />
-                                                    <Button type="button" variant="ghost" size="icon" onClick={() => setValue(`worksiteMonitoring.${index}.signatureDataUrl`, '', { shouldValidate: true })}>
+                                                    {!isViewMode && <Button type="button" variant="ghost" size="icon" onClick={() => setValue(`worksiteMonitoring.${index}.signatureDataUrl`, '', { shouldValidate: true })}>
                                                         <Trash className="h-4 w-4 text-destructive" />
-                                                    </Button>
+                                                    </Button>}
                                                 </div>
                                             ) : (
-                                                <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'worksite', index })}>
+                                                <Button type="button" variant="outline" className="w-full" onClick={() => handleOpenSignatureDialog({ type: 'worksite', index })} disabled={isViewMode}>
                                                     <Signature className="mr-2 h-4 w-4" />
                                                     Sign
                                                 </Button>
@@ -620,7 +691,7 @@ export default function NewOnSiteRecordPage() {
                         )
                         })}
                     </div>
-                  {showAddCheckButton && (
+                  {!isViewMode && showAddCheckButton && (
                     <Button type="button" variant="outline" size="sm" onClick={handleAddWorksiteCheck}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Site Check
                     </Button>
@@ -637,6 +708,7 @@ export default function NewOnSiteRecordPage() {
                                 onValueChange={field.onChange}
                                 value={field.value}
                                 className="flex items-center space-x-4 pt-2"
+                                disabled={isViewMode}
                               >
                                 <FormItem className="flex items-center space-x-2">
                                   <FormControl><RadioGroupItem value="Yes" /></FormControl>
@@ -659,10 +731,10 @@ export default function NewOnSiteRecordPage() {
                    <div className="space-y-4">
                         {tslFields.map((field, index) => (
                             <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
-                                <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeTsl(index)}>
+                                {!isViewMode && <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => removeTsl(index)}>
                                     <Trash className="h-4 w-4 text-destructive" />
-                                </Button>
-                                <FormField control={control} name={`temporarySpeedLimits.${index}.streetName`} render={({ field }) => (<FormItem><FormLabel>Street Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                </Button>}
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.streetName`} render={({ field }) => (<FormItem><FormLabel>Street Name</FormLabel><FormControl><Input {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField
                                     control={control}
@@ -672,18 +744,18 @@ export default function NewOnSiteRecordPage() {
                                             <FormLabel>Date Installed</FormLabel>
                                             <Popover>
                                                 <PopoverTrigger asChild>
-                                                    <FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                                    <FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")} disabled={isViewMode}>
                                                       {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                                                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button></FormControl>
                                                 </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent>
+                                                <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus disabled={isViewMode}/></PopoverContent>
                                             </Popover>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                   />
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.installTime`} render={({ field }) => (<FormItem><FormLabel>Time Installed</FormLabel><FormControl><Input placeholder="Time" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.installTime`} render={({ field }) => (<FormItem><FormLabel>Time Installed</FormLabel><FormControl><Input placeholder="Time" {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField
@@ -694,31 +766,31 @@ export default function NewOnSiteRecordPage() {
                                             <FormLabel>Date Removed</FormLabel>
                                             <Popover>
                                                 <PopoverTrigger asChild>
-                                                    <FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                                    <FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")} disabled={isViewMode}>
                                                       {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                                                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button></FormControl>
                                                 </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent>
+                                                <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus disabled={isViewMode}/></PopoverContent>
                                             </Popover>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                   />
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.removalTime`} render={({ field }) => (<FormItem><FormLabel>Time Removed</FormLabel><FormControl><Input placeholder="Time" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.removalTime`} render={({ field }) => (<FormItem><FormLabel>Time Removed</FormLabel><FormControl><Input placeholder="Time" {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.placementFrom`} render={({ field }) => (<FormItem><FormLabel>Placement From (RP/House No.)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                  <FormField control={control} name={`temporarySpeedLimits.${index}.placementTo`} render={({ field }) => (<FormItem><FormLabel>Placement To (RP/House No.)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.placementFrom`} render={({ field }) => (<FormItem><FormLabel>Placement From (RP/House No.)</FormLabel><FormControl><Input {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
+                                  <FormField control={control} name={`temporarySpeedLimits.${index}.placementTo`} render={({ field }) => (<FormItem><FormLabel>Placement To (RP/House No.)</FormLabel><FormControl><Input {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormField control={control} name={`temporarySpeedLimits.${index}.tslSpeed`} render={({ field }) => (<FormItem><FormLabel>TSL Speed (km/h)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={control} name={`temporarySpeedLimits.${index}.lengthOfTsl`} render={({ field }) => (<FormItem><FormLabel>Length of TSL (m)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={control} name={`temporarySpeedLimits.${index}.tslSpeed`} render={({ field }) => (<FormItem><FormLabel>TSL Speed (km/h)</FormLabel><FormControl><Input type="number" {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={control} name={`temporarySpeedLimits.${index}.lengthOfTsl`} render={({ field }) => (<FormItem><FormLabel>Length of TSL (m)</FormLabel><FormControl><Input type="number" {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
-                                <FormField control={control} name={`temporarySpeedLimits.${index}.dateTslRemainsInPlace`} render={({ field }) => (<FormItem><FormLabel>Date TSL Remains in Place</FormLabel><FormControl><Input placeholder="e.g. 15/11/2025" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={control} name={`temporarySpeedLimits.${index}.dateTslRemainsInPlace`} render={({ field }) => (<FormItem><FormLabel>Date TSL Remains in Place</FormLabel><FormControl><Input placeholder="e.g. 15/11/2025" {...field} disabled={isViewMode} /></FormControl><FormMessage /></FormItem>)} />
                             </div>
                         ))}
-                        <Button
+                        {!isViewMode && <Button
                             type="button"
                             variant="outline"
                             size="sm"
@@ -736,7 +808,7 @@ export default function NewOnSiteRecordPage() {
                             })}
                         >
                             <PlusCircle className="mr-2 h-4 w-4" /> Add TSL
-                        </Button>
+                        </Button>}
                     </div>
               </div>
               
@@ -752,6 +824,7 @@ export default function NewOnSiteRecordPage() {
                                 placeholder="Add any general comments or notes about site adjustments here..."
                                 className="min-h-[150px]"
                                 {...field}
+                                disabled={isViewMode}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -763,10 +836,10 @@ export default function NewOnSiteRecordPage() {
             </CardContent>
             <CardFooter className="justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting}>
+              {!isViewMode && <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                  Submit Form
-              </Button>
+                  {isEditMode ? "Save Changes" : "Submit Form"}
+              </Button>}
             </CardFooter>
           </form>
         </Form>
@@ -792,3 +865,4 @@ export default function NewOnSiteRecordPage() {
     </>
   );
 }
+
