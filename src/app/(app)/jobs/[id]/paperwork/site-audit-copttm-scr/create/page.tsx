@@ -79,8 +79,8 @@ const siteAuditSchema = z.object({
     tailPilot: auditScoreItemSchema,
     leadPilot: auditScoreItemSchema,
     shadowVehicle: auditScoreItemSchema,
-    tmaMissing: auditScoreItemSchema,
-    awvms: auditScoreItemSchema,
+    'TMA Missing': auditScoreItemSchema,
+    'AWVMS': auditScoreItemSchema,
   }),
   pedestrians: z.object({
     inadequateProvision: auditScoreItemSchema,
@@ -153,7 +153,7 @@ const siteAuditSchema = z.object({
 // Scoring logic
 const scoringWeights = {
   signs: { missing: 5, position: 2, notVisible: 5, wrongSign: 5, condition: 4, permanentSign: 5, unapproved: 4, nonCompliantSupport: 2 },
-  mobile: { tailPilot: 30, leadPilot: 20, shadowVehicle: 26, tmaMissing: 26, awvms: 26 },
+  mobile: { tailPilot: 30, leadPilot: 20, shadowVehicle: 26, 'TMA Missing': 26, 'AWVMS': 26 },
   pedestrians: { inadequateProvision: 10, inadequateProvisionCyclists: 10 },
   delineation: { missingTaper: 26, taperTooShort: 15, trailingTaper: 5, spacingInTaper: 5, spacingAlongLanes: 3, missingDelineation: 10, condition: 2, nonApprovedDevice: 4, roadMarking: 30, siteAccess: 10 },
   miscellaneous: { workingInLiveLanes: 20, missingController: 20, safetyZoneCompromised: 10, highVisGarment: 5, marginalSurface: 15, unacceptableSurface: 30, barrierDefects: 10, unsafeTtm: 5, vmsMessage: 15, flashingBeacons: 3, parkingFeatures: 5, unsafeParking: 20, marginalItems: 1 },
@@ -184,10 +184,11 @@ const ScoreSection = ({ form, sectionName, title, weights }: { form: any, sectio
     const score = calculateSectionScore(sectionData, weights);
     
     const formatLabel = (key: string) => {
+      if (key === 'tmaMissing') return 'TMA Missing';
+      if (key === 'awvms') return 'AWVMS';
       if (key === key.toUpperCase()) {
         return key;
       }
-      if (key === 'tmaMissing') return 'TMA Missing';
       return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
     };
 
@@ -249,14 +250,14 @@ export default function CreateSiteAuditPage() {
     // Data fetching
     const { data: allJobs, isLoading: areJobsLoading } = useCollection<Job>(useMemoFirebase(() => firestore ? collection(firestore, 'job_packs') : null, [firestore]));
     const { data: staffList, isLoading: areStaffLoading } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]));
-    const { data: formToEdit, isLoading: isFormLoading } = useDoc<SiteAudit>(useMemoFirebase(() => (firestore && jobId && formId) ? doc(firestore, `job_packs/${jobId}/site_audits/${formId}`) : null, [firestore, jobId, formId]));
+    const { data: formToEdit, isLoading: isFormLoading } = useDoc<SiteAudit>(useMemoFirebase(() => (firestore && jobId && formId) ? doc(firestore, 'job_packs', jobId, 'site_audits', formId) : null, [firestore, jobId, formId]));
     
     // Form setup
     const form = useForm<z.infer<typeof siteAuditSchema>>({
         resolver: zodResolver(siteAuditSchema),
         defaultValues: {
             signs: { missing: {tally: 0}, position: {tally: 0}, notVisible: {tally: 0}, wrongSign: {tally: 0}, condition: {tally: 0}, permanentSign: {tally: 0}, unapproved: {tally: 0}, nonCompliantSupport: {tally: 0} },
-            mobile: { tailPilot: {tally: 0}, leadPilot: {tally: 0}, shadowVehicle: {tally: 0}, tmaMissing: {tally: 0}, awvms: {tally: 0} },
+            mobile: { tailPilot: {tally: 0}, leadPilot: {tally: 0}, shadowVehicle: {tally: 0}, 'TMA Missing': {tally: 0}, 'AWVMS': {tally: 0} },
             pedestrians: { inadequateProvision: {tally: 0}, inadequateProvisionCyclists: {tally: 0} },
             delineation: { missingTaper: {tally: 0}, taperTooShort: {tally: 0}, trailingTaper: {tally: 0}, spacingInTaper: {tally: 0}, spacingAlongLanes: {tally: 0}, missingDelineation: {tally: 0}, condition: {tally: 0}, nonApprovedDevice: {tally: 0}, roadMarking: {tally: 0}, siteAccess: {tally: 0} },
             miscellaneous: { workingInLiveLanes: {tally: 0}, missingController: {tally: 0}, safetyZoneCompromised: {tally: 0}, highVisGarment: {tally: 0}, marginalSurface: {tally: 0}, unacceptableSurface: {tally: 0}, barrierDefects: {tally: 0}, unsafeTtm: {tally: 0}, vmsMessage: {tally: 0}, flashingBeacons: {tally: 0}, parkingFeatures: {tally: 0}, unsafeParking: {tally: 0}, marginalItems: {tally: 0} },
@@ -320,7 +321,7 @@ export default function CreateSiteAuditPage() {
             const stmsData = staffList.find(s => s.id === formToEdit.stmsId);
             setAuditor(auditorData || null);
             setStms(stmsData || null);
-            const dataWithDates = { ...formToEdit };
+            const dataWithDates: { [key: string]: any } = { ...formToEdit };
             if (dataWithDates.auditDate instanceof Timestamp) dataWithDates.auditDate = dataWithDates.auditDate.toDate();
             if (dataWithDates.investigation?.dateAssigned instanceof Timestamp) dataWithDates.investigation.dateAssigned = dataWithDates.investigation.dateAssigned.toDate();
             reset(dataWithDates as z.infer<typeof siteAuditSchema>);
@@ -355,7 +356,7 @@ export default function CreateSiteAuditPage() {
         setIsSubmitting(true);
         
         try {
-            const payload = {
+            const payload: any = {
                 ...data,
                 auditorName: auditor?.name,
                 stmsName: stms?.name,
@@ -404,7 +405,35 @@ export default function CreateSiteAuditPage() {
                             <JobSelector jobs={allJobs || []} selectedJob={selectedJob} onSelectJob={job => setSelectedJob(job)} />
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                <FormField control={form.control} name="auditNumber" render={({ field }) => <FormItem><FormLabel>Audit No</FormLabel><Input {...field} disabled /></FormItem>} />
-                               <FormField control={form.control} name="auditType" render={({ field }) => <FormItem><FormLabel>Audit Type</FormLabel><Input {...field} /></FormItem>} />
+                               <FormField
+                                control={form.control}
+                                name="auditType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Audit Type</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="--None--" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                        <SelectItem value="Audit/Partial Review or Short Form">Audit/Partial Review or Short Form</SelectItem>
+                                        <SelectItem value="CARWAP Only">CARWAP Only</SelectItem>
+                                        <SelectItem value="Full Audit/Review">Full Audit/Review</SelectItem>
+                                        <SelectItem value="On-Site Record Only">On-Site Record Only</SelectItem>
+                                        <SelectItem value="Other Checks Only">Other Checks Only</SelectItem>
+                                        <SelectItem value="STMS Only">STMS Only</SelectItem>
+                                        <SelectItem value="STMS Self Audit">STMS Self Audit</SelectItem>
+                                        <SelectItem value="TMP Only">TMP Only</SelectItem>
+                                        <SelectItem value="TSL/Audit Review">TSL/Audit Review</SelectItem>
+                                        <SelectItem value="TTM Only">TTM Only</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
                                <FormField control={form.control} name="auditDate" render={({ field }) => <FormItem><FormLabel>Date & Time</FormLabel><Popover><PopoverTrigger asChild><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP p") : "Pick a date"}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover></FormItem>} />
                             </div>
                         </div>
