@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc, Timestamp } from 'firebase/firestore';
+import { collection, doc, Timestamp, deleteField } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
 import { X, LoaderCircle, Calendar as CalendarIcon, Upload, File as FileIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -21,7 +21,8 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ClientSelector } from '@/components/clients/client-selector';
 import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
-import { uploadFile } from '@/ai/flows/upload-file-flow';
+import { FileUploadInput } from '@/components/jobs/file-upload-input';
+import { openFileInNewTab } from '@/lib/file-utils';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
   if (typeof window === 'undefined' || !window.google) return null;
@@ -160,18 +161,13 @@ export default function JobEditPage() {
     setIsUploading(true);
     try {
       const fileData = await toBase64(file);
-      const result = await uploadFile({
-          filePath: `jobs/${jobId}/${type}/${file.name}`,
-          fileData,
-          fileName: file.name,
-          fileType: file.type,
-      });
-
+      
+      // Store the base64 data URL directly
       if (type === 'tmp') {
-        setTmpUrl(result.downloadUrl);
+        setTmpUrl(fileData);
         setTmpFile(null);
       } else {
-        setWapUrl(result.downloadUrl);
+        setWapUrl(fileData);
         setWapFile(null);
       }
       toast({ title: 'Upload Successful', description: `${file.name} has been uploaded.` });
@@ -204,43 +200,66 @@ export default function JobEditPage() {
     }
     setIsSubmitting(true);
 
-    const coordinates = await getCoordinates(jobLocation);
+    try {
+      const coordinates = await getCoordinates(jobLocation);
 
-    const updatedJob: Partial<Job> = {
-        name: jobName,
-        location: jobLocation,
-        coordinates,
-        clientName: selectedClient?.name || '',
-        clientId: selectedClient?.id || '',
-        startDate: Timestamp.fromDate(startDate),
-        startTime,
-        siteSetupTime,
-        status: jobStatus,
-        stms: selectedStms?.name || null,
-        stmsId: selectedStms?.id || null,
-        tcs: selectedTcs.map(tc => ({ id: tc.id, name: tc.name })),
-        contactPerson: contactPerson,
-        contactNumber: contactNumber,
-    };
+      const updatedJob: Partial<Job> = {
+          name: jobName,
+          location: jobLocation,
+          coordinates: coordinates || undefined,
+          clientName: selectedClient?.name || '',
+          clientId: selectedClient?.id || '',
+          startDate: Timestamp.fromDate(startDate),
+          startTime,
+          siteSetupTime,
+          status: jobStatus,
+          stms: selectedStms?.name || null,
+          stmsId: selectedStms?.id || null,
+          tcs: selectedTcs.map(tc => ({ id: tc.id, name: tc.name })),
+          contactPerson: contactPerson,
+          contactNumber: contactNumber,
+      };
 
-    if (endDate) {
-      updatedJob.endDate = Timestamp.fromDate(endDate);
-    } else {
-      updatedJob.endDate = undefined;
+      if (endDate) {
+        updatedJob.endDate = Timestamp.fromDate(endDate);
+      }
+      
+      // Handle file URLs - explicitly delete if null, otherwise set the value
+      if (tmpUrl) {
+        updatedJob.tmpUrl = tmpUrl;
+      } else {
+        updatedJob.tmpUrl = deleteField() as any;
+      }
+      
+      if (wapUrl) {
+        updatedJob.wapUrl = wapUrl;
+      } else {
+        updatedJob.wapUrl = deleteField() as any;
+      }
+
+      console.log('Saving job with URLs:', { tmpUrl, wapUrl });
+      const jobDocRef = doc(firestore, 'job_packs', job.id);
+      setDocumentNonBlocking(jobDocRef, updatedJob, { merge: true });
+
+      toast({
+        title: 'Job Updated',
+        description: `The details for ${jobLocation} have been saved.`,
+      });
+      
+      // Wait longer for non-blocking write to complete
+      setTimeout(() => {
+        router.push(`/jobs/${jobId}`);
+      }, 1000);
+    } catch (error) {
+      console.error('Error updating job:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: error instanceof Error ? error.message : 'Could not save job changes.',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    if (tmpUrl) updatedJob.tmpUrl = tmpUrl;
-    if (wapUrl) updatedJob.wapUrl = wapUrl;
-
-    const jobDocRef = doc(firestore, 'job_packs', job.id);
-    setDocumentNonBlocking(jobDocRef, updatedJob, { merge: true });
-
-    toast({
-      title: 'Job Updated',
-      description: `The details for ${jobLocation} have been saved.`,
-    });
-    router.push(`/jobs/${jobId}`);
-    setIsSubmitting(false);
   };
 
   if (isLoadingJob || !job) {
@@ -356,20 +375,105 @@ export default function JobEditPage() {
             </div>
           </div>
           <div className="space-y-4">
-            <Label>TMP / WAP Files</Label>
+            <div>
+              <Label className="text-base font-semibold">Paperwork Files</Label>
+              <p className="text-sm text-muted-foreground mt-1">Upload or view TMP (Traffic Management Plan) and WAP (Work At Height Plan) documents for this job.</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="tmp-upload" className="text-sm font-medium">TMP Paperwork</Label>
-                    <Input id="tmp-upload" type="file" onChange={(e) => setTmpFile(e.target.files?.[0] || null)} className="file:text-primary file:font-semibold"/>
-                    {tmpFile && <Button type="button" size="sm" onClick={() => handleFileUpload(tmpFile, 'tmp')} disabled={isUploading}>{isUploading ? <LoaderCircle className="animate-spin" /> : <Upload />} Upload TMP</Button>}
-                    {tmpUrl && <div className="text-sm text-green-600 flex items-center gap-2"><FileIcon className="h-4 w-4" /> <a href={tmpUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">View Uploaded TMP</a></div>}
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="wap-upload" className="text-sm font-medium">WAP Paperwork</Label>
-                    <Input id="wap-upload" type="file" onChange={(e) => setWapFile(e.target.files?.[0] || null)} className="file:text-primary file:font-semibold"/>
-                    {wapFile && <Button type="button" size="sm" onClick={() => handleFileUpload(wapFile, 'wap')} disabled={isUploading}>{isUploading ? <LoaderCircle className="animate-spin" /> : <Upload />} Upload WAP</Button>}
-                    {wapUrl && <div className="text-sm text-green-600 flex items-center gap-2"><FileIcon className="h-4 w-4" /> <a href={wapUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">View Uploaded WAP</a></div>}
-                </div>
+              <div className="space-y-3">
+                {!tmpUrl && (
+                  <>
+                    <FileUploadInput
+                      id="tmp-upload"
+                      label="TMP Paperwork"
+                      onFileSelected={setTmpFile}
+                      selectedFile={tmpFile}
+                      disabled={isUploading}
+                    />
+                    {tmpFile && (
+                      <Button 
+                        type="button" 
+                        className="w-full" 
+                        onClick={() => handleFileUpload(tmpFile, 'tmp')} 
+                        disabled={isUploading}
+                      >
+                        {isUploading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                        {isUploading ? 'Uploading...' : 'Upload TMP'}
+                      </Button>
+                    )}
+                  </>
+                )}
+                {tmpUrl && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-md space-y-3">
+                    <p className="text-sm font-medium text-green-900">✓ TMP File Uploaded</p>
+                    <Button 
+                      variant="default" 
+                      className="w-full justify-start"
+                      onClick={() => openFileInNewTab(tmpUrl)}
+                    >
+                      <FileIcon className="mr-2 h-4 w-4" />
+                      View TMP Document
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setTmpUrl(null)}
+                      className="w-full"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Delete File
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3">
+                {!wapUrl && (
+                  <>
+                    <FileUploadInput
+                      id="wap-upload"
+                      label="WAP Paperwork"
+                      onFileSelected={setWapFile}
+                      selectedFile={wapFile}
+                      disabled={isUploading}
+                    />
+                    {wapFile && (
+                      <Button 
+                        type="button" 
+                        className="w-full" 
+                        onClick={() => handleFileUpload(wapFile, 'wap')} 
+                        disabled={isUploading}
+                      >
+                        {isUploading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                        {isUploading ? 'Uploading...' : 'Upload WAP'}
+                      </Button>
+                    )}
+                  </>
+                )}
+                {wapUrl && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-md space-y-3">
+                    <p className="text-sm font-medium text-green-900">✓ WAP File Uploaded</p>
+                    <Button 
+                      variant="default" 
+                      className="w-full justify-start"
+                      onClick={() => openFileInNewTab(wapUrl)}
+                    >
+                      <FileIcon className="mr-2 h-4 w-4" />
+                      View WAP Document
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setWapUrl(null)}
+                      className="w-full"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Delete File
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
            </div>
            <div className="space-y-2">

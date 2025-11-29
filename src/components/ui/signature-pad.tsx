@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 interface SignaturePadProps extends Omit<React.ComponentProps<typeof SignatureCanvas>, 'canvasProps'> {
   onSignatureEnd?: () => void;
+  className?: string;
 }
 
 export interface SignaturePadRef {

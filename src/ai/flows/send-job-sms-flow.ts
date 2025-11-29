@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { doc, getDoc, Timestamp } from 'firebase/firestore';
+import { Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { Job, Staff } from '@/lib/data';
 import { format } from 'date-fns';
 import { initializeFirebaseOnServer } from '@/firebase/server-init';
@@ -60,20 +60,20 @@ const sendJobSmsFlow = ai.defineFlow(
     }),
   },
   async (input) => {
-    const firestore = initializeFirebaseOnServer();
+    const app = await initializeFirebaseOnServer();
+    const firestore = getFirestore(app);
     const { jobId } = input;
     let messagesSent = 0;
     const errors: string[] = [];
 
     // 1. Fetch Job Details
-    const jobRef = doc(firestore, 'job_packs', jobId);
-    const jobSnap = await getDoc(jobRef);
+    const jobSnap = await firestore.collection('job_packs').doc(jobId).get();
 
-    if (!jobSnap.exists()) {
+    if (!jobSnap.exists) {
       throw new Error(`Job with ID ${jobId} not found.`);
     }
     const job = jobSnap.data() as Job;
-    const jobDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+    const jobDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : job.startDate instanceof Date ? job.startDate : new Date(job.startDate as any);
 
     // 2. Get all unique staff IDs from the job
     const staffIds = new Set<string>();
@@ -87,12 +87,13 @@ const sendJobSmsFlow = ai.defineFlow(
     }
 
     // 3. Fetch all staff profiles
-    const staffPromises = Array.from(staffIds).map(id => getDoc(doc(firestore, 'staff', id)));
-    const staffSnaps = await Promise.all(staffPromises);
+    const staffDocs = await Promise.all(
+      Array.from(staffIds).map(id => firestore.collection('staff').doc(id).get())
+    );
     
     // 4. Construct and send SMS for each staff member
-    for (const staffSnap of staffSnaps) {
-      if (staffSnap.exists()) {
+    for (const staffSnap of staffDocs) {
+      if (staffSnap.exists) {
         const staff = staffSnap.data() as Staff;
         
         if (staff.phone) {

@@ -26,9 +26,10 @@ interface TruckSelectorProps {
     selectedTruck?: Truck | null;
     onSelectTruck: (truck: Truck | null) => void;
     placeholder?: string;
+    disabled?: boolean;
 }
 
-export function TruckSelector({ trucks, selectedTruck, onSelectTruck, placeholder = "Select truck..."}: TruckSelectorProps) {
+export function TruckSelector({ trucks, selectedTruck, onSelectTruck, placeholder = "Select truck...", disabled = false }: TruckSelectorProps) {
   const [open, setOpen] = React.useState(false)
   
   const handleSelect = (currentValue: string) => {

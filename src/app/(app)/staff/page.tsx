@@ -43,7 +43,8 @@ const getOverallCertStatus = (staff: Staff) => {
   let isExpired = false;
 
   for (const cert of expiringCerts) {
-    const daysUntilExpiry = differenceInDays(new Date(cert.expiryDate), new Date());
+    const expiryDate = cert.expiryDate instanceof Date ? cert.expiryDate : (cert.expiryDate as any).toDate?.() || new Date(cert.expiryDate);
+    const daysUntilExpiry = differenceInDays(expiryDate, new Date());
     if (daysUntilExpiry < 0) {
       isExpired = true;
       break;

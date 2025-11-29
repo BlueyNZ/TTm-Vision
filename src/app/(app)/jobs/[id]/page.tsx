@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { sendJobSms } from '@/ai/flows/send-job-sms-flow';
 import { useToast } from '@/hooks/use-toast';
+import { openFileInNewTab } from '@/lib/file-utils';
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -259,20 +260,24 @@ export default function JobDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {job.tmpUrl && (
-              <a href={job.tmpUrl} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" className="w-full justify-start">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download TMP Paperwork
-                </Button>
-              </a>
+              <Button 
+                variant="default" 
+                className="w-full justify-start"
+                onClick={() => openFileInNewTab(job.tmpUrl!)}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                View TMP Paperwork
+              </Button>
             )}
             {job.wapUrl && (
-              <a href={job.wapUrl} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" className="w-full justify-start">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download WAP Paperwork
-                </Button>
-              </a>
+              <Button 
+                variant="default" 
+                className="w-full justify-start"
+                onClick={() => openFileInNewTab(job.wapUrl!)}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                View WAP Paperwork
+              </Button>
             )}
           </CardContent>
         </Card>

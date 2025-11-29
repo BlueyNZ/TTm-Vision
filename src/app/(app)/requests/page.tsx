@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { Job } from "@/lib/data";
-import { collection, query, where, Timestamp } from "firebase/firestore";
+import { collection, query, where, Timestamp, doc } from "firebase/firestore";
 import { LoaderCircle, FileText, Calendar, MapPin, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 import {
   Table,

@@ -5,7 +5,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './scheduler.css';
 import { Calendar, dateFnsLocalizer, Event as BigCalendarEvent } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addDays, subDays, isSameDay, eachDayOfInterval } from 'date-fns';
-import enUS from 'date-fns/locale/en-US';
+import { enUS } from 'date-fns/locale/en-US';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Job } from '@/lib/data';
 import { collection, Timestamp } from 'firebase/firestore';

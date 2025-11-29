@@ -44,7 +44,7 @@ export function CertificationsExpiry() {
       .filter(cert => cert.name !== 'TTMW')
       .map(cert => ({
         ...cert,
-        expiryDate: (cert.expiryDate as any).toDate ? (cert.expiryDate as any).toDate() : new Date(cert.expiryDate)
+        expiryDate: (cert.expiryDate as any).toDate ? (cert.expiryDate as any).toDate() : cert.expiryDate instanceof Date ? cert.expiryDate : new Date(cert.expiryDate as any)
       }))
       .filter(cert => differenceInDays(cert.expiryDate, new Date()) < 90);
 

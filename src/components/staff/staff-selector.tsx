@@ -27,9 +27,10 @@ interface StaffSelectorProps {
     onSelectStaff: (staff: Staff | null) => void;
     placeholder?: string;
     disabledIds?: string[];
+    disabled?: boolean;
 }
 
-export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeholder = "Select staff...", disabledIds = []}: StaffSelectorProps) {
+export function StaffSelector({ staffList, selectedStaff, onSelectStaff, placeholder = "Select staff...", disabledIds = [], disabled = false }: StaffSelectorProps) {
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState(() => selectedStaff?.name || "");
 

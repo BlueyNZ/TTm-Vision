@@ -22,6 +22,7 @@ import { ClientSelector } from '@/components/clients/client-selector';
 import { LocationAutocompleteInput } from '@/components/jobs/location-autocomplete-input';
 import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { FileUploadInput } from '@/components/jobs/file-upload-input';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
   if (typeof window === 'undefined' || !window.google) return null;
@@ -66,7 +67,8 @@ export default function JobCreatePage() {
   
   const [tmpFile, setTmpFile] = useState<File | null>(null);
   const [wapFile, setWapFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ tmp?: number; wap?: number }>({});
+  const [uploadErrors, setUploadErrors] = useState<string[]>([]);
 
 
   const staffCollection = useMemoFirebase(() => {
@@ -122,7 +124,28 @@ export default function JobCreatePage() {
       });
       return;
     }
+    
+    // Validate file sizes (max 50MB each)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    if (tmpFile && tmpFile.size > MAX_FILE_SIZE) {
+      toast({
+        title: 'File too large',
+        description: 'TMP file must be smaller than 50MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (wapFile && wapFile.size > MAX_FILE_SIZE) {
+      toast({
+        title: 'File too large',
+        description: 'WAP file must be smaller than 50MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
+    setUploadErrors([]);
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
     
@@ -138,7 +161,7 @@ export default function JobCreatePage() {
         jobNumber: newJobNumber,
         name,
         location,
-        coordinates,
+        coordinates: coordinates || undefined,
         clientName: selectedClient?.name || '',
         clientId: selectedClient?.id || '',
         startDate: Timestamp.fromDate(startDate),
@@ -152,54 +175,117 @@ export default function JobCreatePage() {
     };
     
     try {
+        // Create job document first
         await setDoc(docRef, newJob);
+        toast({
+          title: 'Job Created',
+          description: `Job ${newJobNumber} has been created. Uploading files...`,
+        });
 
-        let tmpUrl, wapUrl;
-        setIsUploading(true);
+        // Upload files in parallel with progress tracking
+        const uploadPromises: Promise<{type: 'tmp' | 'wap', url?: string}[]>[] = [];
+        const errors: string[] = [];
 
         if (tmpFile) {
-            const fileData = await toBase64(tmpFile);
-            const result = await uploadFile({
-                filePath: `jobs/${docRef.id}/tmp/${tmpFile.name}`,
-                fileData,
-                fileName: tmpFile.name,
-                fileType: tmpFile.type,
-            });
-            tmpUrl = result.downloadUrl;
-        }
-        if (wapFile) {
-            const fileData = await toBase64(wapFile);
-             const result = await uploadFile({
-                filePath: `jobs/${docRef.id}/wap/${wapFile.name}`,
-                fileData,
-                fileName: wapFile.name,
-                fileType: wapFile.type,
-            });
-            wapUrl = result.downloadUrl;
+            uploadPromises.push(
+              (async () => {
+                try {
+                  setUploadProgress(prev => ({...prev, tmp: 10}));
+                  const fileData = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(tmpFile);
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                  });
+                  setUploadProgress(prev => ({...prev, tmp: 50}));
+                  
+                  const result = await uploadFile({
+                      filePath: `jobs/${docRef.id}/tmp/${tmpFile.name}`,
+                      fileData,
+                      fileName: tmpFile.name,
+                      fileType: tmpFile.type,
+                  });
+                  setUploadProgress(prev => ({...prev, tmp: 100}));
+                  return [{type: 'tmp' as const, url: result.downloadUrl}];
+                } catch (err) {
+                  errors.push(`Failed to upload TMP file: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                  return [{type: 'tmp' as const}];
+                }
+              })()
+            );
         }
         
-        setIsUploading(false);
-
-        const updatePayload: Partial<Job> = {};
-        if (tmpUrl) updatePayload.tmpUrl = tmpUrl;
-        if (wapUrl) updatePayload.wapUrl = wapUrl;
-
-        if (Object.keys(updatePayload).length > 0) {
-            setDocumentNonBlocking(docRef, updatePayload, { merge: true });
+        if (wapFile) {
+            uploadPromises.push(
+              (async () => {
+                try {
+                  setUploadProgress(prev => ({...prev, wap: 10}));
+                  const fileData = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(wapFile);
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                  });
+                  setUploadProgress(prev => ({...prev, wap: 50}));
+                  
+                  const result = await uploadFile({
+                      filePath: `jobs/${docRef.id}/wap/${wapFile.name}`,
+                      fileData,
+                      fileName: wapFile.name,
+                      fileType: wapFile.type,
+                  });
+                  setUploadProgress(prev => ({...prev, wap: 100}));
+                  return [{type: 'wap' as const, url: result.downloadUrl}];
+                } catch (err) {
+                  errors.push(`Failed to upload WAP file: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                  return [{type: 'wap' as const}];
+                }
+              })()
+            );
         }
 
+        if (uploadPromises.length > 0) {
+          const results = await Promise.all(uploadPromises);
+          const updatePayload: Partial<Job> = {};
+          
+          results.forEach(resultArray => {
+            resultArray.forEach(result => {
+              if (result.type === 'tmp' && result.url) updatePayload.tmpUrl = result.url;
+              if (result.type === 'wap' && result.url) updatePayload.wapUrl = result.url;
+            });
+          });
 
-        toast({
-        title: 'Job Created',
-        description: `Job ${newJobNumber} at ${location} has been created.`,
-        });
-        router.push(`/jobs`);
+          if (Object.keys(updatePayload).length > 0) {
+              setDocumentNonBlocking(docRef, updatePayload, { merge: true });
+          }
+        }
+
+        if (errors.length > 0) {
+          setUploadErrors(errors);
+          toast({
+            title: 'Job Created with Warnings',
+            description: `Job ${newJobNumber} was created but some files failed to upload. You can upload them later from the job details page.`,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Success',
+            description: `Job ${newJobNumber} created and files uploaded successfully.`,
+          });
+        }
+        
+        setTimeout(() => router.push(`/jobs`), 1500);
 
     } catch (error) {
         console.error("Error creating job:", error)
-        toast({ variant: 'destructive', title: 'Creation Failed', description: 'Could not create job document.' });
+        toast({ 
+          variant: 'destructive', 
+          title: 'Creation Failed', 
+          description: error instanceof Error ? error.message : 'Could not create job document.' 
+        });
     } finally {
         setIsSubmitting(false);
+        setUploadProgress({});
     }
   };
 
@@ -297,18 +383,27 @@ export default function JobCreatePage() {
             </div>
           </div>
           <div className="space-y-4">
-            <Label>TMP / WAP Files</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="tmp-upload" className="text-sm font-medium">TMP Paperwork</Label>
-                    <Input id="tmp-upload" type="file" onChange={(e) => setTmpFile(e.target.files?.[0] || null)} className="file:text-primary file:font-semibold"/>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="wap-upload" className="text-sm font-medium">WAP Paperwork</Label>
-                    <Input id="wap-upload" type="file" onChange={(e) => setWapFile(e.target.files?.[0] || null)} className="file:text-primary file:font-semibold"/>
-                </div>
+            <div>
+              <Label className="text-base font-semibold">Paperwork Files</Label>
+              <p className="text-sm text-muted-foreground mt-1">Upload TMP (Traffic Management Plan) and WAP (Work At Height Plan) documents for this job.</p>
             </div>
-           </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FileUploadInput
+                id="tmp-upload"
+                label="TMP Paperwork"
+                onFileSelected={setTmpFile}
+                selectedFile={tmpFile}
+                disabled={isSubmitting}
+              />
+              <FileUploadInput
+                id="wap-upload"
+                label="WAP Paperwork"
+                onFileSelected={setWapFile}
+                selectedFile={wapFile}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
            <div className="space-y-2">
             <Label>STMS</Label>
              <StaffSelector 
@@ -360,11 +455,19 @@ export default function JobCreatePage() {
           </div>
         </CardContent>
         <CardFooter className="justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting || isUploading}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting || isUploading}>
-              {isSubmitting || isUploading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {isSubmitting || isUploading ? 'Saving...' : 'Create Job'}
+            <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isSubmitting ? 'Saving and uploading...' : 'Create Job'}
             </Button>
+            {uploadErrors.length > 0 && (
+              <div className="absolute bottom-20 right-4 bg-destructive/10 border border-destructive rounded-md p-3 max-w-xs">
+                <p className="text-sm font-medium text-destructive">Upload Errors:</p>
+                {uploadErrors.map((error, i) => (
+                  <p key={i} className="text-xs text-destructive/80">{error}</p>
+                ))}
+              </div>
+            )}
         </CardFooter>
       </Card>
     </form>

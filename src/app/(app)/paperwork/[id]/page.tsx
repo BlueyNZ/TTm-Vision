@@ -86,17 +86,17 @@ export default function PaperworkMenuPage() {
     }
 
     const collectionDataMap: { [key: string]: any[] | undefined } = {
-        timesheets,
-        truck_inspections: truckInspections,
-        hazard_ids: hazardIds,
-        hazard_ids_nzgttm: hazardIdsNzgttm,
-        tmp_checking_processes: tmpCheckingProcesses,
-        on_site_records: onSiteRecords,
-        on_site_records_mobile_ops: mobileOpsRecords,
-        job_notes: jobNotes,
-        site_photos: sitePhotos,
-        incident_reports: incidentReports,
-        site_audits: siteAudits,
+        timesheets: timesheets ?? undefined,
+        truck_inspections: truckInspections ?? undefined,
+        hazard_ids: hazardIds ?? undefined,
+        hazard_ids_nzgttm: hazardIdsNzgttm ?? undefined,
+        tmp_checking_processes: tmpCheckingProcesses ?? undefined,
+        on_site_records: onSiteRecords ?? undefined,
+        on_site_records_mobile_ops: mobileOpsRecords ?? undefined,
+        job_notes: jobNotes ?? undefined,
+        site_photos: sitePhotos ?? undefined,
+        incident_reports: incidentReports ?? undefined,
+        site_audits: siteAudits ?? undefined,
     };
 
     return (
