@@ -123,35 +123,39 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b bg-background/80 px-3 sm:px-4 backdrop-blur-sm md:px-6">
-      <SidebarTrigger className="md:hidden" />
+    <header className="sticky top-0 z-10 flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b border-border/40 bg-background/95 backdrop-blur-md px-3 sm:px-4 md:px-6 shadow-sm">
+      <SidebarTrigger className="md:hidden hover:bg-accent/50 transition-colors" />
       <div className="flex-1 flex items-center gap-2 sm:gap-4 min-w-0">
         {showBackButton && (
-           <Button variant="outline" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0" onClick={handleBackClick}>
-              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+           <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0 hover:bg-accent/50 transition-all hover:scale-105" onClick={handleBackClick}>
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               <span className="sr-only">Back</span>
             </Button>
         )}
-        <h1 className="text-base font-semibold capitalize sm:text-lg md:text-2xl truncate">
+        <h1 className="text-base font-bold capitalize sm:text-lg md:text-2xl truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
           {title}
         </h1>
       </div>
       <div className="flex items-center gap-1 sm:gap-4 md:ml-auto md:flex-initial md:justify-end flex-shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4">
-              <span className="hidden sm:inline truncate max-w-[120px] md:max-w-none">{user?.displayName || 'My Account'}</span>
-              <span className="sm:hidden">Menu</span>
-              <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <Button variant="ghost" size="sm" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 hover:bg-accent/50 transition-all rounded-xl">
+              <div className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-semibold text-sm">
+                {(user?.displayName || 'U').charAt(0).toUpperCase()}
+              </div>
+              <span className="hidden sm:inline truncate max-w-[120px] md:max-w-none font-medium">{user?.displayName || 'My Account'}</span>
+              <span className="sm:hidden font-medium">Menu</span>
+              <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel className="truncate">{user?.displayName || 'My Account'}</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-56 rounded-xl border-border/50">
+            <DropdownMenuLabel className="truncate font-semibold">{user?.displayName || 'My Account'}</DropdownMenuLabel>
+            <DropdownMenuLabel className="truncate text-xs text-muted-foreground font-normal">{user?.email}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/settings')}>Settings</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push('/support')}>Support</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push('/settings')} className="rounded-lg cursor-pointer">Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push('/support')} className="rounded-lg cursor-pointer">Support</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
+            <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </DropdownMenuItem>

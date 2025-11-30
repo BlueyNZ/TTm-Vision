@@ -114,12 +114,15 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle>Welcome back, {currentStaffMember ? currentStaffMember.name : (user?.displayName || 'User')}!</CardTitle>
-          <CardDescription>
-            Here's a quick look at what's happening.
+    <div className="flex flex-col gap-6 animate-in">
+      <Card className="card-modern overflow-hidden">
+        <div className="h-1 w-full gradient-primary"></div>
+        <CardHeader className="text-center pb-8 pt-8">
+          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Welcome back, {currentStaffMember ? currentStaffMember.name : (user?.displayName || 'User')}!
+          </CardTitle>
+          <CardDescription className="text-base mt-2">
+            Here's a quick look at what's happening today.
           </CardDescription>
         </CardHeader>
          <CardContent>
@@ -127,27 +130,34 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-        <Card>
+        <Card className="card-modern">
             <CardHeader>
-                <CardTitle>My Jobs</CardTitle>
-                <CardDescription>Your assigned jobs.</CardDescription>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center text-white">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">My Jobs</CardTitle>
+                    <CardDescription>Your assigned jobs</CardDescription>
+                  </div>
+                </div>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
                     <div className="flex justify-center items-center h-40">
-                        <LoaderCircle className="h-8 w-8 animate-spin" />
+                        <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
                     </div>
                 ) : assignedJobs.length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {assignedJobs.map(job => {
                             const displayedStatus = getDisplayedStatus(job);
                             const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
 
                             return (
-                                <div key={job.id} className="p-3 sm:p-4 border rounded-lg transition-colors">
+                                <div key={job.id} className="group p-4 border border-border/50 rounded-xl hover:border-primary/50 transition-all hover:shadow-md bg-card/50">
                                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-0">
                                         <div className="flex-1 space-y-2">
-                                          <Link href={`/jobs/${job.id}`} className="hover:underline">
+                                          <Link href={`/jobs/${job.id}`} className="group-hover:text-primary transition-colors">
                                             <p className="font-semibold text-base sm:text-lg flex items-center gap-2">
                                                 <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0"/>
                                                 <span className="line-clamp-2">{job.location}</span>
