@@ -12,11 +12,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, LogOut, ChevronDown, Repeat } from "lucide-react";
+import { ArrowLeft, LogOut, ChevronDown } from "lucide-react";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface AppHeaderProps {
@@ -138,14 +137,6 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
         </h1>
       </div>
       <div className="flex items-center gap-1 sm:gap-4 md:ml-auto md:flex-initial md:justify-end flex-shrink-0">
-        {isAdmin && (
-            <Button asChild variant="outline" size="sm" className="hidden lg:flex">
-              <Link href="/client/dashboard">
-                <Repeat className="mr-2 h-4 w-4" />
-                Switch to Client View
-              </Link>
-            </Button>
-        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4">
@@ -157,17 +148,6 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="truncate">{user?.displayName || 'My Account'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {isAdmin && (
-              <>
-                <DropdownMenuItem asChild className="lg:hidden">
-                  <Link href="/client/dashboard">
-                    <Repeat className="mr-2 h-4 w-4" />
-                    Switch to Client View
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="lg:hidden" />
-              </>
-            )}
             <DropdownMenuItem onClick={() => router.push('/settings')}>Settings</DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/support')}>Support</DropdownMenuItem>
             <DropdownMenuSeparator />

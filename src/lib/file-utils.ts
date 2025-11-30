@@ -2,6 +2,10 @@
  * Convert a base64 data URL to a Blob URL that can be opened in a new tab
  * @param dataUrl - The base64 data URL (e.g., "data:application/pdf;base64,...")
  * @returns A blob URL that can be used with window.open()
+ * 
+ * Base64 to Blob conversion pattern adapted from:
+ * https://github.com/EsriJapan/arcgis-webappbuilder-widgets-themes
+ * Licensed under Apache 2.0
  */
 export function dataUrlToBlobUrl(dataUrl: string): string {
   // Extract the base64 data and MIME type

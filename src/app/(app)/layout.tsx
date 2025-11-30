@@ -6,46 +6,22 @@ import { AppHeader } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Staff } from "@/lib/data";
 import { collection, query, where } from "firebase/firestore";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useJsApiLoader } from "@react-google-maps/api";
-import { cn } from "@/lib/utils";
 import { DebugPanel } from "@/components/debug-panel";
 
 const googleMapsLibraries = ["geocoding", "maps", "places"] as ("geocoding" | "maps" | "places")[];
 
-function ClientRouteHandler({ children }: { children: React.ReactNode }) {
-  const { isLoaded: isMapsLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: googleMapsLibraries,
-  });
-
-  if (!isMapsLoaded) {
-     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      {children}
-    </ThemeProvider>
-  );
-}
-
-function StaffAppLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
@@ -71,12 +47,9 @@ function StaffAppLayout({ children }: { children: React.ReactNode }) {
     if (!isLoading && !user) {
       router.replace('/login');
     }
-    if (!isLoading && user && accessLevel === 'Client') {
-      router.replace('/client/dashboard');
-    }
-  }, [user, isLoading, router, accessLevel]);
+  }, [user, isLoading, router]);
 
-  if (isLoading || !user || accessLevel === 'Client') {
+  if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
@@ -107,18 +80,4 @@ function StaffAppLayout({ children }: { children: React.ReactNode }) {
       </SidebarProvider>
     </ThemeProvider>
   );
-}
-
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const pathname = usePathname();
-
-  if (pathname.startsWith('/client')) {
-    return <ClientRouteHandler>{children}</ClientRouteHandler>;
-  }
-
-  return <StaffAppLayout>{children}</StaffAppLayout>;
 }
