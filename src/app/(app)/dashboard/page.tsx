@@ -144,27 +144,27 @@ export default function DashboardPage() {
                             const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
 
                             return (
-                                <div key={job.id} className="p-4 border rounded-lg transition-colors">
-                                    <div className="flex justify-between items-start">
+                                <div key={job.id} className="p-3 sm:p-4 border rounded-lg transition-colors">
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-0">
                                         <div className="flex-1 space-y-2">
                                           <Link href={`/jobs/${job.id}`} className="hover:underline">
-                                            <p className="font-semibold text-lg flex items-center gap-2">
-                                                <MapPin className="h-5 w-5 text-primary"/>
-                                                {job.location}
+                                            <p className="font-semibold text-base sm:text-lg flex items-center gap-2">
+                                                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0"/>
+                                                <span className="line-clamp-2">{job.location}</span>
                                             </p>
                                           </Link>
-                                            <p className="text-sm text-muted-foreground">
+                                            <p className="text-xs sm:text-sm text-muted-foreground">
                                                 Job #{job.jobNumber}
                                             </p>
-                                            <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                                <Calendar className="h-4 w-4"/>
-                                                {format(startDate, 'eeee, dd MMM yyyy')}
+                                            <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
+                                                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0"/>
+                                                <span className="truncate">{format(startDate, 'eeee, dd MMM yyyy')}</span>
                                             </p>
                                         </div>
                                         <Badge 
                                             variant={getStatusVariant(displayedStatus)}
                                             className={cn(
-                                                "flex items-center gap-2 w-fit", 
+                                                "flex items-center gap-2 w-fit h-fit text-xs sm:text-sm", 
                                                 displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
                                             )}
                                         >
@@ -172,36 +172,38 @@ export default function DashboardPage() {
                                             {displayedStatus}
                                         </Badge>
                                     </div>
-                                    <div className="border-t my-4"></div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-6 text-sm">
+                                    <div className="border-t my-3 sm:my-4"></div>
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-xs sm:text-sm">
                                             {job.stms && (
                                                 <div className="flex items-center gap-2">
-                                                    <UserSquare className="h-4 w-4 text-muted-foreground" />
+                                                    <UserSquare className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
                                                     <p className="font-medium">STMS:</p>
                                                     <span className="text-muted-foreground">{job.stms}</span>
                                                 </div>
                                             )}
                                             {job.tcs && job.tcs.length > 0 && (
                                                 <div className="flex items-center gap-2">
-                                                    <Users className="h-4 w-4 text-muted-foreground" />
+                                                    <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
                                                     <p className="font-medium">TCs:</p>
                                                     <span className="text-muted-foreground">{job.tcs.length} assigned</span>
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 w-full sm:w-auto">
                                             <JobChatButton 
                                                 jobId={job.id} 
                                                 jobLocation={job.location}
                                                 variant="outline"
-                                                size="default"
-                                                showLabel
+                                                size="sm"
+                                                showLabel={false}
                                             />
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="outline">
-                                                        Paperwork <ChevronDown className="ml-2 h-4 w-4" />
+                                                    <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+                                                        <span className="hidden sm:inline">Paperwork</span>
+                                                        <span className="sm:hidden">Forms</span>
+                                                        <ChevronDown className="ml-2 h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">

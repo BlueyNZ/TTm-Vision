@@ -154,21 +154,22 @@ export default function JobsPage() {
   return (
     <>
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
-            <CardTitle>Job Management</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Job Management</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
             View, create, and manage all active jobs.
             </CardDescription>
         </div>
-        <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                 <Link href="/jobs/past">
                     <History className="mr-2 h-4 w-4" />
-                    View Past Jobs
+                    <span className="hidden sm:inline">View Past Jobs</span>
+                    <span className="sm:hidden">Past Jobs</span>
                 </Link>
             </Button>
-            <Button asChild>
+            <Button asChild size="sm" className="w-full sm:w-auto">
                 <Link href="/jobs/create">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Create Job
@@ -185,12 +186,12 @@ export default function JobsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Job No.</TableHead>
-                            <TableHead>Location / Client</TableHead>
-                            <TableHead className="hidden lg:table-cell">Start Date</TableHead>
-                            <TableHead>STMS</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>
+                            <TableHead className="text-xs sm:text-sm">Job No.</TableHead>
+                            <TableHead className="text-xs sm:text-sm">Location / Client</TableHead>
+                            <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Start Date</TableHead>
+                            <TableHead className="hidden md:table-cell text-xs sm:text-sm">STMS</TableHead>
+                            <TableHead className="hidden sm:table-cell text-xs sm:text-sm">Status</TableHead>
+                            <TableHead className="text-xs sm:text-sm">
                             <span className="sr-only">Actions</span>
                             </TableHead>
                         </TableRow>
@@ -200,20 +201,20 @@ export default function JobsPage() {
                             const displayedStatus = getDisplayedStatus(job);
                             return (
                             <TableRow key={job.id}>
-                            <TableCell className="font-medium">{job.jobNumber}</TableCell>
+                            <TableCell className="font-medium text-xs sm:text-sm">{job.jobNumber}</TableCell>
                             <TableCell>
-                                <div className="font-medium">{job.location}</div>
-                                <div className="text-sm text-muted-foreground">{job.clientName}</div>
+                                <div className="font-medium text-xs sm:text-sm line-clamp-2">{job.location}</div>
+                                <div className="text-xs sm:text-sm text-muted-foreground truncate">{job.clientName}</div>
                             </TableCell>
-                            <TableCell className="hidden lg:table-cell text-muted-foreground">
+                            <TableCell className="hidden lg:table-cell text-muted-foreground text-xs sm:text-sm">
                                 <ClientFormattedDate date={job.startDate} />
                             </TableCell>
-                            <TableCell>{job.stms || 'N/A'}</TableCell>
-                            <TableCell>
+                            <TableCell className="hidden md:table-cell text-xs sm:text-sm">{job.stms || 'N/A'}</TableCell>
+                            <TableCell className="hidden sm:table-cell">
                                 <Badge 
                                 variant={getStatusVariant(displayedStatus)} 
                                 className={cn(
-                                    "flex items-center gap-2 w-fit", 
+                                    "flex items-center gap-1 w-fit text-xs", 
                                     displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
                                 )}
                                 >

@@ -100,7 +100,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
           <ClientSidebar isClientAdmin={isClientAdmin} />
         <div className="flex flex-1 flex-col">
           <ClientHeader isAdmin={accessLevel === 'Admin'} />
-          <main className="flex-1 p-4 sm:p-6 bg-background">
+          <main className="flex-1 p-3 sm:p-4 md:p-6 bg-background">
             {children}
           </main>
           <Footer />

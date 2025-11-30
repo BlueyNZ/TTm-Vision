@@ -10,6 +10,12 @@ export const metadata: Metadata = {
   title: 'TTM Vision',
   description: 'Simplified Traffic Management',
   manifest: '/manifest.json',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },

@@ -124,22 +124,22 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+    <header className="sticky top-0 z-10 flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b bg-background/80 px-3 sm:px-4 backdrop-blur-sm md:px-6">
       <SidebarTrigger className="md:hidden" />
-      <div className="flex-1 flex items-center gap-4">
+      <div className="flex-1 flex items-center gap-2 sm:gap-4 min-w-0">
         {showBackButton && (
-           <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleBackClick}>
-              <ArrowLeft className="h-4 w-4" />
+           <Button variant="outline" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0" onClick={handleBackClick}>
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="sr-only">Back</span>
             </Button>
         )}
-        <h1 className="text-lg font-semibold capitalize md:text-2xl truncate">
+        <h1 className="text-base font-semibold capitalize sm:text-lg md:text-2xl truncate">
           {title}
         </h1>
       </div>
-      <div className="flex flex-1 items-center gap-4 md:ml-auto md:flex-initial md:justify-end">
+      <div className="flex items-center gap-1 sm:gap-4 md:ml-auto md:flex-initial md:justify-end flex-shrink-0">
         {isAdmin && (
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="hidden lg:flex">
               <Link href="/client/dashboard">
                 <Repeat className="mr-2 h-4 w-4" />
                 Switch to Client View
@@ -148,14 +148,26 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2">
-              <span>{user?.displayName || 'My Account'}</span>
-              <ChevronDown className="h-4 w-4" />
+            <Button variant="ghost" size="sm" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4">
+              <span className="hidden sm:inline truncate max-w-[120px] md:max-w-none">{user?.displayName || 'My Account'}</span>
+              <span className="sm:hidden">Menu</span>
+              <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{user?.displayName || 'My Account'}</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="truncate">{user?.displayName || 'My Account'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {isAdmin && (
+              <>
+                <DropdownMenuItem asChild className="lg:hidden">
+                  <Link href="/client/dashboard">
+                    <Repeat className="mr-2 h-4 w-4" />
+                    Switch to Client View
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="lg:hidden" />
+              </>
+            )}
             <DropdownMenuItem onClick={() => router.push('/settings')}>Settings</DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/support')}>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
