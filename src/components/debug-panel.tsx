@@ -27,7 +27,10 @@ export function DebugPanel() {
         typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
       ).join(' ');
       
-      setLogs(prev => [...prev.slice(-99), { time, type, message, data: args }]);
+      // Use setTimeout to avoid setState during render
+      setTimeout(() => {
+        setLogs(prev => [...prev.slice(-99), { time, type, message, data: args }]);
+      }, 0);
     };
 
     const originalConsole = {
