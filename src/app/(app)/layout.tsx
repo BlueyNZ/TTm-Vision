@@ -3,7 +3,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar";
 import { AppHeader } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
@@ -73,7 +72,6 @@ export default function AppLayout({
             <main className="flex-1 p-3 sm:p-4 md:p-6 bg-background">
                 {children}
             </main>
-            <Footer />
           </div>
         </div>
         <DebugPanel />

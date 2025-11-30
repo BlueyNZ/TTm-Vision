@@ -9,12 +9,20 @@ export function OfflineIndicator() {
   const isOnline = useOnlineStatus();
   const [showReconnected, setShowReconnected] = useState(false);
   const [wasOffline, setWasOffline] = useState(false);
+  const [showOffline, setShowOffline] = useState(false);
 
   useEffect(() => {
     if (!isOnline) {
       setWasOffline(true);
+      setShowOffline(true);
+      // Auto-dismiss offline alert after 5 seconds
+      const timer = setTimeout(() => {
+        setShowOffline(false);
+      }, 5000);
+      return () => clearTimeout(timer);
     } else if (wasOffline && isOnline) {
       // Just came back online
+      setShowOffline(false);
       setShowReconnected(true);
       const timer = setTimeout(() => {
         setShowReconnected(false);
@@ -25,10 +33,11 @@ export function OfflineIndicator() {
   }, [isOnline, wasOffline]);
 
   if (isOnline && !showReconnected) return null;
+  if (!isOnline && !showOffline) return null;
 
   return (
     <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
-      {!isOnline ? (
+      {!isOnline && showOffline ? (
         <Alert variant="destructive" className="shadow-lg">
           <WifiOff className="h-4 w-4" />
           <AlertDescription>

@@ -155,7 +155,7 @@ export function assessWeatherRisks(conditions: {
     warnings.push('⚠️ Extreme winds - Sign placement unsafe');
     recommendations.push('Consider postponing job');
   } else if (conditions.windSpeed > 40) {
-    if (level !== 'extreme') level = 'high';
+    level = 'high';
     warnings.push('⚠️ High winds - Secure all signage');
     recommendations.push('Use extra weights on signs');
     recommendations.push('Avoid tall or large signs');

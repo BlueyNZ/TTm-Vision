@@ -1,21 +1,22 @@
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Footer } from '@/components/layout/footer';
 import { ServiceWorkerRegistration } from '@/components/service-worker-registration';
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+};
+
 export const metadata: Metadata = {
   title: 'TTM Vision',
   description: 'Simplified Traffic Management',
   manifest: '/manifest.json',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
