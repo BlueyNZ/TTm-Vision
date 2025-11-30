@@ -79,9 +79,11 @@ export default function ReviewRequestPage() {
 
     toast({
       title: 'Job Approved',
-      description: `Job ${newJobNumber} has been created and moved to the main jobs list.`,
+      description: `Job ${newJobNumber} has been created and ready to edit.`,
     });
-    router.push('/jobs');
+    
+    // Redirect to job edit page instead of jobs list
+    router.push(`/jobs/${jobRequest.id}/edit`);
   };
 
   const handleReject = () => {
