@@ -255,6 +255,7 @@ export default function JobsPage() {
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
+                                </div>
                             </TableCell>
                             </TableRow>
                         )})}
