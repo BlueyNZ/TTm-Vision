@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Footer } from '@/components/layout/footer';
+import { ServiceWorkerRegistration } from '@/components/service-worker-registration';
 
 export const metadata: Metadata = {
   title: 'TTM Vision',
@@ -45,6 +46,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#f97316" />
       </head>
       <body className="font-body antialiased">
+        <ServiceWorkerRegistration />
         <div className="flex min-h-screen flex-col">
           <FirebaseClientProvider>
             <div className="flex-1">{children}</div>

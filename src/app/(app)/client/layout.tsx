@@ -4,6 +4,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { ClientSidebar } from "@/components/layout/client-sidebar";
 import { ClientHeader } from "@/components/layout/client-header";
 import { Footer } from "@/components/layout/footer";
+import { OfflineIndicator } from "@/components/offline-indicator";
 import { useUser, useFirestore } from "@/firebase";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -92,9 +93,11 @@ function AppContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <ClientSidebar isClientAdmin={isClientAdmin} />
+    <>
+      <OfflineIndicator />
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <ClientSidebar isClientAdmin={isClientAdmin} />
         <div className="flex flex-1 flex-col">
           <ClientHeader isAdmin={accessLevel === 'Admin'} />
           <main className="flex-1 p-4 sm:p-6 bg-background">
@@ -103,7 +106,8 @@ function AppContent({ children }: { children: React.ReactNode }) {
           <Footer />
         </div>
       </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </>
   );
 }
 

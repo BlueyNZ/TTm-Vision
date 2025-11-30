@@ -4,6 +4,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar";
 import { AppHeader } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { OfflineIndicator } from "@/components/offline-indicator";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -90,6 +91,7 @@ function StaffAppLayout({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
+      <OfflineIndicator />
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
           <AppSidebar isAdmin={isAdmin} />
