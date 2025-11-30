@@ -62,7 +62,7 @@ export default function ClientLayout({
     >
       <OfflineIndicator />
       <div className="flex min-h-screen w-full flex-col">
-        <AppHeader />
+        <AppHeader showSidebar={false} />
         <main className="flex-1 p-3 sm:p-4 md:p-6 bg-background">
           {children}
         </main>

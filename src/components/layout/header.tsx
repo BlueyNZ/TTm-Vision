@@ -10,9 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, LogOut, ChevronDown, Users } from "lucide-react";
+import { ArrowLeft, LogOut, ChevronDown, Users, Menu } from "lucide-react";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -20,14 +20,26 @@ import { cn } from "@/lib/utils";
 
 interface AppHeaderProps {
   isAdmin?: boolean;
+  showSidebar?: boolean;
 }
 
-export function AppHeader({ isAdmin }: AppHeaderProps) {
+export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
+  
+  // Only use sidebar hook if sidebar is available
+  let toggleSidebar: (() => void) | undefined;
+  try {
+    if (showSidebar) {
+      const sidebar = useSidebar();
+      toggleSidebar = sidebar.toggleSidebar;
+    }
+  } catch {
+    // Not in a sidebar context, that's fine
+  }
   
   const pathParts = pathname.split("/").filter(Boolean);
   let title = "Dashboard";
@@ -124,7 +136,18 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
 
   return (
     <header className="sticky top-0 z-10 flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b border-border/40 bg-background/95 backdrop-blur-md px-3 sm:px-4 md:px-6 shadow-sm">
-      <SidebarTrigger className="md:hidden hover:bg-accent/50 transition-colors" />
+      {showSidebar ? (
+        <SidebarTrigger className="md:hidden hover:bg-accent/50 transition-colors" />
+      ) : (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => router.push('/client/dashboard')}
+          className="md:hidden hover:bg-accent/50 transition-colors"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      )}
       <div className="flex-1 flex items-center gap-2 sm:gap-4 min-w-0">
         {showBackButton && (
            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0 hover:bg-accent/50 transition-all hover:scale-105" onClick={handleBackClick}>
