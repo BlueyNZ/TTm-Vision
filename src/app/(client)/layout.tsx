@@ -39,19 +39,21 @@ export default function ClientLayout({
   const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
   const isLoading = isUserLoading || isStaffLoading || !isMapsLoaded;
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.replace('/login');
-    }
-  }, [user, isLoading, router]);
+  // TEMP: Skip auth check for development
+  // useEffect(() => {
+  //   if (!isLoading && !user) {
+  //     router.replace('/login');
+  //   }
+  // }, [user, isLoading, router]);
 
-  if (isLoading || !user) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // TEMP: Skip loading screen for development
+  // if (isLoading || !user) {
+  //   return (
+  //     <div className="flex h-screen w-full items-center justify-center bg-background">
+  //       <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+  //     </div>
+  //   );
+  // }
 
   return (
     <ThemeProvider
