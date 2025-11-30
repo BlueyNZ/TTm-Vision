@@ -5,6 +5,8 @@ import { Timestamp } from "firebase/firestore";
 export type Client = {
   id: string;
   name: string;
+  email?: string; // Email for client portal login
+  phone?: string; // Contact phone number
   userId?: string; // The Firebase Auth UID of the user associated with this client account.
   status: 'Pending' | 'Active';
 };

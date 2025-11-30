@@ -24,11 +24,22 @@ export default function RequestJobPage() {
 
   // Get current client
   const clientQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.email) return null;
-    return query(collection(firestore, 'clients'), where('email', '==', user.email));
-  }, [firestore, user?.email]);
+    if (!firestore || !user?.uid) return null;
+    return query(collection(firestore, 'clients'), where('userId', '==', user.uid));
+  }, [firestore, user?.uid]);
   const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
-  const currentClient = useMemo(() => clientData?.[0], [clientData]);
+  const currentClient = useMemo(() => {
+    if (clientData?.[0]) return clientData[0];
+    // TEMP: Create mock client for development
+    if (!user) return null;
+    return {
+      id: 'dev-client',
+      name: user.displayName || 'Development Client',
+      email: user.email || '',
+      userId: user.uid,
+      status: 'Active' as const,
+    };
+  }, [clientData, user]);
 
   const [formData, setFormData] = useState({
     location: '',

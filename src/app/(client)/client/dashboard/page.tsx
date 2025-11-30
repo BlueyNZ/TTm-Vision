@@ -55,23 +55,37 @@ export default function ClientDashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  // Get current client based on logged-in user email
+  // Get current client based on logged-in user ID or email
   const clientQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.email) return null;
-    return query(collection(firestore, 'clients'), where('email', '==', user.email));
-  }, [firestore, user?.email]);
+    if (!firestore || !user?.uid) return null;
+    return query(collection(firestore, 'clients'), where('userId', '==', user.uid));
+  }, [firestore, user?.uid]);
   const { data: clientData, isLoading: isClientLoading } = useCollection<Client>(clientQuery);
   const currentClient = useMemo(() => clientData?.[0], [clientData]);
 
+  // TEMP: Create mock client for development if none exists
+  const mockClient = useMemo(() => {
+    if (!user || currentClient) return null;
+    return {
+      id: 'dev-client',
+      name: user.displayName || 'Development Client',
+      email: user.email || '',
+      userId: user.uid,
+      status: 'Active' as const,
+    };
+  }, [user, currentClient]);
+
+  const activeClient = currentClient || mockClient;
+
   // Get jobs for this client
   const jobsQuery = useMemoFirebase(() => {
-    if (!firestore || !currentClient?.id) return null;
+    if (!firestore || !activeClient?.id) return null;
     return query(
       collection(firestore, 'job_packs'),
-      where('clientId', '==', currentClient.id),
+      where('clientId', '==', activeClient.id),
       orderBy('startDate', 'desc')
     );
-  }, [firestore, currentClient?.id]);
+  }, [firestore, activeClient?.id]);
   const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsQuery);
 
   const activeJobs = useMemo(() => {
@@ -95,7 +109,7 @@ export default function ClientDashboardPage() {
         <div className="h-1 w-full gradient-primary"></div>
         <CardHeader className="text-center pb-8 pt-8">
           <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary via-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Welcome, {currentClient?.name || user?.displayName || 'Client'}!
+            Welcome, {activeClient?.name || user?.displayName || 'Client'}!
           </CardTitle>
           <CardDescription className="text-base mt-2">
             Manage your jobs and view project status
