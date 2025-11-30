@@ -6,9 +6,10 @@ import { WifiOff, Wifi } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function OfflineIndicator() {
-  // TEMP: Disable offline indicator for development - browser incorrectly detecting offline state
+  // TEMP: Disabled for development - navigator.onLine API incorrectly reports offline in dev environment
   return null;
   
+  /* 
   const isOnline = useOnlineStatus();
   const [showReconnected, setShowReconnected] = useState(false);
   const [wasOffline, setWasOffline] = useState(false);
@@ -57,4 +58,5 @@ export function OfflineIndicator() {
       ) : null}
     </div>
   );
+  */
 }
