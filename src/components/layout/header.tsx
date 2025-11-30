@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, LogOut, ChevronDown } from "lucide-react";
+import { ArrowLeft, LogOut, ChevronDown, Users } from "lucide-react";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -137,6 +137,15 @@ export function AppHeader({ isAdmin }: AppHeaderProps) {
         </h1>
       </div>
       <div className="flex items-center gap-1 sm:gap-4 md:ml-auto md:flex-initial md:justify-end flex-shrink-0">
+        <Button 
+          variant={pathname.startsWith('/client') ? "default" : "outline"} 
+          size="sm" 
+          onClick={() => router.push(pathname.startsWith('/client') ? '/dashboard' : '/client/dashboard')}
+          className="flex items-center gap-1 sm:gap-2 rounded-xl hover:scale-105 transition-all"
+        >
+          <Users className="h-4 w-4" />
+          <span className="hidden sm:inline">{pathname.startsWith('/client') ? 'Staff View' : 'Client View'}</span>
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 hover:bg-accent/50 transition-all rounded-xl">
