@@ -27,6 +27,8 @@ const getDisplayedStatus = (job: Job) => {
 
 const getStatusVariant = (status: string) => {
   switch (status) {
+    case 'Pending':
+      return 'secondary';
     case 'Upcoming':
       return 'secondary';
     case 'In Progress':
@@ -42,6 +44,8 @@ const getStatusVariant = (status: string) => {
 
 const getStatusColor = (status: string) => {
     switch (status) {
+      case 'Pending':
+        return 'fill-yellow-500';
       case 'In Progress':
         return 'fill-success';
       case 'Cancelled':
@@ -88,12 +92,17 @@ export default function ClientDashboardPage() {
   }, [firestore, activeClient?.id]);
   const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsQuery);
 
-  const activeJobs = useMemo(() => {
+  const allJobs = useMemo(() => {
     if (!jobData) return [];
     return jobData.filter(job => {
-      const status = getDisplayedStatus(job);
-      return status === 'In Progress' || status === 'Upcoming';
+      const status = job.status;
+      return status !== 'Completed' && status !== 'Cancelled';
     });
+  }, [jobData]);
+
+  const pendingJobs = useMemo(() => {
+    if (!jobData) return [];
+    return jobData.filter(job => job.status === 'Pending');
   }, [jobData]);
 
   const completedJobs = useMemo(() => {
@@ -121,11 +130,22 @@ export default function ClientDashboardPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="card-modern">
           <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Pending Approval</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-yellow-600">
+              {isLoading ? <LoaderCircle className="h-8 w-8 animate-spin" /> : pendingJobs.length}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-modern">
+          <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Active Jobs</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-primary">
-              {isLoading ? <LoaderCircle className="h-8 w-8 animate-spin" /> : activeJobs.length}
+              {isLoading ? <LoaderCircle className="h-8 w-8 animate-spin" /> : allJobs.length}
             </div>
           </CardContent>
         </Card>
@@ -136,18 +156,7 @@ export default function ClientDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-success">
-              {isLoading ? <LoaderCircle className="h-8 w-8 animate-spin" /> : jobData?.filter(j => getDisplayedStatus(j) === 'Completed').length || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="card-modern">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Jobs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {isLoading ? <LoaderCircle className="h-8 w-8 animate-spin" /> : jobData?.length || 0}
+              {isLoading ? <LoaderCircle className="h-8 w-8 animate-spin" /> : jobData?.filter(j => j.status === 'Completed').length || 0}
             </div>
           </CardContent>
         </Card>
@@ -175,7 +184,7 @@ export default function ClientDashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Active Jobs */}
+      {/* All Jobs */}
       <Card className="card-modern">
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -183,8 +192,8 @@ export default function ClientDashboardPage() {
               <Building2 className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="text-xl">Active Jobs</CardTitle>
-              <CardDescription>Currently in progress or upcoming</CardDescription>
+              <CardTitle className="text-xl">My Jobs</CardTitle>
+              <CardDescription>All your job requests and active projects</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -193,10 +202,10 @@ export default function ClientDashboardPage() {
             <div className="flex justify-center items-center h-40">
               <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : activeJobs.length > 0 ? (
+          ) : allJobs.length > 0 ? (
             <div className="space-y-3">
-              {activeJobs.map(job => {
-                const displayedStatus = getDisplayedStatus(job);
+              {allJobs.map(job => {
+                const displayedStatus = job.status;
                 const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
 
                 return (
@@ -218,8 +227,10 @@ export default function ClientDashboardPage() {
                       <Badge 
                         variant={getStatusVariant(displayedStatus)}
                         className={cn(
-                          "flex items-center gap-2 w-fit h-fit text-xs sm:text-sm", 
-                          displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success'
+                          "flex items-center gap-2 w-fit h-fit text-xs sm:text-sm",
+                          displayedStatus === 'Pending' && 'bg-yellow-500/20 text-yellow-800 border-yellow-500',
+                          displayedStatus === 'In Progress' && 'bg-success/20 text-green-800 border-success',
+                          displayedStatus === 'Upcoming' && 'bg-blue-500/20 text-blue-800 border-blue-500'
                         )}
                       >
                         <Circle className={cn("h-2 w-2", getStatusColor(displayedStatus))}/>
@@ -236,7 +247,7 @@ export default function ClientDashboardPage() {
               })}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-10">No active jobs at the moment.</p>
+            <p className="text-center text-muted-foreground py-10">No jobs yet. Click "Request New Job" above to get started.</p>
           )}
         </CardContent>
       </Card>
