@@ -18,7 +18,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import Image from "next/image";
-import { uploadFile } from "@/ai/flows/upload-file-flow";
 import { format } from "date-fns";
 import { JobSelector } from "@/components/jobs/job-selector";
 
@@ -111,17 +110,11 @@ export default function CreateSitePhotoPage() {
     try {
         const uploadedPhotos: { url: string; comment: string }[] = [];
 
+        // Store photos as base64 data URLs directly (no Firebase Storage needed)
         for (const photo of data.photos) {
-            if (photo.file && photo.dataUrl) {
-                 const fileName = `site_photo_${Date.now()}_${photo.file.name}`;
-                 const uploadResult = await uploadFile({
-                    filePath: `jobs/${targetJobId}/site_photos/${fileName}`,
-                    fileData: photo.dataUrl,
-                    fileName: fileName,
-                    fileType: photo.file.type
-                });
+            if (photo.dataUrl) {
                 uploadedPhotos.push({
-                    url: uploadResult.downloadUrl,
+                    url: photo.dataUrl, // Use base64 data URL directly
                     comment: photo.comment || ''
                 });
             }

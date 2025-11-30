@@ -21,6 +21,7 @@ import {
 import { sendJobSms } from '@/ai/flows/send-job-sms-flow';
 import { useToast } from '@/hooks/use-toast';
 import { openFileInNewTab } from '@/lib/file-utils';
+import { JobChat } from '@/components/jobs/job-chat';
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -294,6 +295,9 @@ export default function JobDetailPage() {
             </div>
           </CardContent>
       </Card>
+
+      {/* Real-time Job Chat */}
+      <JobChat jobId={job.id} jobLocation={job.location} />
     </div>
   );
 }

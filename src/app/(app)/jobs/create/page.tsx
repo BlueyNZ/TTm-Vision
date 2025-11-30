@@ -149,9 +149,17 @@ export default function JobCreatePage() {
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
     
+    // Get all existing job numbers to find the highest number
     const jobSnapshot = await getDocs(jobsCollectionRef);
-    const jobCount = jobSnapshot.size;
-    const newJobNumber = `TF-${String(jobCount + 1).padStart(4, '0')}`;
+    const existingJobNumbers = jobSnapshot.docs
+      .map(doc => doc.data().jobNumber as string)
+      .filter(num => num && num.startsWith('TF-'))
+      .map(num => parseInt(num.replace('TF-', ''), 10))
+      .filter(num => !isNaN(num));
+    
+    // Find the highest job number and add 1, or start at 1 if no jobs exist
+    const maxJobNumber = existingJobNumbers.length > 0 ? Math.max(...existingJobNumbers) : 0;
+    const newJobNumber = `TF-${String(maxJobNumber + 1).padStart(4, '0')}`;
 
     const coordinates = await getCoordinates(location);
 

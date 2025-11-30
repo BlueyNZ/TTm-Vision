@@ -3,6 +3,7 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ClientSidebar } from "@/components/layout/client-sidebar";
 import { ClientHeader } from "@/components/layout/client-header";
+import { Footer } from "@/components/layout/footer";
 import { useUser, useFirestore } from "@/firebase";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -99,6 +100,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
           <main className="flex-1 p-4 sm:p-6 bg-background">
             {children}
           </main>
+          <Footer />
         </div>
       </div>
     </SidebarProvider>

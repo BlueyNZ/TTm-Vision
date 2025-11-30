@@ -44,6 +44,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { JobChatButton } from "@/components/jobs/job-chat-button";
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -221,12 +222,17 @@ export default function JobsPage() {
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                                <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
+                                <div className="flex items-center justify-end gap-1">
+                                    <JobChatButton 
+                                        jobId={job.id} 
+                                        jobLocation={job.location}
+                                    />
+                                    <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => router.push(`/jobs/${job.id}`)}>
                                         <Eye className="mr-2 h-4 w-4" />

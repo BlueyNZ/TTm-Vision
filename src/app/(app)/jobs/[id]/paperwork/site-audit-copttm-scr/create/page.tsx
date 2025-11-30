@@ -255,6 +255,8 @@ export default function CreateSiteAuditPage() {
     const form = useForm<z.infer<typeof siteAuditSchema>>({
         resolver: zodResolver(siteAuditSchema),
         defaultValues: {
+            siteActivityStatus: 'Attended',
+            otherWorksiteAspects: { observations: '', recommendations: '' },
             signs: { missing: {tally: 0}, position: {tally: 0}, notVisible: {tally: 0}, wrongSign: {tally: 0}, condition: {tally: 0}, permanentSign: {tally: 0}, unapproved: {tally: 0}, nonCompliantSupport: {tally: 0} },
             mobile: { tailPilot: {tally: 0}, leadPilot: {tally: 0}, shadowVehicle: {tally: 0}, tmaMissing: {tally: 0}, awvms: {tally: 0} },
             pedestrians: { inadequateProvision: {tally: 0}, inadequateProvisionCyclists: {tally: 0} },
@@ -362,6 +364,7 @@ export default function CreateSiteAuditPage() {
     // Omitted file upload and getCurrentLocation for brevity, assume they work
 
     async function onSubmit(data: z.infer<typeof siteAuditSchema>) {
+        console.log('Form submission attempted with data:', data);
         if(!firestore || !jobId) return;
         setIsSubmitting(true);
         
@@ -371,10 +374,6 @@ export default function CreateSiteAuditPage() {
                 auditorName: auditor?.name,
                 stmsName: stms?.name,
                 auditDate: Timestamp.fromDate(data.auditDate),
-                investigation: {
-                    ...data.investigation,
-                    dateAssigned: data.investigation?.dateAssigned ? Timestamp.fromDate(data.investigation.dateAssigned) : undefined
-                }
             };
             
             if(formId){
@@ -410,12 +409,25 @@ export default function CreateSiteAuditPage() {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
                         <CardContent className="space-y-6">
+                            {/* Display validation errors */}
+                            {Object.keys(form.formState.errors).length > 0 && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <h3 className="text-red-800 font-semibold mb-2">Please fix the following errors:</h3>
+                                    <ul className="list-disc list-inside text-red-700 space-y-1">
+                                        {Object.entries(form.formState.errors).map(([key, error]) => (
+                                            <li key={key}>
+                                                <strong>{key}</strong>: {error?.message || 'This field is required'}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                             {/* Job Details */}
                             <div className="space-y-4">
                                 <h3 className="font-semibold text-lg border-b pb-2">Job Details</h3>
                                 <JobSelector jobs={allJobs || []} selectedJob={selectedJob} onSelectJob={job => setSelectedJob(job)} />
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <FormField control={form.control} name="auditNumber" render={({ field }) => <FormItem><FormLabel>Audit No</FormLabel><Input {...field} disabled /></FormItem>} />
+                                <FormField control={form.control} name="auditNumber" render={({ field }) => <FormItem><FormLabel>Audit No</FormLabel><FormControl><Input {...field} disabled /></FormControl><FormMessage /></FormItem>} />
                                 <FormField
                                     control={form.control}
                                     name="auditType"
@@ -445,7 +457,25 @@ export default function CreateSiteAuditPage() {
                                         </FormItem>
                                     )}
                                     />
-                                <FormField control={form.control} name="auditDate" render={({ field }) => <FormItem><FormLabel>Date & Time</FormLabel><Popover><PopoverTrigger asChild><Button variant="outline" className={cn(!field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP p") : "Pick a date"}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover></FormItem>} />
+                                <FormField control={form.control} name="auditDate" render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Date & Time</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
+                                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                                        {field.value ? format(field.value, "PPP p") : "Pick a date"}
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
                                 </div>
                             </div>
 
@@ -463,32 +493,120 @@ export default function CreateSiteAuditPage() {
                                 <p className="font-semibold">{finalRating}</p>
                             </div>
                             
+                            <FormField 
+                                control={form.control} 
+                                name="siteActivityStatus" 
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-base font-semibold">Site Activity Status *</FormLabel>
+                                        <FormControl>
+                                            <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="Attended" id="attended" />
+                                                    <label htmlFor="attended" className="cursor-pointer">Attended</label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="Unattended" id="unattended" />
+                                                    <label htmlFor="unattended" className="cursor-pointer">Unattended</label>
+                                                </div>
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            
                             <FormField control={form.control} name="scrLeftOnsite" render={({ field }) => <FormItem className="flex items-center gap-2 pt-2"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel>SCR Left Onsite?</FormLabel></FormItem>} />
                              <div className="grid md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     <h4 className="font-semibold">Audited/Reviewed By</h4>
-                                    <FormField control={form.control} name="auditorId" render={() => <FormItem><FormLabel>Auditor Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={auditor} onSelectStaff={setAuditor} /><FormMessage /></FormItem>} />
-                                    <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog('auditor')}>
-                                        <SignatureIcon className="mr-2 h-4 w-4"/>
-                                        {watch('auditorSignatureUrl') ? 'Update Signature' : 'Sign as Auditor'}
-                                    </Button>
-                                    {watch('auditorSignatureUrl') && <Image src={watch('auditorSignatureUrl')!} alt="Auditor Signature" width={200} height={80} className="rounded-md border bg-white" />}
+                                    <FormField 
+                                        control={form.control} 
+                                        name="auditorId" 
+                                        render={({ field, fieldState }) => (
+                                            <FormItem>
+                                                <FormLabel>Auditor Name *</FormLabel>
+                                                <FormControl>
+                                                    <StaffSelector 
+                                                        staffList={staffList || []} 
+                                                        selectedStaff={auditor} 
+                                                        onSelectStaff={setAuditor} 
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} 
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="auditorSignatureUrl"
+                                        render={({ field, fieldState }) => (
+                                            <FormItem>
+                                                <FormLabel>Auditor Signature *</FormLabel>
+                                                <FormControl>
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="outline" 
+                                                        onClick={() => handleOpenSignatureDialog('auditor')}
+                                                        className={cn("w-full", fieldState.error && "border-red-500")}
+                                                    >
+                                                        <SignatureIcon className="mr-2 h-4 w-4"/>
+                                                        {watch('auditorSignatureUrl') ? 'Update Signature' : 'Sign as Auditor'}
+                                                    </Button>
+                                                </FormControl>
+                                                {watch('auditorSignatureUrl') && (
+                                                    <Image 
+                                                        src={watch('auditorSignatureUrl')!} 
+                                                        alt="Auditor Signature" 
+                                                        width={200} 
+                                                        height={80} 
+                                                        className="rounded-md border bg-white" 
+                                                    />
+                                                )}
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
                                 <div className="space-y-4">
                                     <h4 className="font-semibold">STMS Details</h4>
-                                    <FormField control={form.control} name="stmsId" render={() => <FormItem><FormLabel>STMS Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={stms} onSelectStaff={setStms} /></FormItem>} />
+                                    <FormField control={form.control} name="stmsId" render={() => <FormItem><FormLabel>STMS Name</FormLabel><StaffSelector staffList={staffList || []} selectedStaff={stms} onSelectStaff={setStms} /><FormMessage /></FormItem>} />
                                     
-                                    <Button type="button" variant="outline" onClick={() => handleOpenSignatureDialog('stms')}>
-                                        <SignatureIcon className="mr-2 h-4 w-4"/>
-                                        {watch('stmsSignatureUrl') ? 'Update Signature' : 'Sign as STMS'}
-                                    </Button>
-                                    {watch('stmsSignatureUrl') && <Image src={watch('stmsSignatureUrl')!} alt="STMS Signature" width={200} height={80} className="rounded-md border bg-white"/>}
+                                    <FormField
+                                        control={form.control}
+                                        name="stmsSignatureUrl"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>STMS Signature (Optional)</FormLabel>
+                                                <FormControl>
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="outline" 
+                                                        onClick={() => handleOpenSignatureDialog('stms')}
+                                                        className="w-full"
+                                                    >
+                                                        <SignatureIcon className="mr-2 h-4 w-4"/>
+                                                        {watch('stmsSignatureUrl') ? 'Update Signature' : 'Sign as STMS'}
+                                                    </Button>
+                                                </FormControl>
+                                                {watch('stmsSignatureUrl') && (
+                                                    <Image 
+                                                        src={watch('stmsSignatureUrl')!} 
+                                                        alt="STMS Signature" 
+                                                        width={200} 
+                                                        height={80} 
+                                                        className="rounded-md border bg-white"
+                                                    />
+                                                )}
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
                             </div>
                             
                         </CardContent>
                         <CardFooter className="justify-end gap-2">
-                            <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
+                            <Button type="button" variant="ghost" onClick={() => router.push(`/jobs/${jobId}/paperwork/site-audit-copttm-scr`)}>Cancel</Button>
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin"/>}
                                 Submit

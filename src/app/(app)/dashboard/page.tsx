@@ -2,7 +2,6 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Job, Staff } from "@/lib/data";
 import { collection, Timestamp, query, where } from "firebase/firestore";
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { JobChatButton } from "@/components/jobs/job-chat-button";
 
 const getDisplayedStatus = (job: Job) => {
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -86,7 +86,7 @@ export default function DashboardPage() {
 
   const staffQuery = useMemoFirebase(() => {
     if (!firestore || !user?.email) return null;
-    return query(collection(firestore, 'staff'), where('email', '==', user.email));
+    return query(collection(firestore, 'staff'), where('email', '==', user?.email));
   }, [firestore, user?.email]);
   const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
   const currentStaffMember = useMemo(() => staffData?.[0], [staffData]);
@@ -114,19 +114,18 @@ export default function DashboardPage() {
 
 
   return (
-    <TooltipProvider>
-      <div className="flex flex-col gap-6">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle>Welcome back, {currentStaffMember ? currentStaffMember.name : (user?.displayName || 'User')}!</CardTitle>
-            <CardDescription>
-              Here's a quick look at what's happening.
-            </CardDescription>
-          </CardHeader>
-           <CardContent>
-           
-          </CardContent>
-        </Card>
+    <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle>Welcome back, {currentStaffMember ? currentStaffMember.name : (user?.displayName || 'User')}!</CardTitle>
+          <CardDescription>
+            Here's a quick look at what's happening.
+          </CardDescription>
+        </CardHeader>
+         <CardContent>
+         
+        </CardContent>
+      </Card>
 
         <Card>
             <CardHeader>
@@ -154,6 +153,9 @@ export default function DashboardPage() {
                                                 {job.location}
                                             </p>
                                           </Link>
+                                            <p className="text-sm text-muted-foreground">
+                                                Job #{job.jobNumber}
+                                            </p>
                                             <p className="text-sm text-muted-foreground flex items-center gap-2">
                                                 <Calendar className="h-4 w-4"/>
                                                 {format(startDate, 'eeee, dd MMM yyyy')}
@@ -188,25 +190,34 @@ export default function DashboardPage() {
                                                 </div>
                                             )}
                                         </div>
-                                         <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline">
-                                                    Paperwork <ChevronDown className="ml-2 h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                {paperworkForUser.map((link) => (
-                                                    <DropdownMenuItem key={link.href} asChild>
-                                                        <Link href={`/jobs/${job.id}/paperwork/${link.href}`}>
-                                                            {link.title}
-                                                        </Link>
-                                                    </DropdownMenuItem>
-                                                ))}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <div className="flex items-center gap-2">
+                                            <JobChatButton 
+                                                jobId={job.id} 
+                                                jobLocation={job.location}
+                                                variant="outline"
+                                                size="default"
+                                                showLabel
+                                            />
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="outline">
+                                                        Paperwork <ChevronDown className="ml-2 h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {paperworkForUser.map((link) => (
+                                                        <DropdownMenuItem key={link.href} asChild>
+                                                            <Link href={`/jobs/${job.id}/paperwork/${link.href}`}>
+                                                                {link.title}
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                    ))}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
                                     </div>
                                 </div>
-                            )
+                            );
                         })}
                     </div>
                 ) : (
@@ -216,6 +227,5 @@ export default function DashboardPage() {
         </Card>
 
       </div>
-    </TooltipProvider>
   );
 }

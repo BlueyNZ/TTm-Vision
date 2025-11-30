@@ -3,6 +3,7 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar";
 import { AppHeader } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -12,6 +13,7 @@ import { collection, query, where } from "firebase/firestore";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { cn } from "@/lib/utils";
+import { DebugPanel } from "@/components/debug-panel";
 
 const googleMapsLibraries = ["geocoding", "maps", "places"] as ("geocoding" | "maps" | "places")[];
 
@@ -96,8 +98,10 @@ function StaffAppLayout({ children }: { children: React.ReactNode }) {
             <main className="flex-1 p-4 sm:p-6 bg-background">
                 {children}
             </main>
+            <Footer />
           </div>
         </div>
+        <DebugPanel />
       </SidebarProvider>
     </ThemeProvider>
   );
