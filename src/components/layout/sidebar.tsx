@@ -32,6 +32,7 @@ import {
   Scan,
   Info,
   Star,
+  Bell,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -44,7 +45,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { Badge } from "../ui/badge";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, Timestamp } from "firebase/firestore";
+import { useMemo } from "react";
 
 interface AppSidebarProps {
   isAdmin?: boolean;
@@ -61,6 +63,33 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
 
   const { data: jobRequests } = useCollection<Job>(jobRequestsQuery);
   const pendingRequestsCount = jobRequests?.length || 0;
+
+  // Query for upcoming jobs (for job starting soon notifications)
+  const upcomingJobsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'job_packs'), where('status', '==', 'Upcoming'));
+  }, [firestore]);
+  const { data: upcomingJobs } = useCollection<Job>(upcomingJobsQuery);
+
+  // Query for pending client registrations
+  const clientRegistrationsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'client_registrations'), where('status', '==', 'Pending'));
+  }, [firestore]);
+  const { data: pendingRegistrations } = useCollection(clientRegistrationsQuery);
+  const pendingRegistrationsCount = pendingRegistrations?.length || 0;
+
+  // Count notifications (pending requests + jobs starting in 3 days + pending registrations)
+  const notificationCount = useMemo(() => {
+    let count = pendingRequestsCount + pendingRegistrationsCount;
+    const now = new Date();
+    upcomingJobs?.forEach(job => {
+      const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
+      const daysUntil = Math.floor((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysUntil >= 0 && daysUntil <= 3) count++;
+    });
+    return count;
+  }, [pendingRequestsCount, pendingRegistrationsCount, upcomingJobs]);
 
   const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin", "/map", "/equipment-tracking", "/paperwork"].some(path => pathname.startsWith(path));
   const isRequestsPagesActive = pathname.startsWith("/requests");
@@ -192,16 +221,38 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                       </SidebarMenuItem>
                       <SidebarMenuItem>
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/paperwork")}>
-                          <Link href="/paperwork">
-                            Paperwork
+                          <Link href="/paperwork" className="flex justify-between items-center w-full">
+                            <span>Paperwork</span>
+                            <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-500 font-semibold border-blue-500">New</Badge>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/clients")}>
+                           <Link href="/clients">
+                            Clients
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/notifications")}>
+                           <Link href="/notifications" className="flex justify-between items-center w-full">
+                            <span className="flex items-center gap-2">
+                              Notifications
+                              {notificationCount > 0 && (
+                                <Badge className="h-5 w-5 p-0 flex items-center justify-center bg-primary text-primary-foreground text-xs">
+                                  {notificationCount}
+                                </Badge>
+                              )}
+                            </span>
+                            <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-500 font-semibold border-blue-500">New</Badge>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/map")}>
-                           <Link href="/map" className="flex justify-between items-center w-full">
-                            <span>Map</span>
-                            <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-500 font-semibold border-blue-500">New</Badge>
+                           <Link href="/map">
+                            Map
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
@@ -228,6 +279,11 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                       <div className="flex items-center gap-2">
                         <Shield />
                         <span>Admin</span>
+                        {pendingRegistrationsCount > 0 && (
+                          <Badge className="h-5 w-5 p-0 flex items-center justify-center bg-primary text-primary-foreground text-xs">
+                            {pendingRegistrationsCount}
+                          </Badge>
+                        )}
                       </div>
                       <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
                     </SidebarMenuButton>
@@ -242,9 +298,16 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/admin/company-approval")}>
-                          <Link href="/admin/company-approval">
-                            Company Approval
+                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/admin/client-registrations")}>
+                          <Link href="/admin/client-registrations" className="flex justify-between items-center w-full">
+                            <span className="flex items-center gap-2">
+                              Client Registrations
+                              {pendingRegistrationsCount > 0 && (
+                                <Badge className="h-5 w-5 p-0 flex items-center justify-center bg-primary text-primary-foreground text-xs">
+                                  {pendingRegistrationsCount}
+                                </Badge>
+                              )}
+                            </span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
@@ -281,7 +344,7 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
           </Card>
         </div>
         <div className="flex justify-center p-2 group-data-[collapsible=icon]:hidden">
-          <Badge variant="secondary">v0.3 Beta</Badge>
+          <Badge variant="secondary">v1.0 Release</Badge>
         </div>
         <SidebarMenu>
           <SidebarMenuItem>

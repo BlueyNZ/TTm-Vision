@@ -17,6 +17,7 @@ import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface AppHeaderProps {
   isAdmin?: boolean;
@@ -29,6 +30,16 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
   const { user } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  
+  // Get user's custom claims to determine role
+  useEffect(() => {
+    if (auth?.currentUser) {
+      auth.currentUser.getIdTokenResult().then((idTokenResult) => {
+        setUserRole(idTokenResult.claims.role as string || null);
+      });
+    }
+  }, [auth?.currentUser]);
   
   // Only use sidebar hook if sidebar is available
   let toggleSidebar: (() => void) | undefined;
@@ -53,7 +64,7 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
         title: "Logged Out",
         description: "You have been successfully logged out.",
       });
-      router.push('/login');
+      router.push('/');
     } catch (error) {
       toast({
         variant: "destructive",
@@ -160,15 +171,17 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
         </h1>
       </div>
       <div className="flex items-center gap-1 sm:gap-4 md:ml-auto md:flex-initial md:justify-end flex-shrink-0">
-        <Button 
-          variant={pathname.startsWith('/client') ? "default" : "outline"} 
-          size="sm" 
-          onClick={() => router.push(pathname.startsWith('/client') ? '/dashboard' : '/client/dashboard')}
-          className="flex items-center gap-1 sm:gap-2 rounded-xl hover:scale-105 transition-all"
-        >
-          <Users className="h-4 w-4" />
-          <span className="hidden sm:inline">{pathname.startsWith('/client') ? 'Staff View' : 'Client View'}</span>
-        </Button>
+        {userRole !== 'client' && (
+          <Button 
+            variant={pathname.startsWith('/client') ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => router.push(pathname.startsWith('/client') ? '/dashboard' : '/client/dashboard')}
+            className="flex items-center gap-1 sm:gap-2 rounded-xl hover:scale-105 transition-all"
+          >
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">{pathname.startsWith('/client') ? 'Staff View' : 'Client View'}</span>
+          </Button>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 hover:bg-accent/50 transition-all rounded-xl">

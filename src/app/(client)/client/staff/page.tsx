@@ -25,7 +25,7 @@ export default function ClientStaffPage() {
     // TEMP: Create mock client for development
     if (!user) return null;
     return {
-      id: 'dev-client',
+      id: user.uid,
       name: user.displayName || 'Development Client',
       email: user.email || '',
       userId: user.uid,

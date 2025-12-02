@@ -71,7 +71,7 @@ export default function ClientDashboardPage() {
   const mockClient = useMemo(() => {
     if (!user || currentClient) return null;
     return {
-      id: 'dev-client',
+      id: user.uid,
       name: user.displayName || 'Development Client',
       email: user.email || '',
       userId: user.uid,
@@ -81,16 +81,41 @@ export default function ClientDashboardPage() {
 
   const activeClient = currentClient || mockClient;
 
-  // Get jobs for this client
+  // DEBUG: Log client info
+  console.log('=== CLIENT DASHBOARD DEBUG ===');
+  console.log('1. User UID:', user?.uid);
+  console.log('2. Current Client from DB:', currentClient);
+  console.log('3. Mock Client:', mockClient);
+  console.log('4. Active Client (what we use):', activeClient);
+
+  // Get jobs for this client - Try WITHOUT orderBy first to avoid index issues
   const jobsQuery = useMemoFirebase(() => {
-    if (!firestore || !activeClient?.id) return null;
+    if (!firestore || !activeClient?.id) {
+      console.log('5. Query is NULL because:', { firestore: !!firestore, activeClientId: activeClient?.id });
+      return null;
+    }
+    console.log('5. Creating query for clientId:', activeClient.id);
     return query(
       collection(firestore, 'job_packs'),
-      where('clientId', '==', activeClient.id),
-      orderBy('startDate', 'desc')
+      where('clientId', '==', activeClient.id)
+      // Temporarily removed orderBy to check if it's an index issue
     );
   }, [firestore, activeClient?.id]);
   const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsQuery);
+
+  // DEBUG: Log what we found
+  console.log('6. Jobs Query Result:', {
+    isLoading: isJobsLoading,
+    jobsFound: jobData?.length || 0,
+    jobs: jobData?.map(j => ({ 
+      id: j.id, 
+      clientId: j.clientId, 
+      jobNumber: j.jobNumber, 
+      status: j.status,
+      location: j.location 
+    }))
+  });
+  console.log('=== END DEBUG ===');
 
   const allJobs = useMemo(() => {
     if (!jobData) return [];

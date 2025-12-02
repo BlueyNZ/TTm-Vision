@@ -33,7 +33,7 @@ export default function RequestJobPage() {
     // TEMP: Create mock client for development
     if (!user) return null;
     return {
-      id: 'dev-client',
+      id: user.uid,
       name: user.displayName || 'Development Client',
       email: user.email || '',
       userId: user.uid,
@@ -77,6 +77,9 @@ export default function RequestJobPage() {
     setIsSubmitting(true);
 
     try {
+      // DEBUG: Log what clientId we're using
+      console.log('Submitting job request with clientId:', currentClient.id, 'for user:', user?.uid);
+      
       // Create job request with 'Pending' status
       await addDoc(collection(firestore, 'job_packs'), {
         clientId: currentClient.id,
