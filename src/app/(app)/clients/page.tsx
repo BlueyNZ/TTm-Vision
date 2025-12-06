@@ -24,22 +24,24 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, query, where } from 'firebase/firestore';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { AddClientDialog } from '@/components/clients/add-client-dialog';
+import { useTenant } from '@/contexts/tenant-context';
 
 export default function ClientsPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { tenantId } = useTenant();
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deletingClient, setDeletingClient] = useState<Client | null>(null);
 
   const clientsCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'clients');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'clients'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   
   const { data: clientData, isLoading } = useCollection<Client>(clientsCollection);
 

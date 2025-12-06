@@ -11,8 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { addDoc, setDoc } from 'firebase/firestore';
-import { collection, Timestamp, getDocs, doc } from 'firebase/firestore';
+import { collection, Timestamp, getDocs, doc, query, where } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
+import { useTenant } from '@/contexts/tenant-context';
 import { X, Calendar as CalendarIcon, LoaderCircle, Upload, File as FileIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -53,6 +54,7 @@ export default function JobCreatePage() {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { tenantId } = useTenant();
   
   const [location, setLocation] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -72,15 +74,15 @@ export default function JobCreatePage() {
 
 
   const staffCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'staff');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'staff'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   const { data: staffList } = useCollection<Staff>(staffCollection);
 
   const clientsCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'clients');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'clients'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   const { data: clientList } = useCollection<Client>(clientsCollection);
 
   const handleAddTc = (staff: Staff | null) => {

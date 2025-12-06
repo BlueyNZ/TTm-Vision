@@ -44,6 +44,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useTenant } from "@/contexts/tenant-context";
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -101,12 +102,14 @@ export default function PastJobsPage() {
     const router = useRouter();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const { tenantId } = useTenant();
     const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
 
     const pastJobsCollection = useMemoFirebase(() => {
-        if (!firestore) return null;
-        // Query for past jobs only
-        return query(collection(firestore, 'job_packs'), where('status', 'in', ['Completed', 'Cancelled']));
+        if (!firestore || !tenantId) return null;
+        // Query for past jobs only, filtered by tenant
+        return query(collection(firestore, 'job_packs'), where('tenantId', '==', tenantId), where('status', 'in', ['Completed', 'Cancelled']));
+    }, [firestore, tenantId]);
     }, [firestore]);
 
     const { data: jobData, isLoading } = useCollection<Job>(pastJobsCollection);

@@ -8,12 +8,13 @@ import { format, parse, startOfWeek, getDay, addDays, subDays, isSameDay, eachDa
 import { enUS } from 'date-fns/locale/en-US';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Job } from '@/lib/data';
-import { collection, Timestamp } from 'firebase/firestore';
+import { collection, Timestamp, query, where } from 'firebase/firestore';
 import { useMemo, useState } from 'react';
 import { LoaderCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DateGrid } from '@/components/scheduler/date-grid';
 import { Button } from '@/components/ui/button';
+import { useTenant } from '@/contexts/tenant-context';
 
 const locales = {
   'en-US': enUS,
@@ -36,12 +37,13 @@ interface JobEvent extends BigCalendarEvent {
 export default function SchedulerPage() {
   const firestore = useFirestore();
   const router = useRouter();
+  const { tenantId } = useTenant();
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const jobsCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'job_packs');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'job_packs'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   
   const { data: jobData, isLoading } = useCollection<Job>(jobsCollection);
 

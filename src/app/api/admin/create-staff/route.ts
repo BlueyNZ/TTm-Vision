@@ -79,6 +79,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get the requesting user's tenantId
+    const tenantId = requestingUser.tenantId;
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin user has no tenant association' },
+        { status: 403 }
+      );
+    }
+
     // Parse request body
     const body: CreateStaffRequest = await request.json();
     const { name, email, role, accessLevel } = body;
@@ -113,10 +122,12 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    // Set custom claims based on access level
+    // Set custom claims based on access level and include tenantId
     await auth.setCustomUserClaims(userRecord.uid, {
       role,
       accessLevel,
+      tenantId,
+      staffId: userRecord.uid,
     });
 
     // Create Firestore document in appropriate collection
@@ -128,6 +139,7 @@ export async function POST(request: NextRequest) {
       role,
       accessLevel,
       userId: userRecord.uid,
+      tenantId, // Add tenantId to the document
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       createdBy: decodedToken.email,
     };

@@ -12,8 +12,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc, Timestamp, deleteField } from 'firebase/firestore';
+import { collection, doc, Timestamp, deleteField, query, where } from 'firebase/firestore';
 import { StaffSelector } from '@/components/staff/staff-selector';
+import { useTenant } from '@/contexts/tenant-context';
 import { X, LoaderCircle, Calendar as CalendarIcon, Upload, File as FileIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -56,6 +57,7 @@ export default function JobEditPage() {
   const { toast } = useToast();
   const jobId = params.id as string;
   const firestore = useFirestore();
+  const { tenantId } = useTenant();
 
   const [jobName, setJobName] = useState('');
   const [jobLocation, setJobLocation] = useState('');
@@ -85,15 +87,15 @@ export default function JobEditPage() {
   const { data: job, isLoading: isLoadingJob } = useDoc<Job>(jobRef);
 
   const staffCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'staff');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'staff'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   const { data: staffList } = useCollection<Staff>(staffCollection);
 
   const clientsCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'clients');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'clients'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   const { data: clientList } = useCollection<Client>(clientsCollection);
 
   useEffect(() => {

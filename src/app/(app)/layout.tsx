@@ -13,6 +13,7 @@ import { collection, query, where } from "firebase/firestore";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { DebugPanel } from "@/components/debug-panel";
+import { TenantProvider } from "@/contexts/tenant-context";
 
 const googleMapsLibraries = ["geocoding", "maps", "places"] as ("geocoding" | "maps" | "places")[];
 
@@ -63,7 +64,7 @@ export default function AppLayout({
   const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
   const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
   const accessLevel = currentUserStaffProfile?.accessLevel;
-  const isAdmin = accessLevel === 'Admin';
+  const isAdmin = accessLevel === 'Admin' || accessLevel === 5 || accessLevel >= 4;
   const isLoading = isUserLoading || isStaffLoading || !isMapsLoaded || !roleChecked;
 
   useEffect(() => {
@@ -87,19 +88,21 @@ export default function AppLayout({
       enableSystem
       disableTransitionOnChange
     >
-      <OfflineIndicator />
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar isAdmin={isAdmin} />
-          <div className="flex flex-1 flex-col">
-            <AppHeader isAdmin={isAdmin} />
-            <main className="flex-1 p-3 sm:p-4 md:p-6 bg-background">
-                {children}
-            </main>
+      <TenantProvider>
+        <OfflineIndicator />
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full">
+            <AppSidebar isAdmin={isAdmin} />
+            <div className="flex flex-1 flex-col">
+              <AppHeader isAdmin={isAdmin} />
+              <main className="flex-1 p-3 sm:p-4 md:p-6 bg-background">
+                  {children}
+              </main>
+            </div>
           </div>
-        </div>
-        <DebugPanel />
-      </SidebarProvider>
+          <DebugPanel />
+        </SidebarProvider>
+      </TenantProvider>
     </ThemeProvider>
   );
 }

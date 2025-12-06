@@ -10,6 +10,7 @@ import { collection, query, where, Timestamp } from "firebase/firestore";
 import { Staff } from "@/lib/data";
 import Link from "next/link";
 import { isPast } from "date-fns";
+import { useTenant } from "@/contexts/tenant-context";
 
 const getDisplayedStatus = (job: Job) => {
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -22,23 +23,24 @@ const getDisplayedStatus = (job: Job) => {
 
 export default function AdminPage() {
   const firestore = useFirestore();
+  const { tenantId } = useTenant();
 
   const staffCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'staff');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'staff'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffCollection);
 
   const trucksCollection = useMemoFirebase(() => {
-    if(!firestore) return null;
-    return collection(firestore, 'trucks');
-  }, [firestore]);
+    if(!firestore || !tenantId) return null;
+    return query(collection(firestore, 'trucks'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   const { data: truckData, isLoading: isTrucksLoading } = useCollection<TruckType>(trucksCollection);
   
   const jobsCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'job_packs');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'job_packs'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsCollection);
 
 

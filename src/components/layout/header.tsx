@@ -12,12 +12,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, LogOut, ChevronDown, Users, Menu } from "lucide-react";
-import { useAuth, useUser } from "@/firebase";
+import { ArrowLeft, LogOut, ChevronDown, Users, Menu, Building2 } from "lucide-react";
+import { useAuth, useUser, useFirestore } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { useTenant } from "@/contexts/tenant-context";
+import { doc, getDoc } from "firebase/firestore";
+import { Tenant } from "@/lib/data";
 
 interface AppHeaderProps {
   isAdmin?: boolean;
@@ -29,8 +32,11 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
   const router = useRouter();
   const { user } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const { tenantId } = useTenant();
+  const [companyName, setCompanyName] = useState<string | null>(null);
   
   // Get user's custom claims to determine role
   useEffect(() => {
@@ -40,6 +46,25 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
       });
     }
   }, [auth?.currentUser]);
+  
+  // Fetch company name from tenant
+  useEffect(() => {
+    if (!firestore || !tenantId) return;
+    
+    const fetchCompanyName = async () => {
+      try {
+        const tenantDoc = await getDoc(doc(firestore, 'tenants', tenantId));
+        if (tenantDoc.exists()) {
+          const tenantData = tenantDoc.data() as Tenant;
+          setCompanyName(tenantData.name);
+        }
+      } catch (error) {
+        console.error('Error fetching company name:', error);
+      }
+    };
+    
+    fetchCompanyName();
+  }, [firestore, tenantId]);
   
   // Only use sidebar hook if sidebar is available
   let toggleSidebar: (() => void) | undefined;
@@ -166,9 +191,17 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
               <span className="sr-only">Back</span>
             </Button>
         )}
-        <h1 className="text-base font-bold capitalize sm:text-lg md:text-2xl truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-          {title}
-        </h1>
+        <div className="flex flex-col min-w-0">
+          <h1 className="text-base font-bold capitalize sm:text-lg md:text-2xl truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            {title}
+          </h1>
+          {companyName && (
+            <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+              <Building2 className="h-3 w-3" />
+              <span className="truncate">{companyName}</span>
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-1 sm:gap-4 md:ml-auto md:flex-initial md:justify-end flex-shrink-0">
         {userRole !== 'client' && (

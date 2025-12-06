@@ -3,8 +3,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Bell, AlertCircle, Info, Clock, Truck, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, where, Timestamp } from "firebase/firestore";
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { useTenant } from '@/contexts/tenant-context';
 import { Job, Staff, Truck as TruckType } from "@/lib/data";
 import { useMemo } from "react";
 import { differenceInDays } from "date-fns";

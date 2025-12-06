@@ -45,6 +45,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { JobChatButton } from "@/components/jobs/job-chat-button";
+import { useTenant } from "@/contexts/tenant-context";
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -102,14 +103,15 @@ export default function JobsPage() {
     const router = useRouter();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const { tenantId } = useTenant();
     const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
     const [jobToComplete, setJobToComplete] = useState<Job | null>(null);
 
     const jobsCollection = useMemoFirebase(() => {
-        if (!firestore) return null;
-        // Query for active jobs only
-        return query(collection(firestore, 'job_packs'), where('status', 'in', ['Upcoming', 'In Progress']));
-    }, [firestore]);
+        if (!firestore || !tenantId) return null;
+        // Query for active jobs only, filtered by tenant
+        return query(collection(firestore, 'job_packs'), where('tenantId', '==', tenantId), where('status', 'in', ['Upcoming', 'In Progress']));
+    }, [firestore, tenantId]);
 
     const { data: jobData, isLoading } = useCollection<Job>(jobsCollection);
 

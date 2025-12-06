@@ -172,6 +172,11 @@ export default function ClientLoginPage() {
                 <div className="text-sm text-muted-foreground">
                   Need help? <Link href="/support" className="text-primary hover:underline">Contact Support</Link>
                 </div>
+                <div className="text-sm text-muted-foreground">
+                  <Link href="/" className="font-semibold text-primary hover:underline">
+                    ← Back to home
+                  </Link>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -7,15 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useUser, useFirestore, useMemoFirebase, useAuth } from "@/firebase";
-import { doc, collection, query, where } from "firebase/firestore";
+import { doc, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { useCollection } from "@/firebase/firestore/use-collection";
-import { Staff } from "@/lib/data";
+import { Staff, Job, Timesheet, TmpCheckingProcess } from "@/lib/data";
 import { LoaderCircle, Info } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
-import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
+import { reauthenticateWithCredential, EmailAuthProvider, updatePassword, updateProfile } from "firebase/auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
@@ -52,18 +52,130 @@ export default function SettingsPage() {
     }, [staffMember]);
 
 
-    const handleProfileSave = () => {
-        if (!firestore || !staffMember) return;
-        const staffDocRef = doc(firestore, 'staff', staffMember.id);
-        setDocumentNonBlocking(staffDocRef, { 
-            name: name,
-            phone: phone,
-            emergencyContact: {
-                name: emergencyContactName,
-                phone: emergencyContactPhone,
+    const handleProfileSave = async () => {
+        if (!firestore || !staffMember || !user) return;
+        
+        const nameChanged = staffMember.name !== name;
+        
+        try {
+            // Update staff document
+            const staffDocRef = doc(firestore, 'staff', staffMember.id);
+            await setDocumentNonBlocking(staffDocRef, { 
+                name: name,
+                phone: phone,
+                emergencyContact: {
+                    name: emergencyContactName,
+                    phone: emergencyContactPhone,
+                }
+            }, { merge: true });
+
+            // Update Firebase Auth displayName
+            if (nameChanged && user) {
+                await updateProfile(user, {
+                    displayName: name,
+                });
+                // Force reload to refresh the user object and trigger auth state listeners
+                await user.reload();
+                // Force token refresh to ensure the UI updates
+                await user.getIdToken(true);
             }
-        }, { merge: true });
-        toast({ title: "Profile Updated", description: "Your profile details have been saved." });
+
+            // If name changed, update all associated records
+            if (nameChanged) {
+                const batch = writeBatch(firestore);
+                let updateCount = 0;
+
+                // Update timesheets
+                const timesheetsQuery = query(
+                    collection(firestore, 'timesheets'),
+                    where('staffId', '==', staffMember.id)
+                );
+                const timesheetsSnapshot = await getDocs(timesheetsQuery);
+                timesheetsSnapshot.forEach((doc) => {
+                    batch.update(doc.ref, { staffName: name });
+                    updateCount++;
+                });
+
+                // Update jobs where this staff is STMS
+                const stmsJobsQuery = query(
+                    collection(firestore, 'job_packs'),
+                    where('stmsId', '==', staffMember.id)
+                );
+                const stmsJobsSnapshot = await getDocs(stmsJobsQuery);
+                stmsJobsSnapshot.forEach((doc) => {
+                    batch.update(doc.ref, { stms: name });
+                    updateCount++;
+                });
+
+                // Update jobs where this staff is in TCs array
+                const allJobsQuery = query(collection(firestore, 'job_packs'));
+                const allJobsSnapshot = await getDocs(allJobsQuery);
+                allJobsSnapshot.forEach((docSnapshot) => {
+                    const jobData = docSnapshot.data() as Job;
+                    if (jobData.tcs && Array.isArray(jobData.tcs)) {
+                        const tcIndex = jobData.tcs.findIndex(tc => tc.id === staffMember.id);
+                        if (tcIndex !== -1) {
+                            const updatedTcs = [...jobData.tcs];
+                            updatedTcs[tcIndex] = { ...updatedTcs[tcIndex], name: name };
+                            batch.update(docSnapshot.ref, { tcs: updatedTcs });
+                            updateCount++;
+                        }
+                    }
+                });
+
+                // Update TMP checking processes
+                const tmpQuery = query(collection(firestore, 'tmp_checking_processes'));
+                const tmpSnapshot = await getDocs(tmpQuery);
+                tmpSnapshot.forEach((docSnapshot) => {
+                    const tmpData = docSnapshot.data() as TmpCheckingProcess;
+                    let needsUpdate = false;
+                    const updates: any = {};
+
+                    if (tmpData.completedBy && Array.isArray(tmpData.completedBy)) {
+                        const updatedCompletedBy = tmpData.completedBy.map(person => {
+                            if (person.staffId === staffMember.id) {
+                                needsUpdate = true;
+                                return { ...person, staffName: name };
+                            }
+                            return person;
+                        });
+                        if (needsUpdate) {
+                            updates.completedBy = updatedCompletedBy;
+                        }
+                    }
+
+                    if (needsUpdate) {
+                        batch.update(docSnapshot.ref, updates);
+                        updateCount++;
+                    }
+                });
+
+                // Commit all updates
+                if (updateCount > 0) {
+                    await batch.commit();
+                    toast({ 
+                        title: "Profile Updated", 
+                        description: `Your profile has been saved and ${updateCount} related records were updated.` 
+                    });
+                } else {
+                    toast({ 
+                        title: "Profile Updated", 
+                        description: "Your profile details have been saved." 
+                    });
+                }
+            } else {
+                toast({ 
+                    title: "Profile Updated", 
+                    description: "Your profile details have been saved." 
+                });
+            }
+        } catch (error: any) {
+            toast({ 
+                variant: 'destructive', 
+                title: "Update Failed", 
+                description: error.message || "Failed to update profile" 
+            });
+        }
     };
 
     const handlePasswordChange = async (e: React.FormEvent) => {

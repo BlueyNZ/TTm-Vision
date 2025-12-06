@@ -47,6 +47,7 @@ import { Staff } from "@/lib/data";
 import { useFirestore } from "@/firebase";
 import { collection, doc, Timestamp } from "firebase/firestore";
 import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useTenant } from "@/contexts/tenant-context";
 import { Separator } from "../ui/separator";
 
 const staffSchema = z.object({
@@ -146,6 +147,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
   const isEditMode = !!staffToEdit;
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { tenantId } = useTenant();
 
   const form = useForm<z.infer<typeof staffSchema>>({
     resolver: zodResolver(staffSchema),
@@ -213,9 +215,10 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
 
 
   function onSubmit(data: z.infer<typeof staffSchema>) {
-    if (!firestore) return;
+    if (!firestore || !tenantId) return;
     
     const staffPayload = {
+        tenantId,
         name: data.name,
         email: data.email,
         phone: data.phone,

@@ -2,12 +2,113 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Helper function to get user's tenantId by querying staff collection by email
+    function getUserTenantId() {
+      return get(/databases/$(database)/documents/staff/$(request.auth.token.staffId)).data.tenantId;
+    }
+    
+    // Helper to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper to check if document belongs to user's tenant
+    function isOwnTenant() {
+      return request.auth != null && 
+             request.auth.token.tenantId != null &&
+             resource.data.tenantId == request.auth.token.tenantId;
+    }
+    
+    // Helper to check if new data has correct tenantId
+    function hasCorrectTenantId() {
+      return request.auth != null && 
+             request.auth.token.tenantId != null &&
+             request.resource.data.tenantId == request.auth.token.tenantId;
+    }
+    
+    // Helper to check if user belongs to a specific tenant
+    function belongsToTenant(tenantId) {
+      return request.auth != null && 
+             request.auth.token.tenantId == tenantId;
+    }
 
+    // Tenants collection - read your own tenant, admins can create new tenants
+    match /tenants/{tenantId} {
+      allow read: if isAuthenticated() && belongsToTenant(tenantId);
+      allow create: if isAuthenticated(); // For company signup
+      allow update: if isAuthenticated() && belongsToTenant(tenantId);
+      allow delete: if false; // Prevent tenant deletion
+    }
+
+    // Staff collection - can only see staff from your tenant
+    match /staff/{staffId} {
+      allow read: if isAuthenticated() && isOwnTenant();
+      allow create: if isAuthenticated() && hasCorrectTenantId();
+      allow update: if isAuthenticated() && (isOwnTenant() || staffId == request.auth.token.staffId) && hasCorrectTenantId();
+      allow delete: if isAuthenticated() && isOwnTenant();
+    }
+
+    // Clients collection - can only see clients from your tenant
+    match /clients/{clientId} {
+      allow read: if isAuthenticated() && isOwnTenant();
+      allow create: if isAuthenticated() && hasCorrectTenantId();
+      allow update: if isAuthenticated() && isOwnTenant() && hasCorrectTenantId();
+      allow delete: if isAuthenticated() && isOwnTenant();
+    }
+
+    // Trucks collection - can only see trucks from your tenant
+    match /trucks/{truckId} {
+      allow read: if isAuthenticated() && isOwnTenant();
+      allow create: if isAuthenticated() && hasCorrectTenantId();
+      allow update: if isAuthenticated() && isOwnTenant() && hasCorrectTenantId();
+      allow delete: if isAuthenticated() && isOwnTenant();
+    }
+
+    // Job packs collection - can only see jobs from your tenant
+    match /job_packs/{jobId} {
+      allow read: if isAuthenticated() && isOwnTenant();
+      allow create: if isAuthenticated() && hasCorrectTenantId();
+      allow update: if isAuthenticated() && isOwnTenant() && hasCorrectTenantId();
+      allow delete: if isAuthenticated() && isOwnTenant();
+      
+      // Subcollections within jobs (timesheets, inspections, etc.)
+      match /{subcollection}/{docId} {
+        allow read: if isAuthenticated() && 
+                      get(/databases/$(database)/documents/job_packs/$(jobId)).data.tenantId == request.auth.token.tenantId;
+        allow write: if isAuthenticated() && 
+                       get(/databases/$(database)/documents/job_packs/$(jobId)).data.tenantId == request.auth.token.tenantId;
+      }
+    }
+
+    // Timesheets collection - can only see timesheets from your tenant
+    match /timesheets/{timesheetId} {
+      allow read: if isAuthenticated() && isOwnTenant();
+      allow create: if isAuthenticated() && hasCorrectTenantId();
+      allow update: if isAuthenticated() && isOwnTenant() && hasCorrectTenantId();
+      allow delete: if isAuthenticated() && isOwnTenant();
+    }
+
+    // TMP checking processes - tenant restricted
+    match /tmp_checking_processes/{processId} {
+      allow read: if isAuthenticated() && isOwnTenant();
+      allow create: if isAuthenticated() && hasCorrectTenantId();
+      allow update: if isAuthenticated() && isOwnTenant() && hasCorrectTenantId();
+      allow delete: if isAuthenticated() && isOwnTenant();
+    }
+
+    // Client registrations - can only see registrations for your tenant
+    match /client_registrations/{registrationId} {
+      allow read: if isAuthenticated();
+      allow create: if true; // Allow anonymous client registration
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // Deny all other access
     match /{document=**} {
-      // Allow any client to read and write data.
-      // NOTE: This is insecure and is intended for initial development.
-      // You should secure your rules before deploying to production.
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }
+

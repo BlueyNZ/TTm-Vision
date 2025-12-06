@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, doc } from "firebase/firestore";
+import { collection, doc, query, where } from "firebase/firestore";
+import { useTenant } from "@/contexts/tenant-context";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useRouter } from "next/navigation";
 
@@ -65,11 +66,12 @@ export default function StaffPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const router = useRouter();
+  const { tenantId } = useTenant();
   
   const staffCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'staff');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'staff'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   
   const { data: staffData, isLoading } = useCollection<Staff>(staffCollection);
 

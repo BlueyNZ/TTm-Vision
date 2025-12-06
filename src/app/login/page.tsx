@@ -37,7 +37,24 @@ export default function LoginPage() {
       const persistence = keepLoggedIn ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
       
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Set custom claims if not already set
+      try {
+        const idToken = await userCredential.user.getIdToken();
+        await fetch('/api/auth/set-claims', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${idToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        // Force token refresh to get new claims
+        await userCredential.user.getIdToken(true);
+      } catch (claimsError) {
+        console.error('Error setting custom claims:', claimsError);
+        // Continue anyway - user can still access the app
+      }
       
       toast({
         title: 'Login Successful',
@@ -119,6 +136,11 @@ export default function LoginPage() {
               Don&apos;t have an account?{' '}
               <Link href="/signup" className="font-semibold text-primary hover:underline">
                 Sign up
+              </Link>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <Link href="/" className="font-semibold text-primary hover:underline">
+                ← Back to home
               </Link>
             </div>
           </CardFooter>

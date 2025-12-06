@@ -23,14 +23,16 @@ import { collection, query, where, Timestamp } from "firebase/firestore";
 import { useMemo } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { useTenant } from "@/contexts/tenant-context";
 
 export default function PaperworkPage() {
     const firestore = useFirestore();
+    const { tenantId } = useTenant();
 
     const jobsCollection = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(collection(firestore, 'job_packs'), where('status', '!=', 'Pending'));
-    }, [firestore]);
+        if (!firestore || !tenantId) return null;
+        return query(collection(firestore, 'job_packs'), where('tenantId', '==', tenantId), where('status', '!=', 'Pending'));
+    }, [firestore, tenantId]);
 
     const { data: jobData, isLoading } = useCollection<Job>(jobsCollection);
 

@@ -2,8 +2,24 @@
 
 import { Timestamp } from "firebase/firestore";
 
+// Tenant (Organization) type for multi-tenant support
+export type Tenant = {
+  id: string; // e.g., 'traffic-flow'
+  name: string; // Display name
+  status: 'Active' | 'Suspended' | 'Inactive';
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+  settings?: {
+    logo?: string;
+    primaryColor?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+  };
+};
+
 export type Client = {
   id: string;
+  tenantId: string; // Organization/company this client belongs to
   name: string;
   email?: string; // Email for client portal login
   phone?: string; // Contact phone number
@@ -23,6 +39,7 @@ export type License = {
 
 export type Staff = {
   id: string;
+  tenantId: string; // Organization/company this staff belongs to
   name: string;
   email: string;
   phone: string; // Added for SMS notifications
@@ -41,6 +58,7 @@ export type Staff = {
 
 export type Truck = {
   id: string;
+  tenantId: string; // Organization/company this truck belongs to
   name: string;
   plate: string;
   status: 'Operational' | 'Check Required' | 'In Service';
@@ -59,6 +77,7 @@ export type Truck = {
 
 export type Job = {
   id: string;
+  tenantId: string; // Organization/company this job belongs to
   jobNumber: string;
   name: string;
   location: string;
@@ -88,10 +107,11 @@ export type Job = {
 
 export type Timesheet = {
   id: string;
+  tenantId: string; // Organization/company this timesheet belongs to
   jobId: string;
   staffId: string;
   staffName: string;
-  role: 'STMS' | 'TC/TTMW' | 'TMO' | 'Shadow Driver' | 'Other Driver' | 'Yard Work' | 'Truck';
+  role: 'TC' | 'STMS' | 'Operator' | 'Owner' | 'Tester' | 'Other';
   jobDate: Timestamp;
   startTime: string;
   finishTime: string;
@@ -109,6 +129,7 @@ type InspectionCheck = {
 
 export type TruckInspection = {
     id: string;
+    tenantId: string; // Organization/company this inspection belongs to
     jobId: string;
     truckId: string;
     driverId: string;
@@ -165,6 +186,7 @@ export type SiteHazard = {
 
 export type HazardId = {
   id: string;
+  tenantId: string; // Organization/company this hazard ID belongs to
   jobId: string;
   hazardIdNo: string;
   performedBy: string;
@@ -196,6 +218,7 @@ export type HazardId = {
 
 export type HazardIdNzgttm = {
   id: string;
+  tenantId: string; // Organization/company this NZGTTM hazard ID belongs to
   jobId: string;
   hazardIdNo: string;
   performedBy: string;
@@ -220,6 +243,7 @@ type ProcessCheck = {
 
 export type TmpCheckingProcess = {
   id: string;
+  tenantId: string; // Organization/company this TMP checking process belongs to
   jobId: string;
   tmpNumber: string;
   tmdNumber: string;
@@ -286,6 +310,7 @@ export type WorksiteMonitoring = {
 
 export type OnSiteRecord = {
   id: string;
+  tenantId: string; // Organization/company this on-site record belongs to
   jobId: string;
   jobDate: Date;
   tmpNumber?: string;
@@ -341,6 +366,7 @@ export type TemporarySpeedLimit = {
 
 export type OnSiteRecordMobileOps = {
     id: string;
+    tenantId: string; // Organization/company this mobile ops record belongs to
     jobId: string;
     tmpReference: string;
     date: Timestamp;
@@ -383,6 +409,7 @@ export type Attachment = {
 
 export type JobNote = {
     id: string;
+    tenantId: string; // Organization/company this job note belongs to
     jobId: string;
     noteType: 'General' | 'Safety' | 'Client Request' | 'Variation';
     description: string;
@@ -397,6 +424,7 @@ export type JobNote = {
 
 export type SitePhoto = {
     id: string;
+    tenantId: string; // Organization/company this site photo belongs to
     jobId: string;
     photos: {
       url: string;
@@ -409,6 +437,7 @@ export type SitePhoto = {
 
 export type IncidentReport = {
   id: string;
+  tenantId: string; // Organization/company this incident report belongs to
   jobId: string;
   incidentReferenceNo: string;
   copptmReference?: string;
@@ -456,6 +485,7 @@ export type OtherAspectsCheck = 'Yes' | 'No' | 'N/A';
 
 export type SiteAudit = {
   id: string;
+  tenantId: string; // Organization/company this site audit belongs to
   jobId: string;
   auditNumber: string;
   auditType?: string;

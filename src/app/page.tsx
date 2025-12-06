@@ -127,14 +127,23 @@ export default function HomePage() {
           </div>
 
           {/* Footer */}
-          <div className="text-center text-sm text-muted-foreground pt-8">
-            <p>
-              New client?{" "}
+          <div className="text-center space-y-3 pt-8">
+            <p className="text-sm text-muted-foreground">
+              Traffic management company?{" "}
+              <button
+                onClick={() => router.push('/company-signup')}
+                className="text-primary hover:underline font-medium"
+              >
+                Create your account
+              </button>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Need traffic management services?{" "}
               <button
                 onClick={() => router.push('/client-signup')}
                 className="text-primary hover:underline font-medium"
               >
-                Register your company here
+                Register as a client
               </button>
             </p>
           </div>

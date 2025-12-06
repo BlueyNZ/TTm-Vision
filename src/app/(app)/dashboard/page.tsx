@@ -20,6 +20,7 @@ import {
 import { useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { JobChatButton } from "@/components/jobs/job-chat-button";
+import { useTenant } from "@/contexts/tenant-context";
 
 const getDisplayedStatus = (job: Job) => {
   const startDate = job.startDate instanceof Timestamp ? job.startDate.toDate() : new Date(job.startDate);
@@ -77,11 +78,12 @@ export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { tenantId } = useTenant();
 
   const jobsCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'job_packs');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'job_packs'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsCollection);
 
   const staffQuery = useMemoFirebase(() => {

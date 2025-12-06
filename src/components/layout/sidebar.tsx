@@ -33,6 +33,7 @@ import {
   Info,
   Star,
   Bell,
+  Code,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -44,9 +45,9 @@ import { Staff, Job } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { Badge } from "../ui/badge";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, query, where, Timestamp } from "firebase/firestore";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 interface AppSidebarProps {
   isAdmin?: boolean;
@@ -55,6 +56,30 @@ interface AppSidebarProps {
 export function AppSidebar({ isAdmin }: AppSidebarProps) {
   const pathname = usePathname();
   const firestore = useFirestore();
+  const { user } = useUser();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // Check for superAdmin custom claim
+  useEffect(() => {
+    const checkSuperAdmin = async () => {
+      if (user) {
+        try {
+          // Force token refresh to get latest claims
+          const tokenResult = await user.getIdTokenResult(true);
+          console.log("🔍 All custom claims:", tokenResult.claims);
+          console.log("🔐 SuperAdmin status:", tokenResult.claims.superAdmin);
+          setIsSuperAdmin(tokenResult.claims.superAdmin === true);
+        } catch (error) {
+          console.error("Error checking superAdmin claim:", error);
+          setIsSuperAdmin(false);
+        }
+      } else {
+        setIsSuperAdmin(false);
+      }
+    };
+    
+    checkSuperAdmin();
+  }, [user]);
 
   const jobRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -315,6 +340,50 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+              {isSuperAdmin && (
+                <Collapsible asChild defaultOpen={pathname.startsWith("/dev") || pathname.startsWith("/diagnostics") || pathname.startsWith("/test-claims")}>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        tooltip="Developer"
+                        isActive={pathname.startsWith("/dev") || pathname.startsWith("/diagnostics") || pathname.startsWith("/test-claims")}
+                        className="justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Code />
+                          <span>Developer</span>
+                        </div>
+                        <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        <SidebarMenuItem>
+                          <SidebarMenuSubButton asChild isActive={pathname === "/dev"}>
+                            <Link href="/dev">
+                              Manage Companies
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuSubButton asChild isActive={pathname === "/test-claims"}>
+                            <Link href="/test-claims">
+                              Test Claims
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuSubButton asChild isActive={pathname === "/diagnostics"}>
+                            <Link href="/diagnostics">
+                              Diagnostics
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
             </>
           )}
         </SidebarMenu>

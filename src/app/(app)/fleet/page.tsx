@@ -27,10 +27,11 @@ import {
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, Timestamp } from 'firebase/firestore';
+import { collection, doc, Timestamp, query, where } from 'firebase/firestore';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { AddTruckDialog } from '@/components/fleet/add-truck-dialog';
+import { useTenant } from '@/contexts/tenant-context';
 
 const getTruckStatus = (truck: Truck) => {
   if (truck.status === 'In Service') return { label: 'In Service', variant: 'destructive' as const };
@@ -54,13 +55,14 @@ export default function FleetPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { tenantId } = useTenant();
   const [editingTruck, setEditingTruck] = useState<Truck | null>(null);
   const [deletingTruck, setDeletingTruck] = useState<Truck | null>(null);
 
   const trucksCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'trucks');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'trucks'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   
   const { data: truckData, isLoading } = useCollection<Truck>(trucksCollection);
 

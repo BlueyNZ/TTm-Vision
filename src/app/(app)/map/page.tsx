@@ -11,6 +11,7 @@ import { LoaderCircle, X } from "lucide-react";
 import { isPast } from "date-fns";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useTenant } from "@/contexts/tenant-context";
 
 const containerStyle = {
   width: '100%',
@@ -36,11 +37,12 @@ const getDisplayedStatus = (job: Job) => {
 export default function MapPage() {
   const [selectedMarker, setSelectedMarker] = useState<any | null>(null);
   const firestore = useFirestore();
+  const { tenantId } = useTenant();
 
   const jobsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, "job_packs"), where('status', 'in', ['Upcoming', 'In Progress']));
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, "job_packs"), where('tenantId', '==', tenantId), where('status', 'in', ['Upcoming', 'In Progress']));
+  }, [firestore, tenantId]);
 
   const { data: jobData, isLoading: isLoadingJobs } = useCollection<Job>(jobsQuery);
 

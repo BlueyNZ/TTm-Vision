@@ -27,17 +27,19 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useTenant } from "@/contexts/tenant-context";
 
 export default function RequestsPage() {
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
+    const { tenantId } = useTenant();
     const [jobToReject, setJobToReject] = useState<Job | null>(null);
 
     const jobRequestsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(collection(firestore, 'job_packs'), where('status', '==', 'Pending'));
-    }, [firestore]);
+        if (!firestore || !tenantId) return null;
+        return query(collection(firestore, 'job_packs'), where('tenantId', '==', tenantId), where('status', '==', 'Pending'));
+    }, [firestore, tenantId]);
 
     const { data: jobRequests, isLoading } = useCollection<Job>(jobRequestsQuery);
 
