@@ -1,71 +1,133 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { Staff } from '@/lib/data';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { Staff, Tenant } from '@/lib/data';
+
+interface TenantMembership {
+  tenantId: string;
+  tenantName: string;
+  staffId: string;
+  role: string;
+}
 
 interface TenantContextType {
   tenantId: string | null;
   isLoading: boolean;
+  availableTenants: TenantMembership[];
+  switchTenant: (tenantId: string) => void;
+  currentTenantName: string | null;
 }
 
 const TenantContext = createContext<TenantContextType>({
   tenantId: null,
   isLoading: true,
+  availableTenants: [],
+  switchTenant: () => {},
+  currentTenantName: null,
 });
 
 export function useTenant() {
   return useContext(TenantContext);
 }
 
+const SELECTED_TENANT_KEY = 'selectedTenantId';
+
 export function TenantProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const firestore = useFirestore();
   const [tenantId, setTenantId] = useState<string | null>(null);
+  const [availableTenants, setAvailableTenants] = useState<TenantMembership[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user || !firestore) {
       setIsLoading(false);
       setTenantId(null);
+      setAvailableTenants([]);
       return;
     }
 
-    const fetchTenantId = async () => {
+    const fetchTenantMemberships = async () => {
       try {
-        // First, try to get tenantId from custom claims (fastest)
-        const tokenResult = await user.getIdTokenResult();
-        if (tokenResult.claims.tenantId) {
-          setTenantId(tokenResult.claims.tenantId as string);
-          setIsLoading(false);
-          return;
+        // Query all staff records for this user's email
+        const staffQuery = query(
+          collection(firestore, 'staff'),
+          where('email', '==', user.email)
+        );
+        const staffSnapshot = await getDocs(staffQuery);
+        
+        const memberships: TenantMembership[] = [];
+        
+        // Fetch tenant names for each staff record
+        for (const staffDoc of staffSnapshot.docs) {
+          const staffData = staffDoc.data() as Staff;
+          if (staffData.tenantId) {
+            // Fetch the actual tenant document to get the company name
+            const tenantDoc = await getDoc(doc(firestore, 'tenants', staffData.tenantId));
+            const tenantName = tenantDoc.exists() 
+              ? (tenantDoc.data() as Tenant).name 
+              : staffData.tenantId; // Fallback to ID if tenant doc doesn't exist
+            
+            memberships.push({
+              tenantId: staffData.tenantId,
+              tenantName: tenantName,
+              staffId: staffDoc.id,
+              role: staffData.role || 'Staff Member',
+            });
+          }
         }
 
-        // Fallback: Get staff document using UID as document ID
-        const { doc, getDoc } = await import('firebase/firestore');
-        const staffDoc = await getDoc(doc(firestore, 'staff', user.uid));
-        
-        if (staffDoc.exists()) {
-          const staffData = staffDoc.data() as Staff;
-          setTenantId(staffData.tenantId || null);
-        } else {
-          console.warn('No staff document found for user:', user.uid);
+        setAvailableTenants(memberships);
+
+        // Determine which tenant to use
+        if (memberships.length === 0) {
+          console.warn('No tenant memberships found for user:', user.email);
           setTenantId(null);
+        } else if (memberships.length === 1) {
+          // Only one tenant - auto-select it
+          setTenantId(memberships[0].tenantId);
+          localStorage.setItem(SELECTED_TENANT_KEY, memberships[0].tenantId);
+        } else {
+          // Multiple tenants - check localStorage for last selected
+          const savedTenantId = localStorage.getItem(SELECTED_TENANT_KEY);
+          const validSavedTenant = memberships.find(m => m.tenantId === savedTenantId);
+          
+          if (validSavedTenant) {
+            setTenantId(validSavedTenant.tenantId);
+          } else {
+            // No valid saved tenant - use first one
+            setTenantId(memberships[0].tenantId);
+            localStorage.setItem(SELECTED_TENANT_KEY, memberships[0].tenantId);
+          }
         }
       } catch (error) {
-        console.error('Error fetching tenant ID:', error);
+        console.error('Error fetching tenant memberships:', error);
         setTenantId(null);
+        setAvailableTenants([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTenantId();
+    fetchTenantMemberships();
   }, [user, firestore]);
 
+  const switchTenant = (newTenantId: string) => {
+    const validTenant = availableTenants.find(t => t.tenantId === newTenantId);
+    if (validTenant) {
+      setTenantId(newTenantId);
+      localStorage.setItem(SELECTED_TENANT_KEY, newTenantId);
+      // Reload the page to refresh all data with new tenant context
+      window.location.reload();
+    }
+  };
+
+  const currentTenantName = availableTenants.find(t => t.tenantId === tenantId)?.tenantName || null;
+
   return (
-    <TenantContext.Provider value={{ tenantId, isLoading }}>
+    <TenantContext.Provider value={{ tenantId, isLoading, availableTenants, switchTenant, currentTenantName }}>
       {children}
     </TenantContext.Provider>
   );
