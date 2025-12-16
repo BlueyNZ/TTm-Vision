@@ -1,0 +1,12 @@
+PLACEHOLDER - Replace this file with a 1200x630px og-image.png
+
+To generate the image:
+1. Open public/generate-og-image.html in your browser
+2. Take a screenshot of the gradient box (1200x630px)
+3. Save it as og-image.png in this directory
+
+Or use Canva/Figma to create a professional version with:
+- Size: 1200 x 630 pixels
+- Your logo/branding
+- App name: TTM Vision
+- Tagline: Complete Traffic Management Software
