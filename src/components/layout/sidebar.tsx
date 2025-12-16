@@ -48,6 +48,7 @@ import { Badge } from "../ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, query, where, Timestamp } from "firebase/firestore";
 import { useMemo, useState, useEffect } from "react";
+import { TenantSwitcher } from "./tenant-switcher";
 
 interface AppSidebarProps {
   isAdmin?: boolean;
@@ -104,6 +105,20 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
   const { data: pendingRegistrations } = useCollection(clientRegistrationsQuery);
   const pendingRegistrationsCount = pendingRegistrations?.length || 0;
 
+  // Track if user has viewed notifications page
+  const [hasViewedNotifications, setHasViewedNotifications] = useState(false);
+
+  // Check localStorage for last viewed timestamp
+  useEffect(() => {
+    const lastViewed = localStorage.getItem('notificationsLastViewed');
+    if (lastViewed) {
+      const viewedTime = new Date(lastViewed).getTime();
+      const now = new Date().getTime();
+      // If viewed within last 5 minutes, hide the badge
+      setHasViewedNotifications(now - viewedTime < 5 * 60 * 1000);
+    }
+  }, [pathname]);
+
   // Count notifications (pending requests + jobs starting in 3 days + pending registrations)
   const notificationCount = useMemo(() => {
     let count = pendingRequestsCount + pendingRegistrationsCount;
@@ -116,9 +131,10 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
     return count;
   }, [pendingRequestsCount, pendingRegistrationsCount, upcomingJobs]);
 
-  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin", "/map", "/equipment-tracking", "/paperwork"].some(path => pathname.startsWith(path));
+  const isManagementPagesActive = ["/staff", "/fleet", "/jobs", "/clients", "/admin", "/equipment-tracking"].some(path => pathname.startsWith(path));
   const isRequestsPagesActive = pathname.startsWith("/requests");
   const isAdminPagesActive = pathname.startsWith("/admin");
+  const isDashboardPagesActive = ["/dashboard", "/map", "/paperwork"].some(path => pathname.startsWith(path));
 
 
   return (
@@ -128,21 +144,54 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
           <TrafficCone className="h-8 w-8 text-sidebar-primary" />
           <h2 className="text-xl font-bold text-sidebar-foreground">TTM Vision</h2>
         </Link>
+        <div className="mt-4">
+          <TenantSwitcher />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Dashboard"
-              isActive={pathname === "/dashboard"}
-            >
-              <Link href="/dashboard">
-                <LayoutDashboard />
-                <span>Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <Collapsible asChild defaultOpen={isDashboardPagesActive}>
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton
+                  tooltip="Dashboard"
+                  isActive={isDashboardPagesActive}
+                  className="justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <LayoutDashboard />
+                    <span>Dashboard</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenuSub>
+                  <SidebarMenuItem>
+                    <SidebarMenuSubButton asChild isActive={pathname === "/dashboard"}>
+                      <Link href="/dashboard">
+                        My Jobs
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuSubButton asChild isActive={pathname.startsWith("/map")}>
+                      <Link href="/map">
+                        Job Map
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuSubButton asChild isActive={pathname.startsWith("/paperwork")}>
+                      <Link href="/paperwork">
+                        Paperwork
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuItem>
+                </SidebarMenuSub>
+              </CollapsibleContent>
+            </SidebarMenuItem>
+          </Collapsible>
           {isAdmin && (
             <>
               <SidebarMenuItem>
@@ -245,14 +294,6 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/paperwork")}>
-                          <Link href="/paperwork" className="flex justify-between items-center w-full">
-                            <span>Paperwork</span>
-                            <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-500 font-semibold border-blue-500">New</Badge>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
                         <SidebarMenuSubButton asChild isActive={pathname.startsWith("/clients")}>
                            <Link href="/clients">
                             Clients
@@ -264,20 +305,13 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                            <Link href="/notifications" className="flex justify-between items-center w-full">
                             <span className="flex items-center gap-2">
                               Notifications
-                              {notificationCount > 0 && (
+                              {notificationCount > 0 && !hasViewedNotifications && (
                                 <Badge className="h-5 w-5 p-0 flex items-center justify-center bg-primary text-primary-foreground text-xs">
                                   {notificationCount}
                                 </Badge>
                               )}
                             </span>
                             <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-500 font-semibold border-blue-500">New</Badge>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
-                        <SidebarMenuSubButton asChild isActive={pathname.startsWith("/map")}>
-                           <Link href="/map">
-                            Map
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuItem>

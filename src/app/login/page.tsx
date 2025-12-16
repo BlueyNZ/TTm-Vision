@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { TrafficCone, LoaderCircle } from 'lucide-react';
+import { TrafficCone, LoaderCircle, MessageSquare } from 'lucide-react';
 import { signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -126,6 +126,13 @@ export default function LoginPage() {
             </form>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-sm">
+              <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+              <p className="text-blue-900 dark:text-blue-100">
+                <span className="font-semibold">Found a bug or have a feature request?</span><br />
+                <span className="text-xs text-blue-700 dark:text-blue-300">Please report it to help us improve TTM Vision!</span>
+              </p>
+            </div>
             <div className="text-sm text-muted-foreground">
               Are you a client?{' '}
               <Link href="/client-login" className="font-semibold text-primary hover:underline">

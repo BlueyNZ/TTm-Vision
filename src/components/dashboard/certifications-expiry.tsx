@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils";
 import { differenceInDays, format, toDate } from "date-fns";
 import { ScrollArea } from "../ui/scroll-area";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { collection, query, where } from "firebase/firestore";
 import { LoaderCircle } from "lucide-react";
+import { useTenant } from "@/contexts/tenant-context";
 
 function getCertificationStatus(expiryDate: Date): { label: string, variant: "destructive" | "warning" | "success" } {
   const today = new Date();
@@ -31,10 +32,11 @@ type GroupedCertification = {
 
 export function CertificationsExpiry() {
   const firestore = useFirestore();
+  const { tenantId } = useTenant();
   const staffCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'staff');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'staff'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   const { data: staffData, isLoading } = useCollection<Staff>(staffCollection);
 
 

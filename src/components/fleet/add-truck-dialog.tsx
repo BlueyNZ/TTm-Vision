@@ -45,6 +45,7 @@ import { Truck } from "@/lib/data";
 import { useFirestore } from "@/firebase";
 import { collection, doc, Timestamp } from "firebase/firestore";
 import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useTenant } from "@/contexts/tenant-context";
 
 const truckSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -72,6 +73,7 @@ export function AddTruckDialog({ children, truckToEdit, onDialogClose, open: con
   const isEditMode = !!truckToEdit;
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { tenantId } = useTenant();
 
   const form = useForm<z.infer<typeof truckSchema>>({
     resolver: zodResolver(truckSchema),
@@ -110,7 +112,18 @@ export function AddTruckDialog({ children, truckToEdit, onDialogClose, open: con
   function onSubmit(data: z.infer<typeof truckSchema>) {
     if (!firestore) return;
     
+    // Validate tenantId exists before creating
+    if (!tenantId) {
+      toast({
+        title: "Error",
+        description: "Unable to determine your company. Please refresh and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const truckPayload = {
+      tenantId,
       name: data.name,
       plate: data.plate,
       status: data.status,

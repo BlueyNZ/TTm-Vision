@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from "@/firebase";
 import { Job, Staff, Truck, TruckInspection } from "@/lib/data";
-import { doc, collection, addDoc, setDoc, Timestamp } from "firebase/firestore";
+import { doc, collection, addDoc, setDoc, Timestamp, query, where } from "firebase/firestore";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle, CalendarIcon, CheckCircle, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { useTenant } from "@/contexts/tenant-context";
 import { cn } from "@/lib/utils";
 import { format, isValid, parse } from "date-fns";
 import { SignaturePad, SignaturePadRef } from "@/components/ui/signature-pad";
@@ -223,6 +224,7 @@ export default function TruckInspectionPage() {
 
 
   const firestore = useFirestore();
+  const { tenantId } = useTenant();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const signaturePadRef = useRef<SignaturePadRef>(null);
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
@@ -230,8 +232,8 @@ export default function TruckInspectionPage() {
   // Data fetching
   const { data: jobData, isLoading: isJobLoading } = useDoc<Job>(useMemoFirebase(() => firestore ? doc(firestore, 'job_packs', jobId) : null, [firestore, jobId]));
   const { data: allJobs, isLoading: areJobsLoading } = useCollection<Job>(useMemoFirebase(() => firestore ? collection(firestore, 'job_packs') : null, [firestore]));
-  const { data: trucks, isLoading: areTrucksLoading } = useCollection<Truck>(useMemoFirebase(() => firestore ? collection(firestore, 'trucks') : null, [firestore]));
-  const { data: staff, isLoading: areStaffLoading } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staff') : null, [firestore]));
+  const { data: trucks, isLoading: areTrucksLoading } = useCollection<Truck>(useMemoFirebase(() => (firestore && tenantId) ? query(collection(firestore, 'trucks'), where('tenantId', '==', tenantId)) : null, [firestore, tenantId]));
+  const { data: staff, isLoading: areStaffLoading } = useCollection<Staff>(useMemoFirebase(() => (firestore && tenantId) ? query(collection(firestore, 'staff'), where('tenantId', '==', tenantId)) : null, [firestore, tenantId]));
   const { data: inspectionToEdit, isLoading: isInspectionLoading } = useDoc<TruckInspection>(useMemoFirebase(() => (firestore && inspectionId) ? doc(firestore, 'job_packs', jobId, 'truck_inspections', inspectionId) : null, [firestore, jobId, inspectionId]));
 
 

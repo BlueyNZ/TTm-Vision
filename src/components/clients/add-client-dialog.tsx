@@ -28,6 +28,7 @@ import { Client } from "@/lib/data";
 import { useFirestore } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useTenant } from "@/contexts/tenant-context";
 
 const clientSchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters."),
@@ -49,6 +50,7 @@ export function AddClientDialog({ children, clientToEdit, onDialogClose, open: c
   const isEditMode = !!clientToEdit;
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { tenantId } = useTenant();
 
   const form = useForm<z.infer<typeof clientSchema>>({
     resolver: zodResolver(clientSchema),
@@ -71,7 +73,18 @@ export function AddClientDialog({ children, clientToEdit, onDialogClose, open: c
   function onSubmit(data: z.infer<typeof clientSchema>) {
     if (!firestore) return;
     
+    // Validate tenantId exists before creating
+    if (!tenantId) {
+      toast({
+        title: "Error",
+        description: "Unable to determine your company. Please refresh and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const clientPayload = {
+      tenantId,
       name: data.name,
     };
 

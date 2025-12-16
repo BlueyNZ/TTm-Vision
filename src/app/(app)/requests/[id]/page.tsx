@@ -52,6 +52,9 @@ export default function ReviewRequestPage() {
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
     
+    // Job number prefix - change this to customize your job numbers
+    const JOB_PREFIX = 'TMV';
+    
     // Query for the latest job number to prevent race conditions
     const latestJobQuery = query(jobsCollectionRef, orderBy('jobNumber', 'desc'), limit(1));
     const jobSnapshot = await getDocs(latestJobQuery);
@@ -59,13 +62,13 @@ export default function ReviewRequestPage() {
     let newJobNumber;
     if (jobSnapshot.empty) {
         // If there are no jobs, start with the first number
-        newJobNumber = 'TF-0001';
+        newJobNumber = `${JOB_PREFIX}-0001`;
     } else {
         // Get the latest job number and increment it
         const latestJob = jobSnapshot.docs[0].data() as Job;
-        const latestJobNumStr = latestJob.jobNumber.replace('TF-', '');
+        const latestJobNumStr = latestJob.jobNumber.replace(`${JOB_PREFIX}-`, '');
         const latestJobNum = parseInt(latestJobNumStr, 10);
-        newJobNumber = `TF-${String(latestJobNum + 1).padStart(4, '0')}`;
+        newJobNumber = `${JOB_PREFIX}-${String(latestJobNum + 1).padStart(4, '0')}`;
     }
 
     const updatedJob = {

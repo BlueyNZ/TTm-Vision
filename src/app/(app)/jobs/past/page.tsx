@@ -110,7 +110,6 @@ export default function PastJobsPage() {
         // Query for past jobs only, filtered by tenant
         return query(collection(firestore, 'job_packs'), where('tenantId', '==', tenantId), where('status', 'in', ['Completed', 'Cancelled']));
     }, [firestore, tenantId]);
-    }, [firestore]);
 
     const { data: jobData, isLoading } = useCollection<Job>(pastJobsCollection);
 

@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
 import { Circle, LoaderCircle } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, Timestamp } from "firebase/firestore";
+import { collection, Timestamp, query, where } from "firebase/firestore";
+import { useTenant } from "@/contexts/tenant-context";
 
 function getTruckStatus(truck: TruckType): { variant: "success" | "warning" | "destructive" } {
   if (truck.status === 'In Service') return { variant: "destructive" };
@@ -30,10 +31,11 @@ function getTruckStatus(truck: TruckType): { variant: "success" | "warning" | "d
 
 export function FleetServiceStatus() {
   const firestore = useFirestore();
+  const { tenantId } = useTenant();
   const trucksCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'trucks');
-  }, [firestore]);
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'trucks'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
   const { data: truckData, isLoading } = useCollection<TruckType>(trucksCollection);
 
   return (

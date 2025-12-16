@@ -110,6 +110,17 @@ export default function JobCreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // CRITICAL: Validate tenantId first
+    if (!tenantId) {
+        toast({
+            title: 'Organization Error',
+            description: 'Unable to determine your organization. Please refresh and try again.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    
     if (!firestore || !startDate) {
         toast({
             title: 'Missing Information',
@@ -151,23 +162,27 @@ export default function JobCreatePage() {
 
     const jobsCollectionRef = collection(firestore, 'job_packs');
     
+    // Job number prefix - change this to customize your job numbers
+    const JOB_PREFIX = 'TMV';
+    
     // Get all existing job numbers to find the highest number
     const jobSnapshot = await getDocs(jobsCollectionRef);
     const existingJobNumbers = jobSnapshot.docs
       .map(doc => doc.data().jobNumber as string)
-      .filter(num => num && num.startsWith('TF-'))
-      .map(num => parseInt(num.replace('TF-', ''), 10))
+      .filter(num => num && num.startsWith(`${JOB_PREFIX}-`))
+      .map(num => parseInt(num.replace(`${JOB_PREFIX}-`, ''), 10))
       .filter(num => !isNaN(num));
     
     // Find the highest job number and add 1, or start at 1 if no jobs exist
     const maxJobNumber = existingJobNumbers.length > 0 ? Math.max(...existingJobNumbers) : 0;
-    const newJobNumber = `TF-${String(maxJobNumber + 1).padStart(4, '0')}`;
+    const newJobNumber = `${JOB_PREFIX}-${String(maxJobNumber + 1).padStart(4, '0')}`;
 
     const coordinates = await getCoordinates(location);
 
     const docRef = doc(jobsCollectionRef);
 
     const newJob: Omit<Job, 'id'> = {
+        tenantId: tenantId!,
         jobNumber: newJobNumber,
         name,
         location,

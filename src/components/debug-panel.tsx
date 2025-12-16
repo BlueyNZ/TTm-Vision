@@ -13,9 +13,33 @@ export function DebugPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [logs, setLogs] = useState<Array<{ time: string; type: string; message: string; data?: any }>>([]);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const user = useUser();
   const firestore = useFirestore();
   const pathname = usePathname();
+
+  // Check if user is super admin
+  useEffect(() => {
+    const checkSuperAdmin = async () => {
+      if (user) {
+        try {
+          const tokenResult = await user.getIdTokenResult(true);
+          setIsSuperAdmin(tokenResult.claims.superAdmin === true);
+        } catch (error) {
+          setIsSuperAdmin(false);
+        }
+      } else {
+        setIsSuperAdmin(false);
+      }
+    };
+    
+    checkSuperAdmin();
+  }, [user]);
+
+  // Don't render anything if not super admin
+  if (!isSuperAdmin) {
+    return null;
+  }
 
   // Intercept console methods
   useEffect(() => {

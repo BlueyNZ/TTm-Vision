@@ -12,15 +12,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, LogOut, ChevronDown, Users, Menu, Building2 } from "lucide-react";
+import { ArrowLeft, LogOut, ChevronDown, Users, Menu, Building2, Crown } from "lucide-react";
 import { useAuth, useUser, useFirestore } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useTenant } from "@/contexts/tenant-context";
-import { doc, getDoc } from "firebase/firestore";
-import { Tenant } from "@/lib/data";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { Tenant, Staff } from "@/lib/data";
+import { TransferOwnershipDialog } from "@/components/settings/transfer-ownership-dialog";
 
 interface AppHeaderProps {
   isAdmin?: boolean;
@@ -37,6 +38,8 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const { tenantId } = useTenant();
   const [companyName, setCompanyName] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   
   // Get user's custom claims to determine role
   useEffect(() => {
@@ -46,6 +49,31 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
       });
     }
   }, [auth?.currentUser]);
+  
+  // Check if user is owner of current tenant
+  useEffect(() => {
+    if (!firestore || !tenantId || !user?.email) return;
+    
+    const checkOwnership = async () => {
+      try {
+        const staffQuery = query(
+          collection(firestore, 'staff'),
+          where('email', '==', user.email),
+          where('tenantId', '==', tenantId)
+        );
+        const staffSnapshot = await getDocs(staffQuery);
+        
+        if (!staffSnapshot.empty) {
+          const staffData = staffSnapshot.docs[0].data() as Staff;
+          setIsOwner(staffData.role === 'Owner');
+        }
+      } catch (error) {
+        console.error('Error checking ownership:', error);
+      }
+    };
+    
+    checkOwnership();
+  }, [firestore, tenantId, user?.email]);
   
   // Fetch company name from tenant
   useEffect(() => {
@@ -232,6 +260,18 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push('/settings')} className="rounded-lg cursor-pointer">Settings</DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/support')} className="rounded-lg cursor-pointer">Support</DropdownMenuItem>
+            {isOwner && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => setTransferDialogOpen(true)} 
+                  className="rounded-lg cursor-pointer text-amber-600 focus:text-amber-600"
+                >
+                  <Crown className="mr-2 h-4 w-4" />
+                  Transfer Ownership
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
@@ -240,6 +280,11 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      
+      <TransferOwnershipDialog 
+        open={transferDialogOpen} 
+        onOpenChange={setTransferDialogOpen} 
+      />
     </header>
   );
 }

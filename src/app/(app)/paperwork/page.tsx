@@ -7,8 +7,8 @@ import {
     CardTitle,
     CardDescription,
   } from "@/components/ui/card";
-import { Job } from "@/lib/data";
-import { LoaderCircle, FileText } from "lucide-react";
+import { Job, Staff } from "@/lib/data";
+import { LoaderCircle, FileText, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import {
   Table,
@@ -18,38 +18,115 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, where, Timestamp } from "firebase/firestore";
-import { useMemo } from "react";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collection, query, where, Timestamp, getDocs } from "firebase/firestore";
+import { useMemo, useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useTenant } from "@/contexts/tenant-context";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function PaperworkPage() {
     const firestore = useFirestore();
-    const { tenantId } = useTenant();
+    const { user } = useUser();
+    const { tenantId, isLoading: isTenantLoading } = useTenant();
+    const [persistedJobs, setPersistedJobs] = useState<Job[] | undefined>(undefined);
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [staffId, setStaffId] = useState<string | null>(null);
+    const [isCheckingAccess, setIsCheckingAccess] = useState(true);
+
+    // Check if user is STMS and get their staff ID
+    useEffect(() => {
+        if (!firestore || !tenantId || !user?.email) {
+            setIsCheckingAccess(false);
+            return;
+        }
+
+        const checkAccess = async () => {
+            try {
+                const staffQuery = query(
+                    collection(firestore, 'staff'),
+                    where('email', '==', user.email),
+                    where('tenantId', '==', tenantId)
+                );
+                const staffSnapshot = await getDocs(staffQuery);
+
+                if (!staffSnapshot.empty) {
+                    const staffData = staffSnapshot.docs[0].data() as Staff;
+                    setUserRole(staffData.role);
+                    setStaffId(staffSnapshot.docs[0].id);
+                }
+            } catch (error) {
+                console.error('Error checking user access:', error);
+            } finally {
+                setIsCheckingAccess(false);
+            }
+        };
+
+        checkAccess();
+    }, [firestore, tenantId, user?.email]);
 
     const jobsCollection = useMemoFirebase(() => {
-        if (!firestore || !tenantId) return null;
-        return query(collection(firestore, 'job_packs'), where('tenantId', '==', tenantId), where('status', '!=', 'Pending'));
-    }, [firestore, tenantId]);
+        if (!firestore || !tenantId || !staffId) return null;
+        // Only show jobs where this staff member is assigned as STMS
+        return query(
+            collection(firestore, 'job_packs'),
+            where('tenantId', '==', tenantId),
+            where('stmsId', '==', staffId),
+            where('status', '!=', 'Pending')
+        );
+    }, [firestore, tenantId, staffId]);
 
-    const { data: jobData, isLoading } = useCollection<Job>(jobsCollection);
+    const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsCollection);
+    
+    // Keep jobs persisted even during Fast Refresh
+    useEffect(() => {
+        if (jobData && jobData.length > 0) {
+            setPersistedJobs(jobData);
+        }
+    }, [jobData]);
+
+    // Use persisted jobs if current data is undefined (during Fast Refresh)
+    const displayJobs = jobData || persistedJobs;
+    const isLoading = isTenantLoading || isCheckingAccess || (isJobsLoading && !persistedJobs);
 
     const sortedJobs = useMemo(() => {
-        return jobData?.sort((a, b) => {
+        return displayJobs?.sort((a, b) => {
             const dateA = a.startDate instanceof Timestamp ? a.startDate.toDate() : new Date(a.startDate);
             const dateB = b.startDate instanceof Timestamp ? b.startDate.toDate() : new Date(b.startDate);
             return dateB.getTime() - dateA.getTime();
         });
-    }, [jobData]);
+    }, [displayJobs]);
+
+  // Check if user has STMS role
+  if (!isLoading && userRole !== 'STMS') {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Paperwork Hub</CardTitle>
+          <CardDescription>
+            Access restricted to STMS (Site Traffic Management Supervisor) roles only.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Access Denied</AlertTitle>
+            <AlertDescription>
+              You must be assigned as an STMS to access the Paperwork Hub. Please contact your administrator if you believe this is an error.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Paperwork Hub</CardTitle>
         <CardDescription>
-          Select a job below to view and complete its associated paperwork.
+          View and complete paperwork for jobs where you are assigned as STMS.
         </CardDescription>
       </CardHeader>
       <CardContent>

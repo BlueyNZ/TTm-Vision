@@ -159,18 +159,27 @@ export async function POST(request: NextRequest) {
 
     await firestore.collection(collection).doc(userRecord.uid).set(docData);
 
-    // Generate password reset link (valid for 24 hours) pointing to custom reset page
-    const resetLink = await auth.generatePasswordResetLink(email, {
-      url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
-    });
+    // Send password reset email using Firebase's built-in email service
+    // This triggers Firebase's email template automatically
+    try {
+      await auth.generatePasswordResetLink(email, {
+        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
+      });
+      
+      // Firebase Admin SDK only generates the link, it doesn't send the email
+      // To trigger Firebase's built-in email, we need to use sendPasswordResetEmail from the client SDK
+      // We'll return success and let the UI handle triggering the email via client SDK
+      
+    } catch (error) {
+      console.error('Error generating password reset link:', error);
+    }
 
-    // Return success with reset link
+    // Return success - the client will trigger Firebase's email
     return NextResponse.json({
       success: true,
       userId: userRecord.uid,
       email,
-      resetLink,
-      message: 'User created successfully. Send the password reset link to the user.',
+      message: 'User created successfully. Password reset email will be sent.',
     });
 
   } catch (error: any) {

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Job, Staff } from "@/lib/data";
 import { collection, Timestamp, query, where } from "firebase/firestore";
-import { LoaderCircle, Circle, MapPin, Calendar, Users, UserSquare, ChevronDown } from "lucide-react";
+import { LoaderCircle, Circle, MapPin, Calendar, Users, UserSquare, ChevronDown, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { format, isPast } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { JobChatButton } from "@/components/jobs/job-chat-button";
 import { useTenant } from "@/contexts/tenant-context";
@@ -79,6 +79,8 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const { tenantId } = useTenant();
+  const [persistedJobs, setPersistedJobs] = useState<Job[] | undefined>(undefined);
+  const [persistedStaff, setPersistedStaff] = useState<Staff | undefined>(undefined);
 
   const jobsCollection = useMemoFirebase(() => {
     if (!firestore || !tenantId) return null;
@@ -87,19 +89,63 @@ export default function DashboardPage() {
   const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsCollection);
 
   const staffQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.email) return null;
-    return query(collection(firestore, 'staff'), where('email', '==', user?.email));
-  }, [firestore, user?.email]);
+    if (!firestore || !user?.email || !tenantId) return null;
+    return query(
+      collection(firestore, 'staff'), 
+      where('email', '==', user.email),
+      where('tenantId', '==', tenantId)
+    );
+  }, [firestore, user?.email, tenantId]);
   const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
   const currentStaffMember = useMemo(() => staffData?.[0], [staffData]);
 
+  // Persist jobs and staff during Fast Refresh
+  useEffect(() => {
+    if (jobData && jobData.length > 0) {
+      setPersistedJobs(jobData);
+    }
+  }, [jobData]);
+
+  useEffect(() => {
+    if (currentStaffMember) {
+      setPersistedStaff(currentStaffMember);
+    }
+  }, [currentStaffMember]);
+
+  // Use persisted data if current data is undefined
+  const displayJobs = jobData || persistedJobs;
+  const displayStaff = currentStaffMember || persistedStaff;
 
   const assignedJobs = useMemo(() => {
-    if (!user || !jobData || !currentStaffMember) return [];
+    if (!user || !displayJobs || !displayStaff) return [];
 
-    return jobData.filter(job => {
-        const isStms = job.stmsId === currentStaffMember.id;
-        const isTc = job.tcs.some(tc => tc.id === currentStaffMember.id);
+    console.log('🔍 Dashboard Debug:', {
+      userEmail: user.email,
+      staffId: displayStaff.id,
+      staffName: displayStaff.name,
+      totalJobs: displayJobs.length,
+      jobs: displayJobs.map(j => ({
+        jobNumber: j.jobNumber,
+        location: j.location,
+        stmsId: j.stmsId,
+        stms: j.stms,
+        tcs: j.tcs,
+        tcIds: j.tcs?.map(tc => tc.id)
+      }))
+    });
+
+    return displayJobs.filter(job => {
+        const isStms = job.stmsId === displayStaff.id;
+        const isTc = job.tcs.some(tc => tc.id === displayStaff.id);
+        
+        console.log(`Job ${job.jobNumber}:`, {
+          isStms,
+          isTc,
+          jobStmsId: job.stmsId,
+          staffId: displayStaff.id,
+          matched: isStms || isTc
+        });
+        
         return isStms || isTc;
     })
     .sort((a, b) => {
@@ -107,11 +153,11 @@ export default function DashboardPage() {
         const dateB = b.startDate instanceof Timestamp ? b.startDate.toDate() : new Date(b.startDate);
         return dateB.getTime() - dateA.getTime();
     });
-  }, [user, jobData, currentStaffMember]);
+  }, [user, displayJobs, displayStaff]);
 
-  const isLoading = isUserLoading || isJobsLoading || isStaffLoading;
+  const isLoading = isUserLoading || (isJobsLoading && !persistedJobs) || (isStaffLoading && !persistedStaff);
   
-  const userRole = currentStaffMember?.role;
+  const userRole = displayStaff?.role;
   const paperworkForUser = userRole === 'STMS' ? allPaperworkLinks : tcPaperworkLinks;
 
 
@@ -121,14 +167,20 @@ export default function DashboardPage() {
         <div className="h-1 w-full gradient-primary"></div>
         <CardHeader className="text-center pb-8 pt-8">
           <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary via-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Welcome back, {currentStaffMember ? currentStaffMember.name : (user?.displayName || 'User')}!
+            Welcome back, {displayStaff ? displayStaff.name : (user?.displayName || 'User')}!
           </CardTitle>
           <CardDescription className="text-base mt-2">
             Here's a quick look at what's happening today.
           </CardDescription>
         </CardHeader>
          <CardContent>
-         
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-sm">
+            <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <p className="text-blue-900 dark:text-blue-100">
+              <span className="font-semibold">Found a bug or have a feature request?</span><br />
+              <span className="text-xs text-blue-700 dark:text-blue-300">Please report it to help us improve TTM Vision!</span>
+            </p>
+          </div>
         </CardContent>
       </Card>
 

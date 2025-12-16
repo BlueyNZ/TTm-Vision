@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -7,7 +6,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,15 +24,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CheckCircle, Copy, LoaderCircle, Mail } from 'lucide-react';
+import { CheckCircle, LoaderCircle, Mail } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/firebase';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '@/firebase/config';
 
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -43,15 +42,13 @@ const staffSchema = z.object({
   accessLevel: z.enum(["Staff Member", "Admin", "Client"]),
 });
 
-
 export default function CreateStaffPage() {
     const { toast } = useToast();
-    const auth = useAuth();
-    const router = useRouter();
+    const authContext = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [resetLink, setResetLink] = useState<string>('');
     const [createdEmail, setCreatedEmail] = useState<string>('');
     const [showSuccess, setShowSuccess] = useState(false);
+    const [sendingEmail, setSendingEmail] = useState(false);
 
     const form = useForm<z.infer<typeof staffSchema>>({
         resolver: zodResolver(staffSchema),
@@ -64,7 +61,7 @@ export default function CreateStaffPage() {
     });
 
     async function onSubmit(data: z.infer<typeof staffSchema>) {
-        if (!auth?.currentUser) {
+        if (!authContext?.currentUser) {
             toast({
                 title: "Authentication Required",
                 description: "You must be logged in to create staff.",
@@ -77,9 +74,9 @@ export default function CreateStaffPage() {
 
         try {
             // Get the current user's auth token
-            const token = await auth.currentUser.getIdToken();
+            const token = await authContext.currentUser.getIdToken();
 
-            // Call the API route
+            // Call the API route to create the user
             const response = await fetch('/api/admin/create-staff', {
                 method: 'POST',
                 headers: {
@@ -89,7 +86,6 @@ export default function CreateStaffPage() {
                 body: JSON.stringify(data),
             });
 
-            // Check if response is JSON
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 const text = await response.text();
@@ -103,10 +99,31 @@ export default function CreateStaffPage() {
                 throw new Error(result.error || 'Failed to create staff');
             }
 
-            // Show success state with reset link
-            setResetLink(result.resetLink);
+            // User created successfully, now send Firebase's built-in password reset email
             setCreatedEmail(data.email);
             setShowSuccess(true);
+            
+            // Send Firebase's automatic email
+            try {
+                setSendingEmail(true);
+                await sendPasswordResetEmail(auth, data.email);
+                console.log('✅ Firebase password reset email sent to:', data.email);
+                
+                toast({
+                    title: "Success!",
+                    description: "Staff member created and password setup email sent.",
+                });
+            } catch (emailError: any) {
+                console.error('❌ Error sending Firebase email:', emailError);
+                toast({
+                    title: "Staff Created",
+                    description: "User created but email failed to send. Ask them to use 'Forgot Password'.",
+                    variant: 'destructive',
+                });
+            } finally {
+                setSendingEmail(false);
+            }
+
             form.reset();
 
         } catch (error: any) {
@@ -121,185 +138,151 @@ export default function CreateStaffPage() {
         }
     }
 
-    const copyToClipboard = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            toast({
-                title: "Copied!",
-                description: "Password reset link copied to clipboard.",
-            });
-        } catch (error) {
-            toast({
-                title: "Copy Failed",
-                description: "Please manually copy the link.",
-                variant: 'destructive',
-            });
-        }
-    };
-
-    const sendEmailLink = () => {
-        const subject = encodeURIComponent('Set Your Password - TTm Vision');
-        const body = encodeURIComponent(
-            `Hello,\n\nYour account has been created for TTm Vision.\n\nPlease click the link below to set your password:\n\n${resetLink}\n\nThis link will expire in 24 hours.\n\nBest regards,\nTTm Vision Team`
-        );
-        window.open(`mailto:${createdEmail}?subject=${subject}&body=${body}`, '_blank');
-    };
-
     if (showSuccess) {
         return (
-            <div className='space-y-6'>
+            <div className="container max-w-2xl py-10">
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <CheckCircle className="h-8 w-8 text-green-500" />
-                            <div>
-                                <CardTitle>Staff Created Successfully!</CardTitle>
-                                <CardDescription>
-                                    Account created for {createdEmail}
-                                </CardDescription>
-                            </div>
-                        </div>
+                        <CardTitle className="flex items-center gap-2">
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                            Staff Member Created
+                        </CardTitle>
+                        <CardDescription>
+                            The account has been created successfully
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <Alert>
-                            <Mail className="h-4 w-4" />
-                            <AlertTitle>Send Password Reset Link</AlertTitle>
-                            <AlertDescription className="space-y-3 mt-2">
-                                <p>The user needs to set their password. Share this link with them:</p>
-                                <div className="bg-muted p-3 rounded-md font-mono text-xs break-all">
-                                    {resetLink}
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={() => copyToClipboard(resetLink)}
-                                    >
-                                        <Copy className="mr-2 h-4 w-4" />
-                                        Copy Link
-                                    </Button>
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={sendEmailLink}
-                                    >
-                                        <Mail className="mr-2 h-4 w-4" />
-                                        Open Email Client
-                                    </Button>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                    This link is valid for 24 hours. After setting their password, they can log in at the login page.
-                                </p>
-                            </AlertDescription>
-                        </Alert>
-                    </CardContent>
-                    <CardFooter className="flex gap-2">
-                        <Button onClick={() => setShowSuccess(false)}>
+                        {sendingEmail ? (
+                            <Alert className="bg-blue-50 border-blue-200">
+                                <LoaderCircle className="h-4 w-4 animate-spin" />
+                                <AlertTitle>Sending Email...</AlertTitle>
+                                <AlertDescription>
+                                    Sending password setup email to {createdEmail}
+                                </AlertDescription>
+                            </Alert>
+                        ) : (
+                            <Alert className="bg-green-50 border-green-200">
+                                <Mail className="h-4 w-4" />
+                                <AlertTitle>Email Sent!</AlertTitle>
+                                <AlertDescription>
+                                    A password setup email has been sent to <strong>{createdEmail}</strong> using Firebase's built-in email service.
+                                    <br />
+                                    <br />
+                                    The email contains a link to set their password (valid for 1 hour).
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        <Button onClick={() => setShowSuccess(false)} className="w-full">
                             Create Another Staff Member
                         </Button>
-                        <Button variant="outline" onClick={() => router.push('/staff')}>
-                            Go to Staff List
-                        </Button>
-                    </CardFooter>
+                    </CardContent>
                 </Card>
             </div>
         );
     }
 
-
     return (
-        <div className='space-y-6'>
+        <div className="container max-w-2xl py-10">
             <Card>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <CardHeader>
-                            <CardTitle>Create Staff/Client Profile</CardTitle>
-                            <CardDescription>
-                                This will automatically create a Firebase Auth account and send a password reset link to the user.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
+                <CardHeader>
+                    <CardTitle>Create New Staff Member</CardTitle>
+                    <CardDescription>
+                        Add a new staff member to your team. They will receive an email to set their password.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                             <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Full Name</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="John Doe" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="John Doe" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
                             />
+
                             <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Email Address</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="user@example.com" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Email</FormLabel>
+                                        <FormControl>
+                                            <Input type="email" placeholder="john@example.com" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
                             />
+
                             <FormField
-                            control={form.control}
-                            name="role"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Job Title/Role</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a role" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    <SelectItem value="TC">Traffic Controller (TC)</SelectItem>
-                                    <SelectItem value="STMS">STMS</SelectItem>
-                                    <SelectItem value="Operator">Operator</SelectItem>
-                                    <SelectItem value="Owner">Owner</SelectItem>
-                                    <SelectItem value="Tester">Tester</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
+                                control={form.control}
+                                name="role"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Role</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a role" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="TC">Traffic Controller (TC)</SelectItem>
+                                                <SelectItem value="STMS">Site Traffic Management Supervisor (STMS)</SelectItem>
+                                                <SelectItem value="Operator">Operator</SelectItem>
+                                                <SelectItem value="Owner">Owner</SelectItem>
+                                                <SelectItem value="Tester">Tester</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
                             />
+
                             <FormField
-                            control={form.control}
-                            name="accessLevel"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Access Level</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select an access level" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    <SelectItem value="Staff Member">Staff Member</SelectItem>
-                                    <SelectItem value="Admin">Admin</SelectItem>
-                                    <SelectItem value="Client">Client</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
+                                control={form.control}
+                                name="accessLevel"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Access Level</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select access level" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="Staff Member">Staff Member</SelectItem>
+                                                <SelectItem value="Admin">Admin</SelectItem>
+                                                <SelectItem value="Client">Client</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
                             />
-                        </CardContent>
-                        <CardFooter>
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Profile
+
+                            <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <>
+                                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    'Create Staff Member'
+                                )}
                             </Button>
-                        </CardFooter>
-                    </form>
-                </Form>
+                        </form>
+                    </Form>
+                </CardContent>
             </Card>
         </div>
     );
