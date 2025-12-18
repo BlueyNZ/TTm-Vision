@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 // Dynamic import to avoid ESM/CJS issues
 let admin: any;
@@ -15,8 +13,12 @@ async function initializeFirebaseAdmin() {
       return;
     }
     
-    const serviceAccountPath = join(process.cwd(), 'service-account-key.json');
-    const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
+    // Use environment variables for secure credential management
+    const serviceAccount = {
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    };
     
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),

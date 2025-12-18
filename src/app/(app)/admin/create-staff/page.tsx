@@ -161,7 +161,7 @@ export default function CreateStaffPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {sendingEmail ? (
-                            <Alert className="bg-blue-50 border-blue-200">
+                            <Alert>
                                 <LoaderCircle className="h-4 w-4 animate-spin" />
                                 <AlertTitle>Sending Email...</AlertTitle>
                                 <AlertDescription>
@@ -169,7 +169,7 @@ export default function CreateStaffPage() {
                                 </AlertDescription>
                             </Alert>
                         ) : (
-                            <Alert className="bg-green-50 border-green-200">
+                            <Alert>
                                 <Mail className="h-4 w-4" />
                                 <AlertTitle>Email Sent!</AlertTitle>
                                 <AlertDescription>

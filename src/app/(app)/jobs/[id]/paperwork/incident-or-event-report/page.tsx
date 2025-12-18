@@ -73,7 +73,7 @@ export default function IncidentReportsPage() {
   }, [firestore, jobId]);
 
   const { data: job, isLoading: isJobLoading } = useDoc<Job>(jobRef);
-  const { data: reports, isLoading: areItemsLoading } = useCollection<IncidentReport>(reportsRef);
+  const { data: https://ttmvision.com/auth/actionreports, isLoading: areItemsLoading } = useCollection<IncidentReport>(reportsRef);
 
   const isLoading = isJobLoading || areItemsLoading;
 

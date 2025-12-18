@@ -15,8 +15,10 @@ import {
   Activity,
   ArrowRight,
   Shield,
-  AlertCircle
+  AlertCircle,
+  Mail
 } from 'lucide-react';
+import { TestEmailDialog } from '@/components/development/test-email-dialog';
 
 export default function DevelopmentPage() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -74,6 +76,14 @@ export default function DevelopmentPage() {
       bgColor: 'bg-blue-500/10',
     },
     {
+      title: 'Test Email Service',
+      description: 'Send test emails to verify templates and Firebase email configuration',
+      icon: Mail,
+      isDialog: true,
+      color: 'text-cyan-500',
+      bgColor: 'bg-cyan-500/10',
+    },
+    {
       title: 'Manage Companies',
       description: 'View and manage all tenant companies in the system',
       icon: Building2,
@@ -125,39 +135,75 @@ export default function DevelopmentPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {devTools.map((tool) => (
-          <Card 
-            key={tool.href} 
-            className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-primary/50"
-            onClick={() => router.push(tool.href)}
-          >
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className={`p-3 rounded-lg ${tool.bgColor} mb-3`}>
-                  <tool.icon className={`h-6 w-6 ${tool.color}`} />
-                </div>
-                <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-              </div>
-              <CardTitle className="text-xl">{tool.title}</CardTitle>
-              <CardDescription className="text-sm">
-                {tool.description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                variant="ghost" 
-                className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(tool.href);
-                }}
+        {devTools.map((tool, index) => {
+          if (tool.isDialog) {
+            // Render dialog-based tool
+            return (
+              <Card 
+                key={`dialog-${index}`}
+                className="group hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/50"
               >
-                Open Tool
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className={`p-3 rounded-lg ${tool.bgColor} mb-3`}>
+                      <tool.icon className={`h-6 w-6 ${tool.color}`} />
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">{tool.title}</CardTitle>
+                  <CardDescription className="text-sm">
+                    {tool.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <TestEmailDialog>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                    >
+                      Open Tool
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </TestEmailDialog>
+                </CardContent>
+              </Card>
+            );
+          }
+
+          // Render navigation-based tool
+          return (
+            <Card 
+              key={tool.href} 
+              className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-primary/50"
+              onClick={() => router.push(tool.href)}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className={`p-3 rounded-lg ${tool.bgColor} mb-3`}>
+                    <tool.icon className={`h-6 w-6 ${tool.color}`} />
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                </div>
+                <CardTitle className="text-xl">{tool.title}</CardTitle>
+                <CardDescription className="text-sm">
+                  {tool.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  variant="ghost" 
+                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(tool.href);
+                  }}
+                >
+                  Open Tool
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <Card className="mt-8 border-yellow-500/50 bg-yellow-500/5">
