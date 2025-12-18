@@ -44,7 +44,7 @@ import { cn } from "@/lib/utils";
 import { format, parse, isValid } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Staff } from "@/lib/data";
-import { useFirestore } from "@/firebase";
+import { useFirestore, useUser } from "@/firebase";
 import { collection, doc, Timestamp } from "firebase/firestore";
 import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useTenant } from "@/contexts/tenant-context";
@@ -65,7 +65,7 @@ const staffSchema = z.object({
   })).optional(),
   emergencyContactName: z.string().min(2, "Emergency contact name is required."),
   emergencyContactNumber: z.string().min(8, "Emergency contact number is required."),
-  accessLevel: z.enum(["Staff Member", "Admin", "Client", "Client Staff"]),
+  accessLevel: z.enum(["Staff Member", "Management", "Admin", "Client", "Client Staff"]),
 });
 
 type StaffDialogProps = {
@@ -147,6 +147,7 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
   const isEditMode = !!staffToEdit;
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
   const { tenantId } = useTenant();
 
   const form = useForm<z.infer<typeof staffSchema>>({
@@ -241,10 +242,23 @@ export function AddStaffDialog({ children, staffToEdit, onDialogClose, open: con
     if (isEditMode && staffToEdit) {
       const staffDocRef = doc(firestore, 'staff', staffToEdit.id);
       setDocumentNonBlocking(staffDocRef, staffPayload, { merge: true });
+      
+      // Check if the user is editing themselves and critical permissions changed
+      const isEditingSelf = user?.email === staffToEdit.email;
+      const roleChanged = staffToEdit.role !== data.role;
+      const accessLevelChanged = staffToEdit.accessLevel !== data.accessLevel;
+      
       toast({
         title: "Staff Updated",
         description: `${data.name}'s details have been updated.`,
       });
+      
+      // Force refresh if user edited their own role or access level
+      if (isEditingSelf && (roleChanged || accessLevelChanged)) {
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
     } else {
       const staffCollectionRef = collection(firestore, 'staff');
       addDocumentNonBlocking(staffCollectionRef, staffPayload);

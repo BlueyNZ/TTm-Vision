@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useTenant } from '@/contexts/tenant-context';
 import { collection, query, orderBy, Timestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { Tenant } from '@/lib/data';
@@ -10,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { LoaderCircle, Building2, Users, CheckCircle, XCircle, Trash2, Edit } from 'lucide-react';
+import { LoaderCircle, Building2, Users, CheckCircle, XCircle, Trash2, Edit, Eye } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ export default function DevPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { impersonateTenant } = useTenant();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
@@ -233,13 +235,23 @@ export default function DevPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setTenantToDelete(tenant)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => impersonateTenant(tenant.id, tenant.name)}
+                          title="View as this company"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setTenantToDelete(tenant)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

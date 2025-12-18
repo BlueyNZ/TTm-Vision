@@ -1,6 +1,6 @@
 
 'use client';
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Staff } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Trash2, Edit, LoaderCircle, Eye } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit, LoaderCircle, Eye, KeyRound } from "lucide-react";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { AddStaffDialog } from "@/components/staff/add-staff-dialog";
 import {
   DropdownMenu,
@@ -18,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from "@/firebase";
 import { collection, doc, query, where } from "firebase/firestore";
 import { useTenant } from "@/contexts/tenant-context";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -63,10 +64,13 @@ const getOverallCertStatus = (staff: Staff) => {
 
 export default function StaffPage() {
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [resettingPasswordFor, setResettingPasswordFor] = useState<string | null>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
   const router = useRouter();
   const { tenantId } = useTenant();
+  const auth = useAuth();
+  const { user } = useUser();
   
   const staffCollection = useMemoFirebase(() => {
     if (!firestore || !tenantId) return null;
@@ -75,6 +79,47 @@ export default function StaffPage() {
   
   const { data: staffData, isLoading } = useCollection<Staff>(staffCollection);
 
+  // Get current user's staff profile to check if they're an admin
+  const currentUserStaffQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.email) return null;
+    return query(collection(firestore, 'staff'), where('email', '==', user.email));
+  }, [firestore, user?.email]);
+
+  const { data: currentUserStaffData } = useCollection<Staff>(currentUserStaffQuery);
+  const currentUserStaffProfile = useMemo(() => currentUserStaffData?.[0], [currentUserStaffData]);
+  const accessLevel = currentUserStaffProfile?.accessLevel;
+  const role = currentUserStaffProfile?.role;
+  const isAdmin = accessLevel === 'Admin' || role === 'Owner' || accessLevel === 5 || (typeof accessLevel === 'number' && accessLevel >= 4);
+
+  const handleResetPassword = async (staff: Staff) => {
+    if (!auth) {
+      toast({
+        title: "Error",
+        description: "Authentication service not available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResettingPasswordFor(staff.id);
+
+    try {
+      await sendPasswordResetEmail(auth, staff.email);
+      toast({
+        title: "Password Reset Email Sent",
+        description: `A password reset email has been sent to ${staff.email}.`,
+      });
+    } catch (error: any) {
+      console.error('Error sending password reset email:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send password reset email.",
+        variant: "destructive",
+      });
+    } finally {
+      setResettingPasswordFor(null);
+    }
+  };
 
   const handleDeleteStaff = (staff: Staff) => {
     if (!firestore) return;
@@ -97,12 +142,14 @@ export default function StaffPage() {
             View and manage all staff members and their certification status.
           </CardDescription>
         </div>
-        <AddStaffDialog onDialogClose={() => {}}>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Staff
-          </Button>
-        </AddStaffDialog>
+        {(accessLevel === 'Admin' || role === 'Owner') && (
+          <Link href="/admin/create-staff">
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Staff
+            </Button>
+          </Link>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -153,6 +200,15 @@ export default function StaffPage() {
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
+                        {isAdmin && (
+                          <DropdownMenuItem 
+                            onClick={() => handleResetPassword(staff)}
+                            disabled={resettingPasswordFor === staff.id}
+                          >
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            {resettingPasswordFor === staff.id ? "Sending..." : "Reset Password"}
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDeleteStaff(staff)}

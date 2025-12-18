@@ -9,7 +9,7 @@ import {
   } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Job } from "@/lib/data";
-import { PlusCircle, MoreHorizontal, Circle, Eye, Edit, LoaderCircle, Trash2, History, CheckCircle } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Circle, Eye, Edit, LoaderCircle, Trash2, History, CheckCircle, FileText } from "lucide-react";
 import Link from "next/link";
 import {
   Table,
@@ -46,6 +46,7 @@ import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { JobChatButton } from "@/components/jobs/job-chat-button";
 import { useTenant } from "@/contexts/tenant-context";
+import { CreateTemplateDialog } from "@/components/jobs/create-template-dialog";
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -164,6 +165,14 @@ export default function JobsPage() {
             </CardDescription>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <CreateTemplateDialog />
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                <Link href="/jobs/templates">
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">View Templates</span>
+                    <span className="sm:hidden">Templates</span>
+                </Link>
+            </Button>
             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                 <Link href="/jobs/past">
                     <History className="mr-2 h-4 w-4" />

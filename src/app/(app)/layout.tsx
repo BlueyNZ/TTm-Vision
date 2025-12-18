@@ -3,6 +3,7 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar";
 import { AppHeader } from "@/components/layout/header";
+import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
 import { useRouter, usePathname } from "next/navigation";
@@ -64,7 +65,7 @@ export default function AppLayout({
   const { data: staffData, isLoading: isStaffLoading } = useCollection<Staff>(staffQuery);
   const currentUserStaffProfile = useMemo(() => staffData?.[0], [staffData]);
   const accessLevel = currentUserStaffProfile?.accessLevel;
-  const isAdmin = accessLevel === 'Admin' || accessLevel === 5 || accessLevel >= 4;
+  const isAdmin = accessLevel === 'Admin' || accessLevel === 'Management' || currentUserStaffProfile?.role === 'Owner' || accessLevel === 5 || accessLevel >= 4;
   const isLoading = isUserLoading || isStaffLoading || !isMapsLoaded || !roleChecked;
 
   useEffect(() => {
@@ -95,6 +96,7 @@ export default function AppLayout({
             <AppSidebar isAdmin={isAdmin} />
             <div className="flex flex-1 flex-col">
               <AppHeader isAdmin={isAdmin} />
+              <ImpersonationBanner />
               <main className="flex-1 p-3 sm:p-4 md:p-6 bg-background">
                   {children}
               </main>

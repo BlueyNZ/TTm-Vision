@@ -1,14 +1,14 @@
 
 'use client';
 import { useRouter } from 'next/navigation';
-import { Job, Staff, Client } from '@/lib/data';
+import { Job, Staff, Client, JobPackTemplate } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { addDoc, setDoc } from 'firebase/firestore';
 import { collection, Timestamp, getDocs, doc, query, where } from 'firebase/firestore';
@@ -24,6 +24,14 @@ import { LocationAutocompleteInput } from '@/components/jobs/location-autocomple
 import { uploadFile } from '@/ai/flows/upload-file-flow';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { FileUploadInput } from '@/components/jobs/file-upload-input';
+import { TemplateSelector } from '@/components/jobs/template-selector';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 async function getCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
   if (typeof window === 'undefined' || !window.google) return null;
@@ -56,6 +64,7 @@ export default function JobCreatePage() {
   const firestore = useFirestore();
   const { tenantId } = useTenant();
   
+  const [selectedTemplate, setSelectedTemplate] = useState<JobPackTemplate | null>(null);
   const [location, setLocation] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [name, setName] = useState('Start Time:\nOn Site:\nSite Setup Time:\n\nJob Description:');
@@ -63,6 +72,8 @@ export default function JobCreatePage() {
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState('');
   const [siteSetupTime, setSiteSetupTime] = useState('');
+  const [setupType, setSetupType] = useState<'Stop-Go' | 'Lane Shift' | 'Shoulder' | 'Mobiles' | 'Other'>('Stop-Go');
+  const [otherSetupType, setOtherSetupType] = useState('');
   const [selectedStms, setSelectedStms] = useState<Staff | null>(null);
   const [selectedTcs, setSelectedTcs] = useState<Staff[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,6 +95,22 @@ export default function JobCreatePage() {
     return query(collection(firestore, 'clients'), where('tenantId', '==', tenantId));
   }, [firestore, tenantId]);
   const { data: clientList } = useCollection<Client>(clientsCollection);
+
+  const templatesCollection = useMemoFirebase(() => {
+    if (!firestore || !tenantId) return null;
+    return query(collection(firestore, 'job_pack_templates'), where('tenantId', '==', tenantId));
+  }, [firestore, tenantId]);
+  const { data: templateList } = useCollection<JobPackTemplate>(templatesCollection);
+
+  // Apply template when selected
+  useEffect(() => {
+    if (selectedTemplate) {
+      if (selectedTemplate.startTime) setStartTime(selectedTemplate.startTime);
+      if (selectedTemplate.siteSetupTime) setSiteSetupTime(selectedTemplate.siteSetupTime);
+      setSetupType(selectedTemplate.setupType);
+      if (selectedTemplate.otherSetupType) setOtherSetupType(selectedTemplate.otherSetupType);
+    }
+  }, [selectedTemplate]);
 
   const handleAddTc = (staff: Staff | null) => {
     if (staff && !selectedTcs.find(tc => tc.id === staff.id) && selectedStms?.id !== staff.id) {
@@ -193,6 +220,8 @@ export default function JobCreatePage() {
         ...(endDate && { endDate: Timestamp.fromDate(endDate) }),
         startTime,
         siteSetupTime,
+        setupType,
+        ...(setupType === 'Other' && otherSetupType && { otherSetupType }),
         status: 'Upcoming',
         stms: selectedStms?.name || null,
         stmsId: selectedStms?.id || null,
@@ -323,6 +352,21 @@ export default function JobCreatePage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
+            <Label htmlFor="template">Job Pack Template (Optional)</Label>
+            <TemplateSelector
+              templates={templateList || []}
+              selectedTemplate={selectedTemplate}
+              onSelectTemplate={setSelectedTemplate}
+              placeholder="Choose a template to auto-fill fields..."
+            />
+            {selectedTemplate && (
+              <p className="text-sm text-muted-foreground px-1">
+                Using template: <span className="font-medium">{selectedTemplate.name}</span>
+                {selectedTemplate.description && <> - {selectedTemplate.description}</>}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
             <LocationAutocompleteInput
               onPlaceSelected={(place) => {
@@ -344,6 +388,36 @@ export default function JobCreatePage() {
           <div className="space-y-2">
             <Label htmlFor="name">Job Description</Label>
             <Textarea id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Northbound lane closure for barrier repairs" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="setupType">Setup Type</Label>
+            <Select
+              value={setupType}
+              onValueChange={(value: any) => setSetupType(value)}
+            >
+              <SelectTrigger id="setupType">
+                <SelectValue placeholder="Select setup type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Stop-Go">Stop-Go</SelectItem>
+                <SelectItem value="Lane Shift">Lane Shift</SelectItem>
+                <SelectItem value="Shoulder">Shoulder</SelectItem>
+                <SelectItem value="Mobiles">Mobiles</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            {setupType === 'Other' && (
+              <div className="mt-2">
+                <Label htmlFor="otherSetupType">Specify Other Setup Type</Label>
+                <Input
+                  id="otherSetupType"
+                  placeholder="Enter custom setup type"
+                  value={otherSetupType}
+                  onChange={(e) => setOtherSetupType(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className="space-y-2">

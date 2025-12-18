@@ -72,9 +72,9 @@ export async function POST(request: NextRequest) {
     }
 
     const requestingUser = requestingUserDoc.docs[0].data();
-    if (requestingUser.accessLevel !== 'Admin') {
+    if (requestingUser.accessLevel !== 'Admin' && requestingUser.accessLevel !== 'Management' && requestingUser.role !== 'Owner') {
       return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
+        { error: 'Forbidden - Admin, Management, or Owner access required' },
         { status: 403 }
       );
     }
@@ -162,8 +162,9 @@ export async function POST(request: NextRequest) {
     // Send password reset email using Firebase's built-in email service
     // This triggers Firebase's email template automatically
     try {
+      const actionUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
       await auth.generatePasswordResetLink(email, {
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
+        url: `${actionUrl}/reset-password`,
       });
       
       // Firebase Admin SDK only generates the link, it doesn't send the email

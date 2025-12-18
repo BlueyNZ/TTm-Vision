@@ -169,6 +169,13 @@ export default function SettingsPage() {
                     description: "Your profile details have been saved." 
                 });
             }
+
+            // Force refresh if critical user data changed to update UI and permissions
+            if (nameChanged) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
         } catch (error: any) {
             toast({ 
                 variant: 'destructive', 

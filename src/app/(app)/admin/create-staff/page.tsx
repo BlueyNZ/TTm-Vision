@@ -29,22 +29,22 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '@/firebase/config';
 
 const staffSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
   role: z.enum(["TC", "STMS", "Operator", "Owner", "Tester"]),
-  accessLevel: z.enum(["Staff Member", "Admin", "Client"]),
+  accessLevel: z.enum(["Staff Member", "Management", "Admin", "Client"]),
 });
 
 export default function CreateStaffPage() {
     const { toast } = useToast();
-    const authContext = useAuth();
+    const auth = useAuth();
+    const { user: currentUser } = useUser();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [createdEmail, setCreatedEmail] = useState<string>('');
     const [showSuccess, setShowSuccess] = useState(false);
@@ -61,7 +61,7 @@ export default function CreateStaffPage() {
     });
 
     async function onSubmit(data: z.infer<typeof staffSchema>) {
-        if (!authContext?.currentUser) {
+        if (!currentUser) {
             toast({
                 title: "Authentication Required",
                 description: "You must be logged in to create staff.",
@@ -74,7 +74,7 @@ export default function CreateStaffPage() {
 
         try {
             // Get the current user's auth token
-            const token = await authContext.currentUser.getIdToken();
+            const token = await currentUser.getIdToken();
 
             // Call the API route to create the user
             const response = await fetch('/api/admin/create-staff', {
@@ -104,24 +104,32 @@ export default function CreateStaffPage() {
             setShowSuccess(true);
             
             // Send Firebase's automatic email
-            try {
-                setSendingEmail(true);
-                await sendPasswordResetEmail(auth, data.email);
-                console.log('✅ Firebase password reset email sent to:', data.email);
-                
-                toast({
-                    title: "Success!",
-                    description: "Staff member created and password setup email sent.",
-                });
-            } catch (emailError: any) {
-                console.error('❌ Error sending Firebase email:', emailError);
+            if (auth) {
+                try {
+                    setSendingEmail(true);
+                    await sendPasswordResetEmail(auth, data.email);
+                    console.log('✅ Firebase password reset email sent to:', data.email);
+                    
+                    toast({
+                        title: "Success!",
+                        description: "Staff member created and password setup email sent.",
+                    });
+                } catch (emailError: any) {
+                    console.error('❌ Error sending Firebase email:', emailError);
+                    toast({
+                        title: "Staff Created",
+                        description: "User created but email failed to send. Ask them to use 'Forgot Password'.",
+                        variant: 'destructive',
+                    });
+                } finally {
+                    setSendingEmail(false);
+                }
+            } else {
                 toast({
                     title: "Staff Created",
-                    description: "User created but email failed to send. Ask them to use 'Forgot Password'.",
+                    description: "User created but auth service unavailable. Ask them to use 'Forgot Password'.",
                     variant: 'destructive',
                 });
-            } finally {
-                setSendingEmail(false);
             }
 
             form.reset();
@@ -261,6 +269,7 @@ export default function CreateStaffPage() {
                                             </FormControl>
                                             <SelectContent>
                                                 <SelectItem value="Staff Member">Staff Member</SelectItem>
+                                                <SelectItem value="Management">Management</SelectItem>
                                                 <SelectItem value="Admin">Admin</SelectItem>
                                                 <SelectItem value="Client">Client</SelectItem>
                                             </SelectContent>

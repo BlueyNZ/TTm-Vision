@@ -65,9 +65,9 @@ export async function POST(request: NextRequest) {
     }
 
     const requestingUser = requestingUserDoc.docs[0].data();
-    if (requestingUser.accessLevel !== 'Admin') {
+    if (requestingUser.accessLevel !== 'Admin' && requestingUser.accessLevel !== 'Management' && requestingUser.role !== 'Owner') {
       return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
+        { error: 'Forbidden - Admin, Management, or Owner access required' },
         { status: 403 }
       );
     }

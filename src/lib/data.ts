@@ -75,6 +75,19 @@ export type Truck = {
   }[];
 };
 
+export type JobPackTemplate = {
+  id: string;
+  tenantId: string; // Organization/company this template belongs to
+  name: string; // Template name
+  description: string; // Template description
+  setupType: 'Stop-Go' | 'Lane Shift' | 'Shoulder' | 'Mobiles' | 'Other';
+  otherSetupType?: string;
+  startTime?: string; // Default start time for jobs using this template
+  siteSetupTime?: string; // Default site setup time for jobs using this template
+  createdAt: Timestamp | Date;
+  updatedAt?: Timestamp | Date;
+};
+
 export type Job = {
   id: string;
   tenantId: string; // Organization/company this job belongs to
