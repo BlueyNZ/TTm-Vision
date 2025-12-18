@@ -6,19 +6,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Bug, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bug, X, ChevronDown, ChevronUp, Database } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 export function DebugPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [logs, setLogs] = useState<Array<{ time: string; type: string; message: string; data?: any }>>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const user = useUser();
+  const [autoLogEnabled, setAutoLogEnabled] = useState(false);
+  const { user } = useUser();
   const firestore = useFirestore();
   const pathname = usePathname();
 
-  // Check if user is super admin
+  // Check if user is super admin and load auto-log preference
   useEffect(() => {
     const checkSuperAdmin = async () => {
       if (user) {
@@ -34,16 +37,65 @@ export function DebugPanel() {
     };
     
     checkSuperAdmin();
+    
+    // Load auto-log preference from localStorage
+    const savedPreference = localStorage.getItem('dev_logging_enabled');
+    setAutoLogEnabled(savedPreference === 'true');
   }, [user]);
 
-  // Don't render anything if not super admin
-  if (!isSuperAdmin) {
-    return null;
-  }
+  // Toggle auto-logging
+  const toggleAutoLog = () => {
+    const newValue = !autoLogEnabled;
+    setAutoLogEnabled(newValue);
+    localStorage.setItem('dev_logging_enabled', String(newValue));
+  };
+
+  // Function to log to Firestore
+  const logToFirestore = async (
+    type: 'error' | 'warn' | 'info' | 'log',
+    args: any[]
+  ) => {
+    if (!autoLogEnabled) return;
+    
+    try {
+      const message = args.map(arg =>
+        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+      ).join(' ');
+
+      let stack: string | undefined;
+      if (args[0] instanceof Error) {
+        stack = args[0].stack;
+      }
+
+      const errorLog = {
+        type,
+        message,
+        stack,
+        timestamp: Timestamp.now(),
+        userInfo: {
+          uid: user?.uid || null,
+          email: user?.email || null,
+          displayName: user?.displayName || null,
+        },
+        pageInfo: {
+          pathname: pathname || 'unknown',
+          url: typeof window !== 'undefined' ? window.location.href : '',
+          userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : '',
+        },
+        data: args.length > 1 ? args : args[0],
+      };
+
+      const logsCollection = collection(firestore, 'dev_logs');
+      await addDoc(logsCollection, errorLog);
+    } catch (error) {
+      // Silently fail to avoid infinite loops
+      console.warn('Failed to log to Firestore:', error);
+    }
+  };
 
   // Intercept console methods
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !isSuperAdmin) return;
 
     const addLog = (type: string, args: any[]) => {
       const time = new Date().toLocaleTimeString();
@@ -55,6 +107,11 @@ export function DebugPanel() {
       setTimeout(() => {
         setLogs(prev => [...prev.slice(-99), { time, type, message, data: args }]);
       }, 0);
+      
+      // Log to Firestore if auto-logging is enabled
+      if (autoLogEnabled && (type === 'error' || type === 'warn')) {
+        logToFirestore(type as 'error' | 'warn', args);
+      }
     };
 
     const originalConsole = {
@@ -84,13 +141,32 @@ export function DebugPanel() {
       addLog('info', args);
     };
 
+    // Catch unhandled errors
+    const handleError = (event: ErrorEvent) => {
+      addLog('error', [event.error || event.message]);
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      addLog('error', [event.reason]);
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
     return () => {
       console.log = originalConsole.log;
       console.error = originalConsole.error;
       console.warn = originalConsole.warn;
       console.info = originalConsole.info;
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
-  }, []);
+  }, [autoLogEnabled, firestore, pathname, user, isSuperAdmin]);
+
+  // Don't render anything if not super admin
+  if (!isSuperAdmin) {
+    return null;
+  }
 
   // Show debug toggle button in bottom-right corner
   if (!isOpen) {
@@ -115,6 +191,15 @@ export function DebugPanel() {
             Debug Panel
           </CardTitle>
           <div className="flex gap-2">
+            <Button
+              variant={autoLogEnabled ? "default" : "outline"}
+              size="sm"
+              onClick={toggleAutoLog}
+              className="h-6 px-2"
+              title={autoLogEnabled ? "Auto-logging enabled" : "Auto-logging disabled"}
+            >
+              <Database className={cn("h-3 w-3", !autoLogEnabled && "opacity-50")} />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -249,8 +334,4 @@ export function DebugPanel() {
       </CardContent>
     </Card>
   );
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ');
 }

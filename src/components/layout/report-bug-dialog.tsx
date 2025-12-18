@@ -20,6 +20,7 @@ import { useTenant } from '@/contexts/tenant-context';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { Bug, LoaderCircle } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { analyzeBugReport } from '@/ai/flows/analyze-bug-report-flow';
 
 interface ReportBugDialogProps {
   children?: React.ReactNode;
@@ -62,6 +63,14 @@ export function ReportBugDialog({ children }: ReportBugDialogProps) {
     setIsSubmitting(true);
 
     try {
+      // Analyze bug report with AI
+      const aiAnalysis = await analyzeBugReport({
+        title: title.trim(),
+        description: description.trim(),
+        stepsToReproduce: stepsToReproduce.trim(),
+        page: pathname || 'unknown',
+      });
+
       const bugReportsCollection = collection(firestore, 'bug_reports');
       const bugReport = {
         title: title.trim(),
@@ -78,7 +87,14 @@ export function ReportBugDialog({ children }: ReportBugDialogProps) {
         url: typeof window !== 'undefined' ? window.location.href : null,
         userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : null,
         status: 'open',
-        priority: 'medium',
+        priority: aiAnalysis.priority,
+        severity: aiAnalysis.severity,
+        detailQuality: aiAnalysis.detailQuality,
+        aiAnalysis: {
+          reasoning: aiAnalysis.reasoning,
+          suggestedActions: aiAnalysis.suggestedActions || [],
+          analyzedAt: Timestamp.now(),
+        },
         createdAt: Timestamp.now(),
       };
 

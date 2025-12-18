@@ -113,6 +113,14 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && request.auth.token.superAdmin == true;
     }
 
+    // Dev logs - only super admins can read/write/delete
+    match /dev_logs/{logId} {
+      allow read: if isAuthenticated() && request.auth.token.superAdmin == true;
+      allow create: if isAuthenticated() && request.auth.token.superAdmin == true;
+      allow update: if isAuthenticated() && request.auth.token.superAdmin == true;
+      allow delete: if isAuthenticated() && request.auth.token.superAdmin == true;
+    }
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

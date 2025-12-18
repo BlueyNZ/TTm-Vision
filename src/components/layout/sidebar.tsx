@@ -375,48 +375,18 @@ export function AppSidebar({ isAdmin }: AppSidebarProps) {
                 </SidebarMenuItem>
               </Collapsible>
               {isSuperAdmin && (
-                <Collapsible asChild defaultOpen={pathname.startsWith("/dev") || pathname.startsWith("/diagnostics") || pathname.startsWith("/test-claims")}>
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton
-                        tooltip="Developer"
-                        isActive={pathname.startsWith("/dev") || pathname.startsWith("/diagnostics") || pathname.startsWith("/test-claims")}
-                        className="justify-between"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Code />
-                          <span>Developer</span>
-                        </div>
-                        <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        <SidebarMenuItem>
-                          <SidebarMenuSubButton asChild isActive={pathname === "/dev"}>
-                            <Link href="/dev">
-                              Manage Companies
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                          <SidebarMenuSubButton asChild isActive={pathname === "/test-claims"}>
-                            <Link href="/test-claims">
-                              Test Claims
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                          <SidebarMenuSubButton asChild isActive={pathname === "/diagnostics"}>
-                            <Link href="/diagnostics">
-                              Diagnostics
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip="Development"
+                    isActive={pathname.startsWith("/dev") || pathname.startsWith("/diagnostics") || pathname.startsWith("/test-claims") || pathname.startsWith("/development")}
+                  >
+                    <Link href="/development">
+                      <Code />
+                      <span>Development</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               )}
             </>
           )}

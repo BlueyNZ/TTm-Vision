@@ -234,6 +234,16 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
         </div>
       </div>
       <div className="flex items-center gap-1 sm:gap-4 md:ml-auto md:flex-initial md:justify-end flex-shrink-0">
+        <ReportBugDialog>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1 sm:gap-2 rounded-xl hover:scale-105 transition-all"
+          >
+            <Bug className="h-4 w-4" />
+            <span className="hidden sm:inline">Report Bug</span>
+          </Button>
+        </ReportBugDialog>
         {userRole !== 'client' && (
           <Button 
             variant={pathname.startsWith('/client') ? "default" : "outline"} 
@@ -263,12 +273,6 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
             <DropdownMenuItem onClick={() => router.push('/settings')} className="rounded-lg cursor-pointer">Settings</DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/support')} className="rounded-lg cursor-pointer">Support</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <ReportBugDialog>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="rounded-lg cursor-pointer">
-                <Bug className="mr-2 h-4 w-4" />
-                Report Bug
-              </DropdownMenuItem>
-            </ReportBugDialog>
             {isOwner && (
               <>
                 <DropdownMenuSeparator />
