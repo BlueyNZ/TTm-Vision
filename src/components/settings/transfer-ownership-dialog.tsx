@@ -83,7 +83,7 @@ export function TransferOwnershipDialog({ open, onOpenChange }: TransferOwnershi
         accessLevel: 'Admin'
       });
 
-      // Update current owner's role to 'Admin'
+      // Update current owner's role to STMS with Admin access
       const currentStaffQuery = query(
         collection(firestore, 'staff'),
         where('email', '==', user.email),
@@ -94,7 +94,7 @@ export function TransferOwnershipDialog({ open, onOpenChange }: TransferOwnershi
       if (!currentStaffSnapshot.empty) {
         const currentStaffDoc = currentStaffSnapshot.docs[0];
         await updateDoc(doc(firestore, 'staff', currentStaffDoc.id), {
-          role: 'Admin',
+          role: 'STMS',
           accessLevel: 'Admin'
         });
       }

@@ -66,6 +66,7 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
         
         if (!staffSnapshot.empty) {
           const staffData = staffSnapshot.docs[0].data() as Staff;
+          // Only show transfer ownership button for actual Owner role
           setIsOwner(staffData.role === 'Owner');
         }
       } catch (error) {
