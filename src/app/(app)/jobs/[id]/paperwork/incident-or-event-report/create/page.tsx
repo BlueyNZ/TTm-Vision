@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { TruckSelector } from "@/components/fleet/truck-selector";
 import { uploadFile } from "@/ai/flows/upload-file-flow";
+import { useTenant } from "@/contexts/tenant-context";
 
 
 const toBase64 = (file: File): Promise<string> =>
@@ -187,14 +188,16 @@ export default function CreateIncidentReportPage() {
     }
   }, [assignedInvestigator, setValue]);
 
+  const { tenantId } = useTenant();
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !jobId) return;
+    if (!file || !jobId || !tenantId) return;
     setIsUploading(true);
     try {
         const fileData = await toBase64(file);
         const result = await uploadFile({
-            filePath: `jobs/${jobId}/incident_attachments/${file.name}`,
+            filePath: `tenants/${tenantId}/jobs/${jobId}/incident_attachments/${file.name}`,
             fileData,
             fileName: file.name,
             fileType: file.type,

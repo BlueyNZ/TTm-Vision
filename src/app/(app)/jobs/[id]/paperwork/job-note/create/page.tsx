@@ -24,8 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
-import { uploadFile } from "@/ai/flows/upload-file-flow";
-
+import { uploadFile } from "@/ai/flows/upload-file-flow";import { useTenant } from '@/contexts/tenant-context';
 const toBase64 = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -107,15 +106,17 @@ export default function CreateJobNotePage() {
   }, [formToEdit, staffList, allJobs, form]);
 
 
+  const { tenantId } = useTenant();
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !jobId) return;
+    if (!file || !jobId || !tenantId) return;
 
     setIsUploading(true);
     try {
         const fileData = await toBase64(file);
         const result = await uploadFile({
-            filePath: `jobs/${jobId}/job_notes_attachments/${file.name}`,
+            filePath: `tenants/${tenantId}/jobs/${jobId}/job_notes_attachments/${file.name}`,
             fileData,
             fileName: file.name,
             fileType: file.type,

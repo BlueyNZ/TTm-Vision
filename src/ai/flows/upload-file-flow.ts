@@ -4,6 +4,15 @@
  * @fileOverview A Genkit flow for uploading files to Firebase Storage.
  * This flow is designed to be called from the client-side to handle file uploads securely on the server.
  * Falls back to direct HTTP upload if Admin SDK fails.
+ * 
+ * File Storage Structure (Multi-Tenant):
+ * - tenants/{tenantId}/jobs/{jobId}/tmp/{filename} - TMP files
+ * - tenants/{tenantId}/jobs/{jobId}/wap/{filename} - WAP files
+ * - tenants/{tenantId}/jobs/{jobId}/incident_attachments/{filename} - Incident report attachments
+ * - tenants/{tenantId}/jobs/{jobId}/job_notes_attachments/{filename} - Job note attachments
+ * 
+ * Legacy paths (for backward compatibility):
+ * - jobs/{jobId}/... - Old non-tenant-specific paths
  */
 
 import { ai } from '@/ai/genkit';
@@ -13,7 +22,7 @@ import { getStorage } from 'firebase-admin/storage';
 import { firebaseConfig } from '@/firebase/config';
 
 const UploadFileInputSchema = z.object({
-  filePath: z.string().describe('The full path where the file should be stored in Firebase Storage, including the file name (e.g., "jobs/job123/tmp/document.pdf").'),
+  filePath: z.string().describe('The full path where the file should be stored in Firebase Storage, including the file name (e.g., "tenants/{tenantId}/jobs/{jobId}/tmp/document.pdf").'),
   fileData: z.string().describe("The Base64 encoded string of the file data."),
   fileName: z.string().describe("The name of the file."),
   fileType: z.string().describe("The MIME type of the file (e.g., 'application/pdf')."),

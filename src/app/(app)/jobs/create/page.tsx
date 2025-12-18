@@ -254,7 +254,7 @@ export default function JobCreatePage() {
                   setUploadProgress(prev => ({...prev, tmp: 50}));
                   
                   const result = await uploadFile({
-                      filePath: `jobs/${docRef.id}/tmp/${tmpFile.name}`,
+                      filePath: `tenants/${tenantId}/jobs/${docRef.id}/tmp/${tmpFile.name}`,
                       fileData,
                       fileName: tmpFile.name,
                       fileType: tmpFile.type,
@@ -283,7 +283,7 @@ export default function JobCreatePage() {
                   setUploadProgress(prev => ({...prev, wap: 50}));
                   
                   const result = await uploadFile({
-                      filePath: `jobs/${docRef.id}/wap/${wapFile.name}`,
+                      filePath: `tenants/${tenantId}/jobs/${docRef.id}/wap/${wapFile.name}`,
                       fileData,
                       fileName: wapFile.name,
                       fileType: wapFile.type,

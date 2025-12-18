@@ -1,11 +1,38 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow read and write access for all authenticated users.
-    // This is a permissive rule for development.
-    // For production, you should restrict access further based on your app's logic.
+    // Helper to check if user belongs to tenant
+    function belongsToTenant(tenantId) {
+      return request.auth != null && 
+             request.auth.token.tenantId == tenantId;
+    }
+    
+    // Helper to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper to check if user is super admin
+    function isSuperAdmin() {
+      return request.auth != null && 
+             request.auth.token.superAdmin == true;
+    }
+    
+    // Tenant-specific storage - users can only access files from their tenant
+    match /tenants/{tenantId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (belongsToTenant(tenantId) || isSuperAdmin());
+      allow write: if isAuthenticated() && (belongsToTenant(tenantId) || isSuperAdmin());
+    }
+    
+    // Legacy paths (jobs without tenant prefix) - for backward compatibility
+    // Allow authenticated users to read/write (will migrate these over time)
+    match /jobs/{jobId}/{allPaths=**} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Deny all other access
     match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }
