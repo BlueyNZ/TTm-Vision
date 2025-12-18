@@ -32,10 +32,11 @@ export default function PaperworkPage() {
     const { tenantId, isLoading: isTenantLoading } = useTenant();
     const [persistedJobs, setPersistedJobs] = useState<Job[] | undefined>(undefined);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [userAccessLevel, setUserAccessLevel] = useState<string | null>(null);
     const [staffId, setStaffId] = useState<string | null>(null);
     const [isCheckingAccess, setIsCheckingAccess] = useState(true);
 
-    // Check if user is STMS and get their staff ID
+    // Check if user is STMS or Admin and get their staff ID
     useEffect(() => {
         if (!firestore || !tenantId || !user?.email) {
             setIsCheckingAccess(false);
@@ -54,6 +55,7 @@ export default function PaperworkPage() {
                 if (!staffSnapshot.empty) {
                     const staffData = staffSnapshot.docs[0].data() as Staff;
                     setUserRole(staffData.role);
+                    setUserAccessLevel(staffData.accessLevel);
                     setStaffId(staffSnapshot.docs[0].id);
                 }
             } catch (error) {
@@ -67,15 +69,26 @@ export default function PaperworkPage() {
     }, [firestore, tenantId, user?.email]);
 
     const jobsCollection = useMemoFirebase(() => {
-        if (!firestore || !tenantId || !staffId) return null;
-        // Only show jobs where this staff member is assigned as STMS
-        return query(
-            collection(firestore, 'job_packs'),
-            where('tenantId', '==', tenantId),
-            where('stmsId', '==', staffId),
-            where('status', '!=', 'Pending')
-        );
-    }, [firestore, tenantId, staffId]);
+        if (!firestore || !tenantId) return null;
+        
+        // Admins see all jobs, STMS only see their assigned jobs
+        if (userAccessLevel === 'Admin') {
+            return query(
+                collection(firestore, 'job_packs'),
+                where('tenantId', '==', tenantId),
+                where('status', '!=', 'Pending')
+            );
+        } else if (staffId) {
+            return query(
+                collection(firestore, 'job_packs'),
+                where('tenantId', '==', tenantId),
+                where('stmsId', '==', staffId),
+                where('status', '!=', 'Pending')
+            );
+        }
+        
+        return null;
+    }, [firestore, tenantId, staffId, userAccessLevel]);
 
     const { data: jobData, isLoading: isJobsLoading } = useCollection<Job>(jobsCollection);
     
@@ -98,14 +111,16 @@ export default function PaperworkPage() {
         });
     }, [displayJobs]);
 
-  // Check if user has STMS role
-  if (!isLoading && userRole !== 'STMS') {
+  // Check if user has STMS role or Admin access
+  const hasAccess = userRole === 'STMS' || userAccessLevel === 'Admin';
+  
+  if (!isLoading && !hasAccess) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Paperwork Hub</CardTitle>
           <CardDescription>
-            Access restricted to STMS (Site Traffic Management Supervisor) roles only.
+            Access restricted to STMS (Site Traffic Management Supervisor) roles and Admins only.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -113,7 +128,7 @@ export default function PaperworkPage() {
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle>Access Denied</AlertTitle>
             <AlertDescription>
-              You must be assigned as an STMS to access the Paperwork Hub. Please contact your administrator if you believe this is an error.
+              You must be assigned as an STMS or have Admin access to view the Paperwork Hub. Please contact your administrator if you believe this is an error.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -126,7 +141,9 @@ export default function PaperworkPage() {
       <CardHeader>
         <CardTitle>Paperwork Hub</CardTitle>
         <CardDescription>
-          View and complete paperwork for jobs where you are assigned as STMS.
+          {userAccessLevel === 'Admin' 
+            ? 'View and complete paperwork for all jobs.' 
+            : 'View and complete paperwork for jobs where you are assigned as STMS.'}
         </CardDescription>
       </CardHeader>
       <CardContent>

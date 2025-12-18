@@ -47,6 +47,8 @@ import { deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/no
 import { JobChatButton } from "@/components/jobs/job-chat-button";
 import { useTenant } from "@/contexts/tenant-context";
 import { CreateTemplateDialog } from "@/components/jobs/create-template-dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileJobCard } from "@/components/jobs/mobile-job-card";
 
 
 const getDisplayedStatus = (job: Job) => {
@@ -105,6 +107,7 @@ export default function JobsPage() {
     const firestore = useFirestore();
     const { toast } = useToast();
     const { tenantId } = useTenant();
+    const isMobile = useIsMobile();
     const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
     const [jobToComplete, setJobToComplete] = useState<Job | null>(null);
 
@@ -193,7 +196,27 @@ export default function JobsPage() {
             <div className="flex justify-center items-center h-64">
                 <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
             </div>
+            ) : isMobile ? (
+                // Mobile card view
+                <div className="space-y-3">
+                    {sortedJobs?.map((job) => (
+                        <MobileJobCard
+                            key={job.id}
+                            job={job}
+                            onView={() => router.push(`/jobs/${job.id}`)}
+                            onEdit={() => router.push(`/jobs/${job.id}/edit`)}
+                            onComplete={getDisplayedStatus(job) === 'In Progress' ? () => setJobToComplete(job) : undefined}
+                            onDelete={() => setJobToDelete(job)}
+                        />
+                    ))}
+                    {sortedJobs?.length === 0 && (
+                        <div className="text-center py-12 text-muted-foreground">
+                            No active jobs found
+                        </div>
+                    )}
+                </div>
             ) : (
+                // Desktop table view
                 <Table>
                     <TableHeader>
                         <TableRow>
