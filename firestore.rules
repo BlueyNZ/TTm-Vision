@@ -105,6 +105,14 @@ service cloud.firestore {
       allow delete: if isAuthenticated();
     }
 
+    // Bug reports - authenticated users can create, only super admins can read all
+    match /bug_reports/{reportId} {
+      allow read: if isAuthenticated() && request.auth.token.superAdmin == true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && request.auth.token.superAdmin == true;
+      allow delete: if isAuthenticated() && request.auth.token.superAdmin == true;
+    }
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

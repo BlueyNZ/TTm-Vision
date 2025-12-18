@@ -600,3 +600,27 @@ export type SiteAudit = {
   scrLeftOnsite: boolean;
   createdAt: Timestamp;
 }
+
+export type BugReport = {
+  id: string;
+  title: string;
+  description: string;
+  stepsToReproduce?: string;
+  reportedBy: {
+    email: string;
+    displayName: string;
+    uid: string | null;
+  };
+  tenantId: string | null;
+  tenantName: string | null;
+  page: string;
+  url: string | null;
+  userAgent: string | null;
+  status: 'open' | 'in-progress' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  assignedTo?: string;
+  resolution?: string;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+  resolvedAt?: Timestamp;
+}

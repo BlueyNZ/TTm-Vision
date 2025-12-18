@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { ArrowLeft, LogOut, ChevronDown, Users, Menu, Building2, Crown } from "lucide-react";
+import { ArrowLeft, LogOut, ChevronDown, Users, Menu, Building2, Crown, Bug } from "lucide-react";
 import { useAuth, useUser, useFirestore } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +22,7 @@ import { useTenant } from "@/contexts/tenant-context";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Tenant, Staff } from "@/lib/data";
 import { TransferOwnershipDialog } from "@/components/settings/transfer-ownership-dialog";
+import { ReportBugDialog } from "@/components/layout/report-bug-dialog";
 
 interface AppHeaderProps {
   isAdmin?: boolean;
@@ -260,6 +261,13 @@ export function AppHeader({ isAdmin, showSidebar = true }: AppHeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push('/settings')} className="rounded-lg cursor-pointer">Settings</DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/support')} className="rounded-lg cursor-pointer">Support</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <ReportBugDialog>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="rounded-lg cursor-pointer">
+                <Bug className="mr-2 h-4 w-4" />
+                Report Bug
+              </DropdownMenuItem>
+            </ReportBugDialog>
             {isOwner && (
               <>
                 <DropdownMenuSeparator />
